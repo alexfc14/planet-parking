@@ -4,14 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pattern Blocks Desk</title>
-    <!-- Tailwind CSS -->
+
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Three.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
     <style>
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
@@ -25,7 +23,6 @@
             -webkit-backdrop-filter: blur(12px);
             border: 1px solid rgba(255, 255, 255, 0.4);
         }
-        /* Custom scrollbar for templates gallery */
         .custom-scroll::-webkit-scrollbar {
             width: 6px;
             height: 6px;
@@ -45,10 +42,10 @@
 </head>
 <body class="bg-slate-50 text-slate-800 overflow-hidden w-screen h-screen flex flex-col">
 
-    <!-- Rectangular Selection Marquee -->
+    <!-- Selection Marquee -->
     <div id="selection-marquee" class="absolute border-2 border-indigo-500 bg-indigo-500/20 pointer-events-none hidden rounded-sm z-30"></div>
 
-    <!-- Export Modal Backdrop Overlay -->
+    <!-- Export Modal Overlay -->
     <div id="modal-export" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center hidden opacity-0 transition-opacity duration-300 pointer-events-auto">
         <div class="glass-panel p-6 rounded-3xl shadow-2xl max-w-sm w-full mx-4 border border-white/60 transform scale-95 transition-transform duration-300" id="export-card">
             <div class="flex justify-between items-center border-b pb-3 mb-4">
@@ -81,67 +78,56 @@
         </div>
     </div>
 
-    <!-- Templates Modal Backdrop Overlay -->
+    <!-- Templates Modal Overlay -->
     <div id="modal-templates" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center hidden opacity-0 transition-opacity duration-300 pointer-events-auto">
         <div class="glass-panel p-6 rounded-3xl shadow-2xl max-w-2xl w-full mx-4 border border-white/60 transform scale-95 transition-transform duration-300 flex flex-col max-h-[85vh]" id="templates-card">
-            <div class="flex justify-between items-center border-b pb-3 mb-4 shrink-0">
+            <div class="flex justify-between items-center border-b pb-3 mb-3 shrink-0">
                 <h3 class="font-bold text-slate-900 flex items-center gap-2">
                     <i class="fa-solid fa-folder-open text-indigo-600"></i>
                     <span>Templates Desk</span>
                 </h3>
                 <button id="btn-close-templates" class="text-slate-400 hover:text-slate-600 transition"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
-
-            <!-- Search Bar Input Container -->
-            <div class="mb-4 shrink-0 relative">
-                <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                    <i class="fa-solid fa-magnifying-glass text-xs"></i>
-                </div>
-                <input type="text" id="template-search" placeholder="Search patterns by name..." class="w-full pl-9 pr-4 py-2.5 text-xs rounded-xl border border-slate-200 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition bg-white/50">
-            </div>
-
-            <!-- Tabs Segment Controller -->
-            <div class="flex bg-slate-100 p-1 rounded-2xl gap-1 mb-4 shrink-0">
-                <button id="tab-templates-default" class="flex-1 py-2 text-xs font-bold rounded-xl transition bg-white text-indigo-600 shadow-sm flex items-center justify-center gap-1.5">
-                    <i class="fa-solid fa-shapes text-[10px]"></i> Default Patterns <span id="badge-default-count" class="bg-indigo-100 text-indigo-700 text-[10px] px-2 py-0.5 rounded-full ml-1 min-w-[20px] text-center">0</span>
+            
+            <div class="flex items-center gap-2 mb-3 shrink-0 bg-slate-100 p-1 rounded-2xl border border-slate-200">
+                <button id="tab-btn-default" class="flex-1 py-1.5 px-3 rounded-xl text-xs font-bold transition bg-white text-indigo-600 shadow-sm flex items-center justify-center gap-1.5">
+                    <i class="fa-solid fa-shapes text-xs"></i> Default Patterns
                 </button>
-                <button id="tab-templates-local" class="flex-1 py-2 text-xs font-bold rounded-xl transition text-slate-500 hover:text-slate-800 flex items-center justify-center gap-1.5">
-                    <i class="fa-solid fa-folder text-[10px]"></i> Local Folder <span id="badge-local-count" class="bg-slate-200 text-slate-600 text-[10px] px-2 py-0.5 rounded-full ml-1 min-w-[20px] text-center">0</span>
+                <button id="tab-btn-local" class="flex-1 py-1.5 px-3 rounded-xl text-xs font-bold transition text-slate-500 hover:text-slate-800 flex items-center justify-center gap-1.5">
+                    <i class="fa-solid fa-hard-drive text-xs"></i> Local Folder
                 </button>
             </div>
 
-            <!-- Hidden inputs and action bar for folder uploading (Only shown inside Local Folder Tab) -->
-            <div id="local-importer-bar" class="hidden flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4 shrink-0 bg-slate-50 border border-slate-100 p-3 rounded-2xl">
-                <p class="text-[11px] text-slate-500 max-w-sm">Loads patterns directly from your templates folder to bypass sandbox blocks.</p>
+            <div id="local-tab-controls" class="hidden flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-3 shrink-0 bg-indigo-50/60 p-3 rounded-2xl border border-indigo-100">
+                <p class="text-xs text-slate-600 max-w-md">Load custom pattern files from a folder on your device.</p>
                 <input type="file" id="folder-loader" class="hidden" webkitdirectory directory multiple>
-                <button id="btn-import-folder" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold py-2 px-3.5 rounded-xl flex items-center gap-1.5 transition active:scale-95 whitespace-nowrap self-stretch sm:self-auto justify-center">
+                <button id="btn-import-folder" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold py-2 px-3.5 rounded-xl flex items-center gap-1.5 transition active:scale-95 whitespace-nowrap self-stretch sm:self-auto justify-center shadow-md shadow-indigo-100">
                     <i class="fa-solid fa-folder-plus"></i> Select Folder
                 </button>
             </div>
 
-            <!-- Loader / Empty Status Container -->
+            <div class="relative mb-3 shrink-0">
+                <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                <input type="text" id="template-search-input" placeholder="Search patterns by name..." class="w-full bg-white/80 border border-slate-200 rounded-xl pl-9 pr-4 py-2 text-xs font-medium text-slate-800 placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition">
+            </div>
+
             <div id="templates-status" class="hidden py-8 flex flex-col items-center justify-center text-center gap-2 shrink-0">
                 <div class="w-8 h-8 border-4 border-indigo-500/20 border-t-indigo-600 rounded-full animate-spin"></div>
-                <span class="text-xs font-medium text-slate-500">Searching templates folder...</span>
+                <span class="text-xs font-medium text-slate-500">Searching templates directory...</span>
             </div>
             
-            <!-- Templates Grid Container -->
-            <div id="templates-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-4 overflow-y-auto custom-scroll pr-1 py-1 flex-grow">
-                <!-- Template cards dynamically loaded here -->
-            </div>
+            <div id="templates-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-3 overflow-y-auto custom-scroll pr-1 py-1 flex-grow"></div>
         </div>
     </div>
 
-    <!-- Floating Info Notification -->
+    <!-- Notification Toast -->
     <div id="notification-toast" class="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 bg-slate-900 text-white text-xs font-bold py-3 px-6 rounded-2xl shadow-xl pointer-events-none opacity-0 transition-opacity duration-300 flex items-center gap-2">
         <i id="notification-icon" class="fa-solid fa-circle-info text-indigo-400"></i>
         <span id="notification-msg">Pattern loaded successfully</span>
     </div>
 
-    <!-- Header Panel -->
-    <header class="absolute top-4 left-4 right-4 z-10 flex justify-between items-center pointer-events-none">
-        <!-- Compact Header Brand Card -->
-        <div class="glass-panel px-4 py-2.5 rounded-2xl shadow-lg flex items-center gap-3 pointer-events-auto">
+    <header class="absolute top-4 left-4 right-4 z-10 flex flex-wrap md:flex-nowrap justify-between items-center gap-3 pointer-events-none">
+        <div class="glass-panel px-4 py-2.5 rounded-2xl shadow-lg flex items-center gap-3 pointer-events-auto shrink-0">
             <div class="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white text-lg shadow-md shadow-indigo-200">
                 <i class="fa-solid fa-shapes"></i>
             </div>
@@ -151,8 +137,36 @@
             </div>
         </div>
 
-        <!-- History & Settings Controls -->
-        <div class="flex gap-2 pointer-events-auto">
+        <!-- Real-Time Streamlined Icon Metrics Header -->
+        <div class="glass-panel px-5 py-2.5 rounded-2xl shadow-lg flex items-center gap-4 pointer-events-auto mx-auto border border-white/60">
+            <div class="flex items-center gap-2 cursor-help group" title="Total Pieces: Total number of active blocks on the board">
+                <i class="fa-solid fa-cubes text-indigo-600 text-base group-hover:scale-110 transition"></i>
+                <span id="stat-total-pieces" class="text-xs font-bold text-slate-800 leading-none">0</span>
+            </div>
+
+            <div class="w-[1px] h-5 bg-slate-200"></div>
+
+            <div class="flex items-center gap-2 cursor-help group" title="Compactness Score: C = (2 * √(π * Area)) / Perimeter">
+                <i class="fa-solid fa-circle-notch text-amber-500 text-base group-hover:scale-110 transition"></i>
+                <span id="stat-compactness" class="text-xs font-bold text-slate-800 leading-none">0.0%</span>
+            </div>
+
+            <div class="w-[1px] h-5 bg-slate-200"></div>
+
+            <div class="flex items-center gap-2 cursor-help group" title="Boundary %: Percentage of total edges that are unattached boundary edges">
+                <i class="fa-solid fa-border-none text-emerald-600 text-base group-hover:scale-110 transition"></i>
+                <span id="stat-boundary-pct" class="text-xs font-bold text-slate-800 leading-none">0.0%</span>
+            </div>
+
+            <div class="w-[1px] h-5 bg-slate-200"></div>
+
+            <div class="flex items-center gap-2 cursor-help group" title="Circle Coverage: Percentage of Minimum Enclosing Circle area covered by pieces">
+                <i class="fa-solid fa-circle-dot text-violet-600 text-base group-hover:scale-110 transition"></i>
+                <span id="stat-circle-coverage" class="text-xs font-bold text-slate-800 leading-none">0.0%</span>
+            </div>
+        </div>
+
+        <div class="flex gap-2 pointer-events-auto shrink-0">
             <button id="btn-undo" class="glass-panel w-12 h-12 rounded-2xl flex items-center justify-center text-slate-600 hover:text-indigo-600 hover:bg-white active:scale-95 transition shadow-lg text-lg opacity-50 cursor-not-allowed" title="Undo (Ctrl+Z)" disabled>
                 <i class="fa-solid fa-reply"></i>
             </button>
@@ -165,14 +179,12 @@
         </div>
     </header>
 
-    <!-- Side Configurations Drawer -->
     <div id="drawer-settings" class="absolute top-20 right-4 bottom-24 w-80 z-20 glass-panel rounded-3xl shadow-2xl p-6 flex flex-col gap-6 transition-all duration-300 transform translate-x-[340px] pointer-events-auto">
         <div class="flex justify-between items-center border-b pb-4 border-slate-100">
             <h3 class="font-bold text-slate-800 text-base"><i class="fa-solid fa-palette mr-2"></i>Desk Settings</h3>
             <button id="btn-close-settings" class="text-slate-400 hover:text-slate-600 transition"><i class="fa-solid fa-xmark text-lg"></i></button>
         </div>
 
-        <!-- Board Management -->
         <div class="flex flex-col gap-3">
             <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">Board Actions</label>
             <div class="grid grid-cols-2 gap-2">
@@ -193,6 +205,18 @@
             </button>
         </div>
 
+        <div class="flex flex-col gap-2 border-t pt-4 border-slate-100">
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-400">Placement Mode</label>
+            <label class="flex items-center justify-between cursor-pointer p-2.5 rounded-xl hover:bg-slate-100/80 transition border border-slate-200/60 bg-white/50">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-magnet text-indigo-600 text-sm"></i>
+                    <span class="text-xs font-bold text-slate-800">Auto-Attach Best Fit</span>
+                </div>
+                <input type="checkbox" id="toggle-auto-attach" class="w-4 h-4 accent-indigo-600 rounded cursor-pointer" checked>
+            </label>
+            <p class="text-[10px] text-slate-400 leading-snug px-1">Snaps newly pasted or spawned pieces to existing board pieces, minimizing boundary edges and avoiding acute crevices.</p>
+        </div>
+
         <div class="mt-auto border-t pt-4 border-slate-100 text-center text-xs text-slate-400 font-medium">
             <p>Pan: Right-Click Drag / Two-Fingers.<br>Zoom: Mouse Wheel / Pinch Touch.</p>
         </div>
@@ -200,92 +224,83 @@
 
     <!-- Left Vertical Customizer Panel -->
     <div id="selection-panel" class="absolute left-4 top-1/2 -translate-y-1/2 z-10 glass-panel p-3 rounded-2xl shadow-xl flex flex-col items-center gap-3 transition-all duration-300 transform -translate-x-32 opacity-0 pointer-events-none">
-        <!-- Rotation CCW -->
         <button id="btn-rotate-ccw" class="w-10 h-10 rounded-xl bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 active:scale-95 text-slate-600 flex items-center justify-center transition shadow-sm" title="Rotate CCW (-15°)">
             <i class="fa-solid fa-arrow-rotate-left inline-block rotate-90"></i>
         </button>
-        <!-- Duplicate Selection -->
         <button id="btn-duplicate" class="w-10 h-10 rounded-xl bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 active:scale-95 text-slate-600 flex items-center justify-center transition shadow-sm" title="Duplicate Selection (Ctrl+D)">
             <i class="fa-solid fa-clone"></i>
         </button>
         
         <div class="w-8 h-[1px] bg-slate-200/80 my-1"></div>
 
-        <!-- Custom Color Picker Circle -->
         <div class="relative w-8 h-8 rounded-lg overflow-hidden border border-slate-200 cursor-pointer shadow-sm hover:scale-105 transition" title="Custom Color">
             <input type="color" id="piece-color-picker" class="absolute -top-1 -left-1 w-12 h-12 cursor-pointer border-0 p-0" title="Custom Color">
         </div>
 
-        <!-- Quick Memory Swatches Stack -->
         <div id="quick-swatches" class="flex flex-col gap-1.5 items-center"></div>
 
         <div class="w-8 h-[1px] bg-slate-200/80 my-1"></div>
 
-        <!-- Toggle Borders Option -->
         <button id="btn-toggle-borders" class="w-10 h-10 rounded-xl bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 active:scale-95 text-slate-600 flex items-center justify-center transition shadow-sm" title="Toggle Outer Borders">
             <i class="fa-solid fa-border-all text-sm"></i>
         </button>
 
-        <!-- Concentric Layer Gradient Button (shows when length > 1) -->
-        <button id="btn-layer-gradient" class="w-10 h-10 rounded-xl bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 active:scale-95 text-slate-600 flex items-center justify-center transition shadow-sm hidden" title="Concentric Layer Gradient">
+        <button id="btn-layer-gradient" class="w-10 h-10 rounded-xl bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 active:scale-95 text-slate-600 flex items-center justify-center transition shadow-sm" title="Apply Concentric Layer Depth Gradient">
             <i class="fa-solid fa-wand-magic-sparkles text-sm"></i>
         </button>
 
-        <!-- Delete Shape -->
         <button id="btn-delete-piece" class="w-10 h-10 rounded-xl bg-rose-50 hover:bg-rose-100 active:scale-95 text-rose-600 flex items-center justify-center transition shadow-sm" title="Delete Piece (Backspace)">
             <i class="fa-solid fa-trash-can"></i>
         </button>
     </div>
 
-    <!-- Three.js Canvas Container -->
+    <!-- Canvas Container -->
     <div id="canvas-container" class="w-full h-full flex-grow relative" style="touch-action: none;"></div>
 
-    <!-- Unified Combined Bottom Dock -->
     <div class="absolute bottom-4 left-4 right-4 z-10 pointer-events-none flex justify-center">
         <div class="glass-panel p-3 rounded-2xl shadow-xl flex flex-wrap md:flex-nowrap items-center gap-4 pointer-events-auto max-w-full">
-            
-            <!-- Shape Spawner Row -->
             <div class="flex items-center gap-2 overflow-x-auto">
                 <div id="standard-spawners" class="flex items-center gap-2">
-                    <button data-sides="3" class="btn-spawn group flex flex-col items-center justify-center w-16 h-14 rounded-xl hover:bg-slate-100 active:scale-95 transition">
-                        <svg class="w-7 h-7 drop-shadow" viewBox="0 0 100 100">
+                    <button data-sides="3" class="btn-spawn group flex flex-col items-center justify-center min-w-[4.25rem] h-16 px-2 rounded-xl hover:bg-slate-100 active:scale-95 transition">
+                        <svg class="w-6 h-6 drop-shadow" viewBox="0 0 100 100">
                             <polygon points="50,15 85,75 15,75" fill="#FFD166" stroke="#cfa645" stroke-width="4" stroke-linejoin="round"/>
                         </svg>
-                        <span class="text-[9px] font-bold text-slate-500 mt-1">Triangle</span>
+                        <span class="text-[9px] font-bold text-slate-500 mt-0.5">Triangle</span>
+                        <span class="spawner-count text-[9px] font-extrabold text-indigo-600 bg-indigo-50 px-1.5 rounded-full border border-indigo-100/80 leading-none py-0.5">0</span>
                     </button>
-                    <button data-sides="4" class="btn-spawn group flex flex-col items-center justify-center w-16 h-14 rounded-xl hover:bg-slate-100 active:scale-95 transition">
-                        <svg class="w-7 h-7 drop-shadow" viewBox="0 0 100 100">
+                    <button data-sides="4" class="btn-spawn group flex flex-col items-center justify-center min-w-[4.25rem] h-16 px-2 rounded-xl hover:bg-slate-100 active:scale-95 transition">
+                        <svg class="w-6 h-6 drop-shadow" viewBox="0 0 100 100">
                             <rect x="20" y="20" width="60" height="60" rx="5" fill="#EF476F" stroke="#c03254" stroke-width="4"/>
                         </svg>
-                        <span class="text-[9px] font-bold text-slate-500 mt-1">Square</span>
+                        <span class="text-[9px] font-bold text-slate-500 mt-0.5">Square</span>
+                        <span class="spawner-count text-[9px] font-extrabold text-indigo-600 bg-indigo-50 px-1.5 rounded-full border border-indigo-100/80 leading-none py-0.5">0</span>
                     </button>
-                    <button data-sides="6" class="btn-spawn group flex flex-col items-center justify-center w-16 h-14 rounded-xl hover:bg-slate-100 active:scale-95 transition">
-                        <svg class="w-7 h-7 drop-shadow" viewBox="0 0 100 100">
+                    <button data-sides="6" class="btn-spawn group flex flex-col items-center justify-center min-w-[4.25rem] h-16 px-2 rounded-xl hover:bg-slate-100 active:scale-95 transition">
+                        <svg class="w-6 h-6 drop-shadow" viewBox="0 0 100 100">
                             <polygon points="50,10 85,30 85,70 50,90 15,70 15,30" fill="#F77F00" stroke="#c36200" stroke-width="4" stroke-linejoin="round"/>
                         </svg>
-                        <span class="text-[9px] font-bold text-slate-500 mt-1">Hexagon</span>
+                        <span class="text-[9px] font-bold text-slate-500 mt-0.5">Hexagon</span>
+                        <span class="spawner-count text-[9px] font-extrabold text-indigo-600 bg-indigo-50 px-1.5 rounded-full border border-indigo-100/80 leading-none py-0.5">0</span>
                     </button>
-                    <button data-sides="8" class="btn-spawn group flex flex-col items-center justify-center w-16 h-14 rounded-xl hover:bg-slate-100 active:scale-95 transition">
-                        <svg class="w-7 h-7 drop-shadow" viewBox="0 0 100 100">
+                    <button data-sides="8" class="btn-spawn group flex flex-col items-center justify-center min-w-[4.25rem] h-16 px-2 rounded-xl hover:bg-slate-100 active:scale-95 transition">
+                        <svg class="w-6 h-6 drop-shadow" viewBox="0 0 100 100">
                             <polygon points="50,10 78,22 90,50 78,78 50,90 22,78 10,50 22,22" fill="#118AB2" stroke="#0b6381" stroke-width="4" stroke-linejoin="round"/>
                         </svg>
-                        <span class="text-[9px] font-bold text-slate-500 mt-1">Octagon</span>
+                        <span class="text-[9px] font-bold text-slate-500 mt-0.5">Octagon</span>
+                        <span class="spawner-count text-[9px] font-extrabold text-indigo-600 bg-indigo-50 px-1.5 rounded-full border border-indigo-100/80 leading-none py-0.5">0</span>
                     </button>
-                    <button data-sides="12" class="btn-spawn group flex flex-col items-center justify-center w-16 h-14 rounded-xl hover:bg-slate-100 active:scale-95 transition">
-                        <svg class="w-7 h-7 drop-shadow" viewBox="0 0 100 100">
+                    <button data-sides="12" class="btn-spawn group flex flex-col items-center justify-center min-w-[4.25rem] h-16 px-2 rounded-xl hover:bg-slate-100 active:scale-95 transition">
+                        <svg class="w-6 h-6 drop-shadow" viewBox="0 0 100 100">
                             <polygon points="50,10 70,15 85,30 90,50 85,70 70,85 50,90 30,85 15,70 10,50 15,30 30,15" fill="#2B9C7E" stroke="#1d6b56" stroke-width="4" stroke-linejoin="round"/>
                         </svg>
-                        <span class="text-[9px] font-bold text-slate-500 mt-1">Dodecagon</span>
+                        <span class="text-[9px] font-bold text-slate-500 mt-0.5">Dodecagon</span>
+                        <span class="spawner-count text-[9px] font-extrabold text-indigo-600 bg-indigo-50 px-1.5 rounded-full border border-indigo-100/80 leading-none py-0.5">0</span>
                     </button>
                 </div>
 
-                <!-- Dynamic Group Memorization Divider -->
                 <div id="custom-divider" class="w-[1px] h-10 bg-slate-200 mx-1 hidden"></div>
-
-                <!-- Custom Spawners container -->
                 <div id="custom-spawners" class="flex items-center gap-2"></div>
             </div>
-
         </div>
     </div>
 
@@ -302,7 +317,6 @@
         };
         let activePaletteKey = "classic";
 
-        // --- Low Latency Web Audio Synthesizer Class definition ---
         class SoundSynth {
             constructor() {
                 this.ctx = null;
@@ -405,12 +419,201 @@
         }
         const sfx = new SoundSynth();
 
-        // --- STREAMING_CHUNK: Computing geometric formulas... ---
         function calculateCircumradius(numSides) {
             return 1 / (2 * Math.sin(Math.PI / numSides));
         }
         function calculateApothem(numSides) {
             return 1 / (2 * Math.tan(Math.PI / numSides));
+        }
+        function calculatePolygonArea(numSides) {
+            return (numSides) / (4 * Math.tan(Math.PI / numSides));
+        }
+
+        function isPointInPolygon(pt, vs) {
+            let x = pt.x, y = pt.y;
+            let inside = false;
+            for (let i = 0, j = vs.length - 1; i < vs.length; j = i++) {
+                let xi = vs[i].x, yi = vs[i].y;
+                let xj = vs[j].x, yj = vs[j].y;
+                let intersect = ((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+                if (intersect) inside = !inside;
+            }
+            return inside;
+        }
+
+        function getMinimumEnclosingCircle(points) {
+            if (!points || points.length === 0) return { center: { x: 0, y: 0 }, radius: 0 };
+            const pts = points.map(p => ({ x: p.x, y: p.y }));
+            for (let i = pts.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [pts[i], pts[j]] = [pts[j], pts[i]];
+            }
+
+            function makeCircleTwoPoints(p1, p2) {
+                const center = { x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2 };
+                const radius = Math.hypot(p1.x - p2.x, p1.y - p2.y) / 2;
+                return { center, radius };
+            }
+
+            function makeCircleThreePoints(p1, p2, p3) {
+                const d = 2 * (p1.x * (p2.y - p3.y) + p2.x * (p3.y - p1.y) + p3.x * (p1.y - p2.y));
+                if (Math.abs(d) < 1e-7) return null;
+                const ux = ((p1.x*p1.x + p1.y*p1.y)*(p2.y - p3.y) + (p2.x*p2.x + p2.y*p2.y)*(p3.y - p1.y) + (p3.x*p3.x + p3.y*p3.y)*(p1.y - p2.y)) / d;
+                const uy = ((p1.x*p1.x + p1.y*p1.y)*(p3.x - p2.x) + (p2.x*p2.x + p2.y*p2.y)*(p1.x - p3.x) + (p3.x*p3.x + p3.y*p3.y)*(p2.x - p1.x)) / d;
+                const center = { x: ux, y: uy };
+                const radius = Math.hypot(p1.x - ux, p1.y - uy);
+                return { center, radius };
+            }
+
+            function isPointInCircle(p, c) {
+                return c && Math.hypot(p.x - c.center.x, p.y - c.center.y) <= c.radius + 1e-6;
+            }
+
+            function welzl(P, R, n) {
+                if (n === 0 || R.length === 3) {
+                    if (R.length === 0) return { center: { x: 0, y: 0 }, radius: 0 };
+                    if (R.length === 1) return { center: { x: R[0].x, y: R[0].y }, radius: 0 };
+                    if (R.length === 2) return makeCircleTwoPoints(R[0], R[1]);
+                    return makeCircleThreePoints(R[0], R[1], R[2]) || makeCircleTwoPoints(R[0], R[1]);
+                }
+
+                const p = P[n - 1];
+                let c = welzl(P, R, n - 1);
+
+                if (isPointInCircle(p, c)) return c;
+
+                return welzl(P, [...R, p], n - 1);
+            }
+
+            return welzl(pts, [], pts.length);
+        }
+
+        function pointToSegmentDistance(P, A, B) {
+            const AB = new THREE.Vector2().subVectors(B, A);
+            const AP = new THREE.Vector2().subVectors(P, A);
+            const ab2 = AB.lengthSq();
+            if (ab2 === 0) return AP.length();
+            let t = AP.dot(AB) / ab2;
+            t = Math.max(0, Math.min(1, t));
+            const proj = new THREE.Vector2(A.x + t * (B.x - A.x), A.y + t * (B.y - A.y));
+            return P.distanceTo(proj);
+        }
+
+        function countUnfillableGaps(allPolygons) {
+            let unfillableGaps = 0;
+
+            const clusters = [];
+            const minAngle = Math.PI / 3 - 0.02; // 60 degrees
+
+            allPolygons.forEach(p => {
+                const verts = p.getVertices();
+                const numSides = p.numSides;
+                for (let i = 0; i < numSides; i++) {
+                    const v = verts[i];
+                    const prevV = verts[(i - 1 + numSides) % numSides];
+                    const nextV = verts[(i + 1) % numSides];
+
+                    let cluster = clusters.find(c => Math.hypot(c.x - v.x, c.y - v.y) < 0.05);
+                    if (!cluster) {
+                        cluster = { x: v.x, y: v.y, rays: [] };
+                        clusters.push(cluster);
+                    }
+
+                    const ray1 = Math.atan2(prevV.y - v.y, prevV.x - v.x);
+                    const ray2 = Math.atan2(nextV.y - v.y, nextV.x - v.x);
+                    cluster.rays.push(ray1, ray2);
+                }
+            });
+
+            clusters.forEach(c => {
+                if (c.rays.length < 2) return;
+
+                let uniqueRays = c.rays.map(r => (r < 0 ? r + 2 * Math.PI : r));
+                uniqueRays.sort((a, b) => a - b);
+
+                const filteredRays = [];
+                for (let i = 0; i < uniqueRays.length; i++) {
+                    if (i === 0 || Math.abs(uniqueRays[i] - uniqueRays[i - 1]) > 0.01) {
+                        filteredRays.push(uniqueRays[i]);
+                    }
+                }
+
+                const len = filteredRays.length;
+                if (len < 2) return;
+
+                for (let i = 0; i < len; i++) {
+                    const r1 = filteredRays[i];
+                    const r2 = filteredRays[(i + 1) % len];
+                    let diff = r2 - r1;
+                    if (diff <= 0) diff += 2 * Math.PI;
+
+                    if (diff > 0.02 && diff < minAngle) {
+                        const midRay = r1 + diff / 2;
+                        const probeX = c.x + 0.04 * Math.cos(midRay);
+                        const probeY = c.y + 0.04 * Math.sin(midRay);
+                        const probePt = new THREE.Vector2(probeX, probeY);
+
+                        let isSolid = false;
+                        for (const p of allPolygons) {
+                            if (isPointInPolygon(probePt, p.getVertices())) {
+                                isSolid = true;
+                                break;
+                            }
+                        }
+
+                        if (!isSolid) {
+                            unfillableGaps++;
+                        }
+                    }
+                }
+            });
+
+            const boundarySegments = [];
+            const boundaryVertices = [];
+
+            allPolygons.forEach(p => {
+                const verts = p.getVertices();
+                for (let i = 0; i < p.numSides; i++) {
+                    const v1 = verts[i];
+                    const v2 = verts[(i + 1) % p.numSides];
+                    const mid = new THREE.Vector2((v1.x + v2.x) / 2, (v1.y + v2.y) / 2);
+
+                    let isShared = false;
+                    for (const other of allPolygons) {
+                        if (other === p) continue;
+                        const oVerts = other.getVertices();
+                        for (let j = 0; j < other.numSides; j++) {
+                            const ov1 = oVerts[j];
+                            const ov2 = oVerts[(j + 1) % other.numSides];
+                            const oMid = new THREE.Vector2((ov1.x + ov2.x) / 2, (ov1.y + ov2.y) / 2);
+                            if (mid.distanceTo(oMid) < 0.05) {
+                                isShared = true;
+                                break;
+                            }
+                        }
+                        if (isShared) break;
+                    }
+
+                    if (!isShared) {
+                        boundarySegments.push({ a: v1, b: v2, poly: p });
+                        if (!boundaryVertices.some(bv => bv.distanceTo(v1) < 0.02)) boundaryVertices.push(v1);
+                        if (!boundaryVertices.some(bv => bv.distanceTo(v2) < 0.02)) boundaryVertices.push(v2);
+                    }
+                }
+            });
+
+            for (const v of boundaryVertices) {
+                for (const seg of boundarySegments) {
+                    if (v.distanceTo(seg.a) < 0.05 || v.distanceTo(seg.b) < 0.05) continue;
+
+                    const dist = pointToSegmentDistance(v, seg.a, seg.b);
+                    if (dist > 0.02 && dist < 0.80) {
+                        unfillableGaps++;
+                    }
+                }
+            }
+
+            return unfillableGaps;
         }
 
         function createTactilePolygonGeometry(numSides) {
@@ -440,7 +643,6 @@
             return geom;
         }
 
-        // Separating Axis Theorem (SAT) Object for Physics
         const SAT = {
             getAxes(vertices) {
                 const axes = [];
@@ -482,7 +684,6 @@
             }
         };
 
-        // --- STREAMING_CHUNK: Class Model: Pattern Polygon Block ---
         let nextPieceId = 1;
         class PatternPolygon {
             constructor(numSides, center = new THREE.Vector2(0, 0), rotation = 0, colorHex = null) {
@@ -619,18 +820,20 @@
             }
         }
 
-        // --- STREAMING_CHUNK: Board Game implementation & dynamic templates ---
         class BoardGame {
             constructor() {
                 this.polygons = [];
                 this.joinFrames = [];
                 this.particles = [];
                 this.customBlueprints = [];
-
-                this.defaultTemplates = []; 
-                this.localTemplates = [];
-                this.activeTemplatesTab = 'default'; 
                 
+                this.defaultTemplates = []; 
+                this.localTemplates = [];   
+                this.activeTab = "default"; 
+                this.searchQuery = "";      
+
+                this.autoAttachEnabled = true;
+
                 this.selectedPolygons = [];
                 this.draggedPolygon = null;
                 this.draggedClusterOrigins = [];
@@ -659,6 +862,7 @@
                 this.setupRendererAndCamera();
                 this.setupLights();
                 this.setupDeskGrid();
+                this.setupEnclosingCircleVisual();
                 this.setupRaycasting();
                 this.setupEventListeners();
                 this.setupUIHandlers();
@@ -718,16 +922,31 @@
             }
 
             setupDeskGrid() {
-                const grid = new THREE.GridHelper(36, 36, 0xcbd5e1, 0xe2e8f0);
+                const grid = new THREE.GridHelper(1000, 1000, 0xcbd5e1, 0xe2e8f0);
                 grid.rotation.x = Math.PI / 2;
                 grid.position.z = -0.02;
                 this.scene.add(grid);
+            }
 
-                const borderGeom = new THREE.RingGeometry(18, 18.2, 64);
-                const borderMat = new THREE.MeshBasicMaterial({ color: 0xe2e8f0, side: THREE.DoubleSide });
-                const deskBorder = new THREE.Mesh(borderGeom, borderMat);
-                deskBorder.position.z = -0.01;
-                this.scene.add(deskBorder);
+            setupEnclosingCircleVisual() {
+                const segments = 128;
+                const points = [];
+                for (let i = 0; i <= segments; i++) {
+                    const theta = (i / segments) * Math.PI * 2;
+                    points.push(new THREE.Vector3(Math.cos(theta), Math.sin(theta), 0));
+                }
+                const geometry = new THREE.BufferGeometry().setFromPoints(points);
+                const material = new THREE.LineBasicMaterial({
+                    color: 0x94a3b8, // Slate-400 crisp gray
+                    linewidth: 2,
+                    transparent: true,
+                    opacity: 0.75
+                });
+
+                this.enclosingCircleMesh = new THREE.LineLoop(geometry, material);
+                this.enclosingCircleMesh.position.set(0, 0, -0.01);
+                this.enclosingCircleMesh.visible = false;
+                this.scene.add(this.enclosingCircleMesh);
             }
 
             setupRaycasting() {
@@ -745,6 +964,221 @@
                 const intersectionVec = new THREE.Vector3();
                 this.raycaster.ray.intersectPlane(this.planeZ, intersectionVec);
                 return new THREE.Vector2(intersectionVec.x, intersectionVec.y);
+            }
+
+            updateBoardStats() {
+                const totalPieces = this.polygons.length;
+                const elPieces = document.getElementById("stat-total-pieces");
+                if (elPieces) elPieces.textContent = totalPieces;
+
+                const shapeCounts = {};
+                this.polygons.forEach(p => {
+                    shapeCounts[p.numSides] = (shapeCounts[p.numSides] || 0) + 1;
+                });
+
+                document.querySelectorAll("#standard-spawners .btn-spawn").forEach(btn => {
+                    const sides = parseInt(btn.dataset.sides);
+                    const count = shapeCounts[sides] || 0;
+                    const badge = btn.querySelector(".spawner-count");
+                    if (badge) badge.textContent = count;
+                });
+
+                let totalArea = 0;
+                let totalBoundaryEdges = 0;
+                let totalEdges = 0;
+                const allVertices = [];
+
+                this.polygons.forEach(p => {
+                    totalArea += calculatePolygonArea(p.numSides);
+                    totalEdges += p.numSides;
+                    
+                    const verts = p.getVertices();
+                    verts.forEach(v => allVertices.push(v));
+
+                    for (let i = 0; i < p.numSides; i++) {
+                        if (p.neighbors[i] === null) {
+                            totalBoundaryEdges++;
+                        }
+                    }
+                });
+
+                let compactnessVal = 0;
+                let boundaryPctVal = 0;
+
+                if (totalBoundaryEdges > 0) {
+                    compactnessVal = (2 * Math.sqrt(Math.PI * totalArea)) / totalBoundaryEdges;
+                }
+                if (totalEdges > 0) {
+                    boundaryPctVal = (totalBoundaryEdges / totalEdges) * 100;
+                }
+
+                const elCompactness = document.getElementById("stat-compactness");
+                if (elCompactness) {
+                    elCompactness.textContent = (compactnessVal * 100).toFixed(1) + "%";
+                }
+
+                const elBoundaryPct = document.getElementById("stat-boundary-pct");
+                if (elBoundaryPct) {
+                    elBoundaryPct.textContent = boundaryPctVal.toFixed(1) + "%";
+                }
+
+                // Update Enclosing Circle visual and Coverage Metric
+                const elCircleCoverage = document.getElementById("stat-circle-coverage");
+
+                if (allVertices.length > 0) {
+                    const mec = getMinimumEnclosingCircle(allVertices);
+                    const circleArea = Math.PI * mec.radius * mec.radius;
+
+                    let coveragePct = 0;
+                    if (circleArea > 0) {
+                        coveragePct = Math.min(100, (totalArea / circleArea) * 100);
+                    }
+
+                    if (elCircleCoverage) {
+                        elCircleCoverage.textContent = coveragePct.toFixed(1) + "%";
+                    }
+
+                    if (this.enclosingCircleMesh) {
+                        this.enclosingCircleMesh.position.set(mec.center.x, mec.center.y, -0.01);
+                        this.enclosingCircleMesh.scale.set(mec.radius, mec.radius, 1);
+                        this.enclosingCircleMesh.visible = mec.radius > 0;
+                    }
+                } else {
+                    if (elCircleCoverage) elCircleCoverage.textContent = "0.0%";
+                    if (this.enclosingCircleMesh) this.enclosingCircleMesh.visible = false;
+                }
+            }
+
+            findBestBoundaryPlacement(incomingItems) {
+                if (!this.autoAttachEnabled || this.polygons.length === 0 || !incomingItems || incomingItems.length === 0) {
+                    return null;
+                }
+
+                const startTime = performance.now();
+                const TIMEOUT_MS = 1000; // 1.0 second cap
+
+                let bestPlacement = null;
+                let maxSharedEdges = -1;
+                let minUnfillableGaps = Infinity;
+                let minEnclosingRadius = Infinity;
+
+                const cog = new THREE.Vector2(0, 0);
+                incomingItems.forEach(item => cog.add(new THREE.Vector2(item.center.x, item.center.y)));
+                cog.divideScalar(incomingItems.length);
+
+                const relItems = incomingItems.map(item => ({
+                    numSides: parseInt(item.numSides),
+                    color: item.color,
+                    showBorders: item.showBorders,
+                    rotation: item.rotation,
+                    apothem: calculateApothem(item.numSides),
+                    radius: calculateCircumradius(item.numSides),
+                    relCenter: new THREE.Vector2(item.center.x - cog.x, item.center.y - cog.y)
+                }));
+
+                for (let inIdx = 0; inIdx < relItems.length; inIdx++) {
+                    const inShape = relItems[inIdx];
+
+                    for (let inEdge = 0; inEdge < inShape.numSides; inEdge++) {
+
+                        for (const targetPoly of this.polygons) {
+                            for (let targetEdge = 0; targetEdge < targetPoly.numSides; targetEdge++) {
+
+                                if (performance.now() - startTime > TIMEOUT_MS) {
+                                    return bestPlacement;
+                                }
+
+                                if (targetPoly.neighbors[targetEdge] !== null) continue;
+
+                                const targetNorm = targetPoly.getEdgeNormalWorld(targetEdge);
+                                const idealInCenter = new THREE.Vector2().addVectors(
+                                    targetPoly.center,
+                                    new THREE.Vector2().addVectors(
+                                        targetNorm.clone().multiplyScalar(targetPoly.apothem),
+                                        targetNorm.clone().multiplyScalar(inShape.apothem)
+                                    )
+                                );
+
+                                const idealInRot = targetPoly.rotation + (2 * targetEdge + 1) * Math.PI / targetPoly.numSides + Math.PI - (2 * inEdge + 1) * Math.PI / inShape.numSides;
+
+                                const deltaRot = idealInRot - inShape.rotation;
+                                
+                                const rotatedInRel = inShape.relCenter.clone().rotateAround(new THREE.Vector2(0, 0), deltaRot);
+                                const candidateCog = new THREE.Vector2().subVectors(idealInCenter, rotatedInRel);
+
+                                let isValid = true;
+                                const tempCandidatePolys = [];
+
+                                for (const item of relItems) {
+                                    const rotRel = item.relCenter.clone().rotateAround(new THREE.Vector2(0, 0), deltaRot);
+                                    const itemCenter = new THREE.Vector2().addVectors(candidateCog, rotRel);
+                                    const itemRot = item.rotation + deltaRot;
+
+                                    const tempPoly = new PatternPolygon(item.numSides, itemCenter, itemRot, item.color);
+                                    tempCandidatePolys.push(tempPoly);
+
+                                    for (const existing of this.polygons) {
+                                        if (SAT.checkOverlap(tempPoly, existing)) {
+                                            isValid = false;
+                                            break;
+                                        }
+                                    }
+                                    if (!isValid) break;
+                                }
+
+                                if (isValid) {
+                                    let sharedEdgeCount = 0;
+                                    for (const tempP of tempCandidatePolys) {
+                                        for (let eA = 0; eA < tempP.numSides; eA++) {
+                                            const midA = tempP.getEdgeMidpointWorld(eA);
+                                            for (const existing of this.polygons) {
+                                                for (let eB = 0; eB < existing.numSides; eB++) {
+                                                    const midB = existing.getEdgeMidpointWorld(eB);
+                                                    if (midA.distanceTo(midB) < 0.05) {
+                                                        sharedEdgeCount++;
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    const candidateBoard = [...this.polygons, ...tempCandidatePolys];
+                                    const unfillableGaps = countUnfillableGaps(candidateBoard);
+
+                                    const allOuterVerts = [];
+                                    candidateBoard.forEach(p => {
+                                        const verts = p.getVertices();
+                                        verts.forEach(v => allOuterVerts.push(v));
+                                    });
+
+                                    const mec = getMinimumEnclosingCircle(allOuterVerts);
+                                    const candRadius = mec ? mec.radius : Infinity;
+
+                                    // Primary: 1) Zero acute/pinch gaps, 2) Maximize shared edges, 3) Minimize Enclosing Circle Radius (compact roundness)
+                                    if (unfillableGaps < minUnfillableGaps || 
+                                       (unfillableGaps === minUnfillableGaps && sharedEdgeCount > maxSharedEdges) ||
+                                       (unfillableGaps === minUnfillableGaps && sharedEdgeCount === maxSharedEdges && candRadius < minEnclosingRadius)) {
+                                        
+                                        minUnfillableGaps = unfillableGaps;
+                                        maxSharedEdges = sharedEdgeCount;
+                                        minEnclosingRadius = candRadius;
+
+                                        bestPlacement = {
+                                            candidatePositions: tempCandidatePolys.map(tp => ({
+                                                center: tp.center.clone(),
+                                                rotation: tp.rotation
+                                            }))
+                                        };
+                                    }
+                                }
+
+                                tempCandidatePolys.forEach(tp => tp.destroy(this.scene));
+                            }
+                        }
+                    }
+                }
+
+                return bestPlacement;
             }
 
             getBestSnapTarget(draggedPoly) {
@@ -832,13 +1266,23 @@
             }
 
             isLocationValid(poly, ignoreList = []) {
-                if (poly.center.length() > 17.5) return false;
-
                 for (const p of this.polygons) {
                     if (p === poly || ignoreList.includes(p)) continue;
                     if (SAT.checkOverlap(poly, p)) return false;
                 }
                 return true;
+            }
+
+            clearJoinFrames() {
+                if (!this.joinFrames) this.joinFrames = [];
+                this.joinFrames.forEach(f => {
+                    if (f) {
+                        this.scene.remove(f);
+                        if (f.geometry) f.geometry.dispose();
+                        if (f.material) f.material.dispose();
+                    }
+                });
+                this.joinFrames = [];
             }
 
             finalizeSnap(draggedPoly, snap) {
@@ -966,65 +1410,76 @@
 
                 const colorToUse = customColor || this.shapeColorsMemory[sides] || PALETTES[activePaletteKey][sides];
                 const defaultSpawnRotation = -Math.PI / 2 - Math.PI / sides;
-                const poly = new PatternPolygon(sides, position, defaultSpawnRotation, colorToUse);
-                
-                let found = false;
-                let r = 0;
-                let angle = 0;
-                const stepRadius = 0.4;
-                const stepAngle = Math.PI / 8;
-                const originalPos = position.clone();
-                let iterations = 0;
+                const dummyItem = [{ numSides: sides, center: { x: position.x, y: position.y }, rotation: defaultSpawnRotation, color: colorToUse, showBorders: true }];
 
-                while (!found && r < 18 && iterations < 350) {
-                    poly.center.set(originalPos.x + r * Math.cos(angle), originalPos.y + r * Math.sin(angle));
-                    if (this.isLocationValid(poly)) {
-                        found = true;
-                    } else {
-                        angle += stepAngle;
-                        r += stepRadius * (stepAngle / (2 * Math.PI));
-                        iterations++;
+                const autoFit = this.findBestBoundaryPlacement(dummyItem);
+                
+                let targetPos = position.clone();
+                let targetRot = defaultSpawnRotation;
+
+                if (autoFit && autoFit.candidatePositions.length > 0) {
+                    targetPos.copy(autoFit.candidatePositions[0].center);
+                    targetRot = autoFit.candidatePositions[0].rotation;
+                } else {
+                    const tempPoly = new PatternPolygon(sides, position, defaultSpawnRotation, colorToUse);
+                    let found = false;
+                    let r = 0;
+                    let angle = 0;
+                    const stepRadius = 0.4;
+                    const stepAngle = Math.PI / 8;
+                    const originalPos = position.clone();
+                    let iterations = 0;
+                    const startTime = performance.now();
+
+                    while (!found && iterations < 300 && (performance.now() - startTime < 100)) {
+                        tempPoly.center.set(originalPos.x + r * Math.cos(angle), originalPos.y + r * Math.sin(angle));
+                        if (this.isLocationValid(tempPoly)) {
+                            found = true;
+                            targetPos.copy(tempPoly.center);
+                        } else {
+                            angle += stepAngle;
+                            r += stepRadius * (stepAngle / (2 * Math.PI));
+                            iterations++;
+                        }
                     }
+                    tempPoly.destroy(this.scene);
                 }
 
+                const poly = new PatternPolygon(sides, targetPos, targetRot, colorToUse);
                 poly.updateMeshTransform();
                 this.scene.add(poly.mesh);
                 this.polygons.push(poly);
+                
+                this.autoConnectAdjacentNeighbors();
                 this.selectPiece(poly);
                 sfx.playSelect();
+                this.updateBoardStats();
                 return poly;
             }
 
-            // --- STREAMING_CHUNK: Dynamic Left Side Panel HUD Synchronization ---
             updateSelectionPanelUI() {
                 const panel = document.getElementById("selection-panel");
-                const btnGradient = document.getElementById("btn-layer-gradient");
-                const btnBorders = document.getElementById("btn-toggle-borders");
+                if (!panel) return;
 
                 if (this.selectedPolygons.length > 0) {
                     if (this.selectedPolygons.length === 1 && this.selectedPolygon) {
                         this.createRotationRing(this.selectedPolygon);
                         const picker = document.getElementById("piece-color-picker");
                         if (picker) picker.value = this.selectedPolygon.color;
-                    } else {
-                        this.selectedPolygons.forEach(p => this.removeRotationRing(p));
                     }
 
                     this.updateColorSwatches();
 
-                    const allHaveBorders = this.selectedPolygons.every(p => p.showBorders);
-                    if (allHaveBorders) {
-                        btnBorders.classList.add("bg-indigo-50", "text-indigo-600", "border-indigo-200");
-                        btnBorders.classList.remove("bg-slate-100", "text-slate-600");
-                    } else {
-                        btnBorders.classList.remove("bg-indigo-50", "text-indigo-600", "border-indigo-200");
-                        btnBorders.classList.add("bg-slate-100", "text-slate-600");
-                    }
-
-                    if (this.selectedPolygons.length > 1) {
-                        btnGradient.classList.remove("hidden");
-                    } else {
-                        btnGradient.classList.add("hidden");
+                    const btnBorders = document.getElementById("btn-toggle-borders");
+                    if (btnBorders) {
+                        const allHaveBorders = this.selectedPolygons.every(p => p.showBorders);
+                        if (allHaveBorders) {
+                            btnBorders.classList.add("bg-indigo-50", "text-indigo-600", "border-indigo-200");
+                            btnBorders.classList.remove("bg-slate-100", "text-slate-600");
+                        } else {
+                            btnBorders.classList.remove("bg-indigo-50", "text-indigo-600", "border-indigo-200");
+                            btnBorders.classList.add("bg-slate-100", "text-slate-600");
+                        }
                     }
 
                     panel.classList.remove("opacity-0", "pointer-events-none", "-translate-x-32");
@@ -1032,7 +1487,6 @@
                 } else {
                     panel.classList.add("opacity-0", "pointer-events-none", "-translate-x-32");
                     panel.classList.remove("opacity-100", "pointer-events-auto", "translate-x-0");
-                    btnGradient.classList.add("hidden");
                 }
             }
 
@@ -1100,6 +1554,7 @@
 
                 this.autoConnectAdjacentNeighbors();
                 this.updateSpawnerButtonColors();
+                this.updateBoardStats();
             }
 
             pushState() {
@@ -1136,20 +1591,24 @@
                 const btnUndo = document.getElementById("btn-undo");
                 const btnRedo = document.getElementById("btn-redo");
                 
-                if (this.undoStack.length > 0) {
-                    btnUndo.disabled = false;
-                    btnUndo.classList.remove("opacity-50", "cursor-not-allowed");
-                } else {
-                    btnUndo.disabled = true;
-                    btnUndo.classList.add("opacity-50", "cursor-not-allowed");
+                if (btnUndo) {
+                    if (this.undoStack.length > 0) {
+                        btnUndo.disabled = false;
+                        btnUndo.classList.remove("opacity-50", "cursor-not-allowed");
+                    } else {
+                        btnUndo.disabled = true;
+                        btnUndo.classList.add("opacity-50", "cursor-not-allowed");
+                    }
                 }
 
-                if (this.redoStack.length > 0) {
-                    btnRedo.disabled = false;
-                    btnRedo.classList.remove("opacity-50", "cursor-not-allowed");
-                } else {
-                    btnRedo.disabled = true;
-                    btnRedo.classList.add("opacity-50", "cursor-not-allowed");
+                if (btnRedo) {
+                    if (this.redoStack.length > 0) {
+                        btnRedo.disabled = false;
+                        btnRedo.classList.remove("opacity-50", "cursor-not-allowed");
+                    } else {
+                        btnRedo.disabled = true;
+                        btnRedo.classList.add("opacity-50", "cursor-not-allowed");
+                    }
                 }
             }
 
@@ -1176,7 +1635,10 @@
                 const baseOffset = new THREE.Vector2(1.2, 1.2); 
                 const chosenOffset = new THREE.Vector2(0, 0);
 
-                while (!foundOffset && r < 30 && iterations < 400) {
+                const startTime = performance.now();
+                const TIMEOUT_MS = 100;
+
+                while (!foundOffset && iterations < 200 && (performance.now() - startTime < TIMEOUT_MS)) {
                     const dx = baseOffset.x + r * Math.cos(angle);
                     const dy = baseOffset.y + r * Math.sin(angle);
                     
@@ -1195,10 +1657,6 @@
                     });
 
                     for (const tempPoly of tempPolys) {
-                        if (tempPoly.center.length() > 17.5) {
-                            allValid = false;
-                            break;
-                        }
                         for (const existing of this.polygons) {
                             if (SAT.checkOverlap(tempPoly, existing)) {
                                 allValid = false;
@@ -1223,10 +1681,28 @@
                 }
 
                 if (!foundOffset) {
-                    if (!this.pasteOffsetCounter) this.pasteOffsetCounter = 0;
-                    this.pasteOffsetCounter++;
-                    const shiftFactor = 0.8 * ((this.pasteOffsetCounter % 5) + 1);
-                    chosenOffset.set(baseOffset.x + shiftFactor, baseOffset.y + shiftFactor);
+                    let maxX = -Infinity;
+                    let maxY = -Infinity;
+                    this.polygons.forEach(p => {
+                        if (p.center.x > maxX) maxX = p.center.x;
+                        if (p.center.y > maxY) maxY = p.center.y;
+                    });
+
+                    let inMinX = Infinity;
+                    let inMinY = Infinity;
+                    items.forEach(i => {
+                        if (i.center.x < inMinX) inMinX = i.center.x;
+                        if (i.center.y < inMinY) inMinY = i.center.y;
+                    });
+
+                    if (maxX !== -Infinity && inMinX !== Infinity) {
+                        chosenOffset.set(maxX - inMinX + 2.5, maxY - inMinY + 2.5);
+                    } else {
+                        if (!this.pasteOffsetCounter) this.pasteOffsetCounter = 0;
+                        this.pasteOffsetCounter++;
+                        const shiftFactor = 1.2 * ((this.pasteOffsetCounter % 5) + 1);
+                        chosenOffset.set(baseOffset.x + shiftFactor, baseOffset.y + shiftFactor);
+                    }
                 }
                 return chosenOffset;
             }
@@ -1235,180 +1711,369 @@
                 if (this.clipboard.length === 0) return;
                 this.pushState();
 
-                const offset = this.findClusterLegalOffset(this.clipboard);
+                const autoFit = this.findBestBoundaryPlacement(this.clipboard);
                 const pastedPolys = [];
                 this.deselectAll();
 
-                this.clipboard.forEach(item => {
-                    const poly = new PatternPolygon(
-                        item.numSides,
-                        new THREE.Vector2(item.center.x + offset.x, item.center.y + offset.y),
-                        item.rotation,
-                        item.color
-                    );
-                    poly.showBorders = item.showBorders !== undefined ? item.showBorders : true;
-                    poly.updateBorder();
-                    poly.updateMeshTransform();
-                    this.scene.add(poly.mesh);
-                    this.polygons.push(poly);
-                    pastedPolys.push(poly);
-                });
+                if (autoFit && autoFit.candidatePositions.length === this.clipboard.length) {
+                    this.clipboard.forEach((item, idx) => {
+                        const cand = autoFit.candidatePositions[idx];
+                        const poly = new PatternPolygon(
+                            item.numSides,
+                            cand.center.clone(),
+                            cand.rotation,
+                            item.color
+                        );
+                        poly.showBorders = item.showBorders !== undefined ? item.showBorders : true;
+                        poly.updateBorder();
+                        poly.updateMeshTransform();
+                        this.scene.add(poly.mesh);
+                        this.polygons.push(poly);
+                        pastedPolys.push(poly);
+                    });
+                } else {
+                    const offset = this.findClusterLegalOffset(this.clipboard);
+                    this.clipboard.forEach(item => {
+                        const poly = new PatternPolygon(
+                            item.numSides,
+                            new THREE.Vector2(item.center.x + offset.x, item.center.y + offset.y),
+                            item.rotation,
+                            item.color
+                        );
+                        poly.showBorders = item.showBorders !== undefined ? item.showBorders : true;
+                        poly.updateBorder();
+                        poly.updateMeshTransform();
+                        this.scene.add(poly.mesh);
+                        this.polygons.push(poly);
+                        pastedPolys.push(poly);
+                    });
+                }
 
                 this.selectedPolygons = pastedPolys;
                 this.selectedPolygons.forEach(p => p.material.emissive.setHex(0x111111));
                 
                 this.autoConnectAdjacentNeighbors();
                 this.updateSelectionPanelUI();
+                this.updateBoardStats();
                 sfx.playSnap();
             }
 
-            areBlueprintsEqual(bp1, bp2) {
-                if (bp1.length !== bp2.length) return false;
+            areBlueprintsEqual(bpA, bpB) {
+                if (!bpA || !bpB || bpA.length !== bpB.length) return false;
 
-                const matchPiece = (p1, p2) => {
-                    if (p1.numSides !== p2.numSides) return false;
-                    if (p1.color !== p2.color) return false;
-                    if (p1.showBorders !== p2.showBorders) return false;
-                    
-                    let rotDiff = Math.abs(p1.rotation - p2.rotation) % (Math.PI * 2);
-                    if (rotDiff > Math.PI) rotDiff = Math.PI * 2 - rotDiff;
-                    if (rotDiff > 0.01) return false;
-                    
-                    const dist = Math.sqrt(Math.pow(p1.localCenter.x - p2.localCenter.x, 2) + Math.pow(p1.localCenter.y - p2.localCenter.y, 2));
-                    return dist < 0.05;
-                };
+                const cogA = new THREE.Vector2(0, 0);
+                bpA.forEach(p => cogA.add(new THREE.Vector2(p.center.x, p.center.y)));
+                cogA.divideScalar(bpA.length);
 
-                const matchedIndices = new Set();
-                for (let i = 0; i < bp1.length; i++) {
-                    const p1 = bp1[i];
-                    let foundMatch = false;
-                    for (let j = 0; j < bp2.length; j++) {
-                        if (matchedIndices.has(j)) continue;
-                        const p2 = bp2[j];
-                        if (matchPiece(p1, p2)) {
-                            matchedIndices.add(j);
-                            foundMatch = true;
-                            break;
-                        }
-                    }
-                    if (!foundMatch) return false;
-                }
-                return true;
-            }
+                const cogB = new THREE.Vector2(0, 0);
+                bpB.forEach(p => cogB.add(new THREE.Vector2(p.center.x, p.center.y)));
+                cogB.divideScalar(bpB.length);
 
-            memorizeCustomGroup(items) {
-                const cog = new THREE.Vector2(0, 0);
-                items.forEach(item => {
-                    cog.x += item.center.x;
-                    cog.y += item.center.y;
-                });
-                cog.divideScalar(items.length);
-
-                const blueprint = items.map(item => ({
-                    numSides: item.numSides,
-                    rotation: item.rotation,
-                    color: item.color,
-                    showBorders: item.showBorders !== undefined ? item.showBorders : true,
-                    localCenter: {
-                        x: item.center.x - cog.x,
-                        y: item.center.y - cog.y
-                    }
+                const relA = bpA.map(p => ({
+                    numSides: p.numSides,
+                    color: p.color,
+                    showBorders: p.showBorders,
+                    rotation: p.rotation,
+                    relPos: new THREE.Vector2(p.center.x - cogA.x, p.center.y - cogA.y)
                 }));
 
-                for (const existingBp of this.customBlueprints) {
-                    if (this.areBlueprintsEqual(existingBp, blueprint)) {
-                        this.showToast("Group layout is already memorized!", "fa-solid fa-circle-exclamation text-amber-400");
-                        return;
+                const relB = bpB.map(p => ({
+                    numSides: p.numSides,
+                    color: p.color,
+                    showBorders: p.showBorders,
+                    rotation: p.rotation,
+                    relPos: new THREE.Vector2(p.center.x - cogB.x, p.center.y - cogB.y)
+                }));
+
+                const matchedB = new Set();
+
+                for (const itemA of relA) {
+                    let matchFound = false;
+                    for (let i = 0; i < relB.length; i++) {
+                        if (matchedB.has(i)) continue;
+                        const itemB = relB[i];
+
+                        if (itemA.numSides === itemB.numSides &&
+                            itemA.color === itemB.color &&
+                            itemA.showBorders === itemB.showBorders) {
+
+                            const dist = itemA.relPos.distanceTo(itemB.relPos);
+                            let rotDiff = Math.abs(itemA.rotation - itemB.rotation) % (Math.PI * 2);
+                            if (rotDiff > Math.PI) rotDiff = Math.PI * 2 - rotDiff;
+
+                            if (dist < 0.05 && rotDiff < 0.01) {
+                                matchedB.add(i);
+                                matchFound = true;
+                                break;
+                            }
+                        }
+                    }
+                    if (!matchFound) return false;
+                }
+                return matchedB.size === bpA.length;
+            }
+
+            duplicateSelection() {
+                if (this.selectedPolygons.length === 0) return;
+
+                if (this.selectedPolygons.length > 1) {
+                    const groupBlueprint = this.selectedPolygons.map(p => ({
+                        numSides: p.numSides,
+                        rotation: p.rotation,
+                        color: p.color,
+                        showBorders: p.showBorders,
+                        center: { x: p.center.x, y: p.center.y }
+                    }));
+
+                    const isAlreadySaved = this.customBlueprints.some(bp => this.areBlueprintsEqual(bp, groupBlueprint));
+
+                    if (isAlreadySaved) {
+                        this.showToast("Group layout is already memorized!", "fa-solid fa-circle-info text-amber-400");
+                    } else {
+                        this.customBlueprints.push(groupBlueprint);
+                        this.renderCustomSpawners();
+                        this.showToast("Memorized group to tray!", "fa-solid fa-star text-amber-400");
                     }
                 }
 
-                this.customBlueprints.push(blueprint);
+                this.copySelectedPieces();
+                this.pasteCopiedPieces();
+            }
 
-                const container = document.getElementById("custom-spawners");
+            renderCustomSpawners() {
                 const divider = document.getElementById("custom-divider");
+                const container = document.getElementById("custom-spawners");
+                if (!container || !divider) return;
+                container.innerHTML = "";
 
-                if (container && divider) {
+                if (this.customBlueprints.length > 0) {
                     divider.classList.remove("hidden");
+                } else {
+                    divider.classList.add("hidden");
+                }
 
-                    const svgHTML = this.generateBlueprintSVG(blueprint, true);
-
-                    const btn = document.createElement("div");
-                    btn.className = "group relative flex flex-col items-center justify-center w-18 h-14 rounded-xl hover:bg-slate-100 active:scale-95 transition border border-slate-200/60 bg-white shadow-sm shrink-0 cursor-pointer select-none";
-                    btn.setAttribute("role", "button");
-                    btn.innerHTML = `
-                        <div class="w-14 h-9 relative flex items-center justify-center pointer-events-none">
-                            ${svgHTML}
+                this.customBlueprints.forEach((bp, index) => {
+                    const spawnerCard = document.createElement("div");
+                    spawnerCard.role = "button";
+                    spawnerCard.className = "group relative flex flex-col items-center justify-center w-18 h-14 px-2 py-1 rounded-xl bg-indigo-50/80 hover:bg-indigo-100 border border-indigo-200/80 active:scale-95 transition shadow-sm cursor-pointer shrink-0";
+                    
+                    const svgMarkup = this.generateBlueprintSVG(bp);
+                    
+                    spawnerCard.innerHTML = `
+                        <div class="w-14 h-9 relative flex items-center justify-center overflow-hidden rounded">
+                            ${svgMarkup}
                         </div>
-                        <span class="text-[9px] font-bold text-slate-500 truncate max-w-[62px] pointer-events-none leading-none mb-0.5">Custom</span>
-                        <span class="btn-delete-spawner absolute -top-1.5 -right-1.5 w-4.5 h-4.5 bg-rose-500 hover:bg-rose-600 text-white rounded-full flex items-center justify-center text-[10px] font-bold opacity-0 group-hover:opacity-100 transition shadow-sm z-10" title="Delete Preset">
-                            <i class="fa-solid fa-xmark pointer-events-none"></i>
+                        <span class="text-[8px] font-bold text-indigo-700 leading-none mt-0.5">Group ${index + 1}</span>
+                        <span class="btn-del-custom absolute -top-1.5 -right-1.5 w-4 h-4 bg-rose-500 hover:bg-rose-600 text-white rounded-full flex items-center justify-center text-[9px] opacity-0 group-hover:opacity-100 transition shadow-md z-20" title="Remove Custom Block">
+                            <i class="fa-solid fa-xmark"></i>
                         </span>
                     `;
 
-                    btn.addEventListener("click", (e) => {
-                        if (e.target.closest(".btn-delete-spawner")) {
+                    spawnerCard.addEventListener("click", (e) => {
+                        if (e.target.closest(".btn-del-custom")) {
                             e.stopPropagation();
-                            btn.remove();
-                            this.customBlueprints = this.customBlueprints.filter(bp => bp !== blueprint);
-                            if (container.children.length === 0) {
-                                divider.classList.add("hidden");
-                            }
+                            this.customBlueprints.splice(index, 1);
+                            this.renderCustomSpawners();
+                            sfx.playError();
                             return;
                         }
-                        this.spawnCustomGroup(blueprint);
+                        this.spawnCustomGroup(bp);
                     });
 
-                    container.appendChild(btn);
-                    this.showToast("Group memorized in bottom menu!", "fa-solid fa-wand-magic-sparkles text-indigo-400");
-                }
+                    container.appendChild(spawnerCard);
+                });
             }
 
             spawnCustomGroup(blueprint) {
                 this.pushState();
 
-                const baseCenter = new THREE.Vector2(0, 1.5);
+                const cog = new THREE.Vector2(0, 0);
+                blueprint.forEach(p => cog.add(new THREE.Vector2(p.center.x, p.center.y)));
+                cog.divideScalar(blueprint.length);
 
-                const pseudoItems = blueprint.map(bp => ({
-                    numSides: bp.numSides,
-                    rotation: bp.rotation,
-                    color: bp.color,
-                    showBorders: bp.showBorders,
-                    center: {
-                        x: baseCenter.x + bp.localCenter.x,
-                        y: baseCenter.y + bp.localCenter.y
-                    }
+                const normalizedItems = blueprint.map(p => ({
+                    numSides: p.numSides,
+                    rotation: p.rotation,
+                    color: p.color,
+                    showBorders: p.showBorders,
+                    center: { x: p.center.x - cog.x, y: p.center.y - cog.y }
                 }));
 
-                const offset = this.findClusterLegalOffset(pseudoItems);
+                const autoFit = this.findBestBoundaryPlacement(normalizedItems);
                 const spawnedPolys = [];
                 this.deselectAll();
 
-                blueprint.forEach(bp => {
-                    const finalPos = new THREE.Vector2(
-                        baseCenter.x + bp.localCenter.x + offset.x,
-                        baseCenter.y + bp.localCenter.y + offset.y
-                    );
-
-                    const poly = new PatternPolygon(bp.numSides, finalPos, bp.rotation, bp.color);
-                    poly.showBorders = bp.showBorders;
-                    poly.updateBorder();
-                    poly.updateMeshTransform();
-
-                    this.scene.add(poly.mesh);
-                    this.polygons.push(poly);
-                    spawnedPolys.push(poly);
-                });
+                if (autoFit && autoFit.candidatePositions.length === normalizedItems.length) {
+                    normalizedItems.forEach((item, idx) => {
+                        const cand = autoFit.candidatePositions[idx];
+                        const poly = new PatternPolygon(
+                            item.numSides,
+                            cand.center.clone(),
+                            cand.rotation,
+                            item.color
+                        );
+                        poly.showBorders = item.showBorders !== undefined ? item.showBorders : true;
+                        poly.updateBorder();
+                        poly.updateMeshTransform();
+                        this.scene.add(poly.mesh);
+                        this.polygons.push(poly);
+                        spawnedPolys.push(poly);
+                    });
+                } else {
+                    const offset = this.findClusterLegalOffset(normalizedItems);
+                    normalizedItems.forEach(item => {
+                        const poly = new PatternPolygon(
+                            item.numSides,
+                            new THREE.Vector2(item.center.x + offset.x, item.center.y + offset.y),
+                            item.rotation,
+                            item.color
+                        );
+                        poly.showBorders = item.showBorders !== undefined ? item.showBorders : true;
+                        poly.updateBorder();
+                        poly.updateMeshTransform();
+                        this.scene.add(poly.mesh);
+                        this.polygons.push(poly);
+                        spawnedPolys.push(poly);
+                    });
+                }
 
                 this.selectedPolygons = spawnedPolys;
                 this.selectedPolygons.forEach(p => p.material.emissive.setHex(0x111111));
 
                 this.autoConnectAdjacentNeighbors();
                 this.updateSelectionPanelUI();
+                this.updateBoardStats();
 
                 sfx.playSnap();
+                const firstPoly = spawnedPolys[0];
+                if (firstPoly) {
+                    this.spawnSparkleBurst(firstPoly.center, firstPoly.color);
+                }
+            }
 
-                const centerWorld = new THREE.Vector2(baseCenter.x + offset.x, baseCenter.y + offset.y);
-                this.spawnSparkleBurst(centerWorld, spawnedPolys[0].color);
+            applyLayerGradient() {
+                let targetPolys = [...this.selectedPolygons];
+                if (targetPolys.length === 0) return;
+
+                if (targetPolys.length === 1) {
+                    const cluster = new Set();
+                    const queue = [targetPolys[0]];
+                    cluster.add(targetPolys[0]);
+
+                    while (queue.length > 0) {
+                        const curr = queue.shift();
+                        for (let edge = 0; edge < curr.numSides; edge++) {
+                            const neighbor = curr.neighbors[edge];
+                            if (neighbor && !cluster.has(neighbor)) {
+                                cluster.add(neighbor);
+                                queue.push(neighbor);
+                            }
+                        }
+                    }
+                    targetPolys = Array.from(cluster);
+                }
+
+                if (targetPolys.length < 2) {
+                    this.showToast("Attach adjacent pieces to apply gradient", "fa-solid fa-circle-info text-indigo-400");
+                    return;
+                }
+
+                this.pushState();
+
+                const selectedSet = new Set(targetPolys);
+                const baselineMap = new Map();
+
+                targetPolys.forEach(p => {
+                    let isExposed = false;
+                    for (let edge = 0; edge < p.numSides; edge++) {
+                        const neighbor = p.neighbors[edge];
+                        if (!neighbor || !selectedSet.has(neighbor)) {
+                            isExposed = true;
+                            break;
+                        }
+                    }
+                    if (isExposed) {
+                        baselineMap.set(p, 1);
+                    }
+                });
+
+                let currentLayer = 1;
+                let addedInLastPass = true;
+
+                while (addedInLastPass) {
+                    addedInLastPass = false;
+                    const currentLayerPolys = [...baselineMap.entries()]
+                        .filter(([_, level]) => level === currentLayer)
+                        .map(([p, _]) => p);
+
+                    for (const p of currentLayerPolys) {
+                        for (let edge = 0; edge < p.numSides; edge++) {
+                            const neighbor = p.neighbors[edge];
+                            if (neighbor && selectedSet.has(neighbor) && !baselineMap.has(neighbor)) {
+                                baselineMap.set(neighbor, currentLayer + 1);
+                                addedInLastPass = true;
+                            }
+                        }
+                    }
+                    if (addedInLastPass) currentLayer++;
+                }
+
+                targetPolys.forEach(p => {
+                    if (!baselineMap.has(p)) {
+                        baselineMap.set(p, currentLayer);
+                    }
+                });
+
+                const smoothedScores = new Map();
+                let minScore = Infinity;
+                let maxScore = -Infinity;
+
+                targetPolys.forEach(p => {
+                    let edgeSum = 0;
+                    for (let edge = 0; edge < p.numSides; edge++) {
+                        const neighbor = p.neighbors[edge];
+                        if (neighbor && selectedSet.has(neighbor)) {
+                            edgeSum += baselineMap.get(neighbor) || 0;
+                        } else {
+                            edgeSum += 0;
+                        }
+                    }
+                    const avgScore = edgeSum / p.numSides;
+                    smoothedScores.set(p, avgScore);
+
+                    if (avgScore < minScore) minScore = avgScore;
+                    if (avgScore > maxScore) maxScore = avgScore;
+                });
+
+                const maxMult = 1.18;
+                const minMult = 0.96;
+
+                targetPolys.forEach(p => {
+                    const score = smoothedScores.get(p);
+                    let norm = 0;
+                    if (maxScore > minScore) {
+                        norm = (score - minScore) / (maxScore - minScore);
+                    }
+
+                    const smoothNorm = Math.pow(norm, 1.7);
+                    const multiplier = maxMult - smoothNorm * (maxMult - minMult);
+
+                    const pColor = new THREE.Color(p.color);
+                    const hsl = {};
+                    pColor.getHSL(hsl);
+
+                    const targetL = Math.max(0.08, Math.min(0.95, hsl.l * multiplier));
+
+                    const newColor = new THREE.Color();
+                    newColor.setHSL(hsl.h, hsl.s, targetL);
+                    const hexStr = "#" + newColor.getHexString();
+
+                    p.setColor(hexStr);
+                });
+
+                this.updateSelectionPanelUI();
+                sfx.playSelect();
+                this.showToast("Applied subtle interior gradient!", "fa-solid fa-wand-magic-sparkles text-indigo-400");
             }
 
             rotateSelectedCluster(delta) {
@@ -1456,84 +2121,9 @@
                 }
             }
 
-            getLegalJoinConfigurations(PieceA, PieceB) {
-                const configs = [];
-                for (let edgeB = 0; edgeB < PieceB.numSides; edgeB++) {
-                    if (PieceB.neighbors[edgeB] !== null) continue;
-
-                    for (let edgeA = 0; edgeA < PieceA.numSides; edgeA++) {
-                        const norm = PieceB.getEdgeNormalWorld(edgeB);
-                        const idealCenter = new THREE.Vector2().addVectors(
-                            PieceB.center,
-                            new THREE.Vector2().addVectors(
-                                norm.clone().multiplyScalar(PieceB.apothem),
-                                norm.clone().multiplyScalar(PieceA.apothem)
-                            )
-                        );
-                        const idealRot = PieceB.rotation + (2 * edgeB + 1) * Math.PI / PieceB.numSides + Math.PI - (2 * edgeA + 1) * Math.PI / PieceA.numSides;
-
-                        const cachedCenter = PieceA.center.clone();
-                        const cachedRot = PieceA.rotation;
-
-                        PieceA.center.copy(idealCenter);
-                        PieceA.rotation = idealRot;
-
-                        const valid = this.isLocationValid(PieceA, [PieceA]);
-
-                        PieceA.center.copy(cachedCenter);
-                        PieceA.rotation = cachedRot;
-
-                        if (valid) {
-                            configs.push({
-                                edgeB,
-                                edgeA,
-                                idealCenter,
-                                idealRot
-                            });
-                        }
-                    }
-                }
-                return configs;
-            }
-
-            spawnGoldenFraming(PieceA, PieceB, configs) {
-                this.clearJoinFrames();
-
-                const uniqueEdges = [...new Set(configs.map(c => c.edgeB))];
-
-                uniqueEdges.forEach(edgeB => {
-                    const mid = PieceB.getEdgeMidpointWorld(edgeB);
-                    const norm = PieceB.getEdgeNormalWorld(edgeB);
-
-                    const frameGeom = new THREE.BoxGeometry(0.96, 0.08, 0.24);
-                    const frameMat = new THREE.MeshBasicMaterial({
-                        color: 0xdfb010,
-                        transparent: true,
-                        opacity: 0.82
-                    });
-                    const frame = new THREE.Mesh(frameGeom, frameMat);
-                    frame.position.set(mid.x, mid.y, 0.12);
-                    frame.rotation.set(0, 0, Math.atan2(norm.y, norm.x) + Math.PI / 2);
-
-                    const matchedConfigs = configs.filter(c => c.edgeB === edgeB);
-                    frame.userData = { isJoinFrame: true, configs: matchedConfigs, sourcePoly: PieceA };
-
-                    this.scene.add(frame);
-                    this.joinFrames.push(frame);
-                });
-            }
-
-            clearJoinFrames() {
-                this.joinFrames.forEach(f => {
-                    this.scene.remove(f);
-                    f.geometry.dispose();
-                    f.material.dispose();
-                });
-                this.joinFrames = [];
-            }
-
             updateColorSwatches() {
                 const container = document.getElementById("quick-swatches");
+                if (!container) return;
                 container.innerHTML = "";
 
                 const paletteColors = PALETTES[activePaletteKey];
@@ -1559,130 +2149,6 @@
                     });
                     container.appendChild(swatch);
                 });
-            }
-
-            // --- STREAMING_CHUNK: Applying smooth and subtle concentric HSL gradient... ---
-            applyLayerGradient() {
-                if (this.selectedPolygons.length === 0) return;
-                this.pushState();
-
-                // 1. Direct Shape Sampling: Query the exact flat base color from the first selected shape
-                const baseShape = this.selectedPolygons[0];
-                const baseColor = new THREE.Color(baseShape.color);
-                const hsl = {};
-                baseColor.getHSL(hsl);
-
-                const selectedSet = new Set(this.selectedPolygons);
-                const boundaryPieces = [];
-                const depths = new Map();
-
-                // Identify baseline outermost blocks touching outer space
-                selectedSet.forEach(p => {
-                    let isBoundary = false;
-                    for (let i = 0; i < p.numSides; i++) {
-                        const n = p.neighbors[i];
-                        if (!n || !selectedSet.has(n)) {
-                            isBoundary = true;
-                            break;
-                        }
-                    }
-                    if (isBoundary) {
-                        boundaryPieces.push(p);
-                        depths.set(p, 1); // Outermost boundary layer starts at depth 1
-                    }
-                });
-
-                if (boundaryPieces.length === 0 && selectedSet.size > 0) {
-                    // COG Fallback for fully closed/co-centric patterns
-                    const cog = new THREE.Vector2(0, 0);
-                    selectedSet.forEach(p => cog.add(p.center));
-                    cog.divideScalar(selectedSet.size);
-
-                    const distances = Array.from(selectedSet).map(p => ({
-                        poly: p,
-                        dist: p.center.distanceTo(cog)
-                    }));
-                    distances.sort((a, b) => b.dist - a.dist);
-
-                    if (distances.length > 1) {
-                        const maxDist = distances[0].dist;
-                        const minDist = distances[distances.length - 1].dist;
-                        const distRange = maxDist - minDist;
-
-                        distances.forEach(item => {
-                            const t = distRange > 0.01 ? (maxDist - item.dist) / distRange : 0;
-                            
-                            // Map to a highly refined, extremely subtle lightness spectrum
-                            const baseLightness = hsl.l;
-                            const maxMult = 1.18;
-                            const minMult = 0.96; // Max 4% reduction for an extremely soft, airy concentric look
-                            const multiplier = maxMult - t * (maxMult - minMult);
-
-                            const targetLightness = Math.max(0.15, Math.min(0.96, baseLightness * multiplier));
-                            const targetColor = new THREE.Color().setHSL(hsl.h, hsl.s, targetLightness);
-                            item.poly.setColor("#" + targetColor.getHexString());
-                        });
-                    }
-                } else {
-                    // Pass 1: Run Breadth-First Search (BFS) to map baseline layers
-                    const queue = [...boundaryPieces];
-                    let maxBaseline = 1;
-
-                    while (queue.length > 0) {
-                        const current = queue.shift();
-                        const currentDepth = depths.get(current);
-
-                        for (let i = 0; i < current.numSides; i++) {
-                            const neighbor = current.neighbors[i];
-                            if (neighbor && selectedSet.has(neighbor) && !depths.has(neighbor)) {
-                                const nextDepth = currentDepth + 1;
-                                depths.set(neighbor, nextDepth);
-                                maxBaseline = Math.max(maxBaseline, nextDepth);
-                                queue.push(neighbor);
-                            }
-                        }
-                    }
-
-                    // Pass 2: Smooth Interior Scores via weighted adjacency (Shared edges)
-                    const smoothedScores = new Map();
-                    let maxSmoothed = 0;
-                    let minSmoothed = Infinity;
-
-                    selectedSet.forEach(p => {
-                        let scoreSum = 0;
-                        for (let i = 0; i < p.numSides; i++) {
-                            const n = p.neighbors[i];
-                            if (n && selectedSet.has(n)) {
-                                scoreSum += depths.get(n) || 0;
-                            } else {
-                                scoreSum += 0; // Exposed outer boundary edge has score 0
-                            }
-                        }
-                        const avgScore = scoreSum / p.numSides;
-                        smoothedScores.set(p, avgScore);
-                        maxSmoothed = Math.max(maxSmoothed, avgScore);
-                        minSmoothed = Math.min(minSmoothed, avgScore);
-                    });
-
-                    // Pass 3: Apply refined relative HSL values with subtle, non-abrupt jumps
-                    selectedSet.forEach(p => {
-                        const score = smoothedScores.get(p);
-                        const t = (maxSmoothed - minSmoothed) > 0.01 ? (score - minSmoothed) / (maxSmoothed - minSmoothed) : 0;
-
-                        // Precise, subtle lightness scaling bounds (keeping gaps between layers beautifully narrow)
-                        const baseLightness = hsl.l;
-                        const maxMult = 1.18;  // Elegant bright highlight on pointy outer tips
-                        const minMult = 0.96;  // Delicate, soft shadow at the core
-                        const multiplier = maxMult - t * (maxMult - minMult);
-
-                        const targetLightness = Math.max(0.15, Math.min(0.96, baseLightness * multiplier));
-                        const targetColor = new THREE.Color().setHSL(hsl.h, hsl.s, targetLightness);
-                        p.setColor("#" + targetColor.getHexString());
-                    });
-                }
-
-                sfx.playSelect();
-                this.showToast("Concentric interior gradient applied smoothly!", "fa-solid fa-wand-magic-sparkles text-indigo-400");
             }
 
             updateSpawnerButtonColors() {
@@ -1711,7 +2177,7 @@
                             const template = [...this.defaultTemplates, ...this.localTemplates].find(t => t.id === templateId);
                             if (template) {
                                 if (template.localData) {
-                                    container.innerHTML = this.generateBlueprintSVG(template.localData, false);
+                                    container.innerHTML = this.generateBlueprintSVG(template.localData);
                                 } else if (template.svgPreview) {
                                     container.innerHTML = template.svgPreview;
                                 } else {
@@ -1727,8 +2193,7 @@
                 });
             }
 
-            // --- STREAMING_CHUNK: Compiling Dynamic Vector Blueprint SVGs... ---
-            generateBlueprintSVG(pieces, isMiniature = false) {
+            generateBlueprintSVG(pieces) {
                 if (!Array.isArray(pieces) || pieces.length === 0) {
                     return `<div class="text-slate-300 text-[10px] uppercase font-bold">Empty Desk</div>`;
                 }
@@ -1759,7 +2224,7 @@
                     const cx = (minX + maxX) / 2;
                     const cy = (minY + maxY) / 2;
                     
-                    const paddingMultiplier = isMiniature ? 1.15 : 1.45;
+                    const paddingMultiplier = 1.15;
                     const paddedW = Math.max(w * paddingMultiplier, 1.2);
                     const paddedH = Math.max(h * paddingMultiplier, 1.2);
                     
@@ -1803,8 +2268,7 @@
                         };
                     });
                     
-                    const paddingClass = isMiniature ? "p-0.5" : "p-2.5";
-                    let svgContent = `<svg class="absolute inset-0 w-full h-full ${paddingClass} object-contain" viewBox="${vx} ${vy} ${viewBoxW} ${viewBoxH}" xmlns="http://www.w3.org/2000/svg">`;
+                    let svgContent = `<svg class="absolute inset-0 w-full h-full p-0.5 object-contain" viewBox="${vx} ${vy} ${viewBoxW} ${viewBoxH}" xmlns="http://www.w3.org/2000/svg">`;
                     
                     svgContent += `
                         <defs>
@@ -1840,7 +2304,7 @@
                     const response = await fetch(template.file);
                     if (response.ok) {
                         const data = await response.json();
-                        template.svgPreview = this.generateBlueprintSVG(data, false);
+                        template.svgPreview = this.generateBlueprintSVG(data);
                         if (targetContainer) {
                             targetContainer.innerHTML = template.svgPreview;
                         }
@@ -1861,81 +2325,56 @@
                     try {
                         const pathSegments = path.split('/').filter(p => p.length > 0);
                         const username = host.split('.')[0];
-                        
-                        const targets = [];
+
+                        let possibleApiUrls = [];
 
                         if (pathSegments.length > 0) {
-                            const repoA = pathSegments[0];
-                            const subPathSegmentsA = pathSegments.slice(1, -1).concat('templates');
-                            const pathA = subPathSegmentsA.filter(s => s).join('/');
-                            targets.push({
-                                repo: repoA,
-                                path: pathA,
-                                desc: "Project Page Route"
-                            });
-
-                            const repoB = `${username}.github.io`;
-                            const subPathSegmentsB = pathSegments.slice(0, -1).concat('templates');
-                            const pathB = subPathSegmentsB.filter(s => s).join('/');
-                            targets.push({
-                                repo: repoB,
-                                path: pathB,
-                                desc: "User Page Route"
-                            });
-                        }
-
-                        let templatesToLoad = [];
-                        
-                        for (const target of targets) {
-                            try {
-                                const apiURL = `https://api.github.com/repos/${username}/${target.repo}/contents/${target.path}`;
-                                console.log(`Scanning templates via GitHub API (${target.desc}): ${apiURL}`);
-                                
-                                const response = await fetch(apiURL);
-                                if (response.ok) {
-                                    const files = await response.json();
-                                    if (Array.isArray(files)) {
-                                        const jsonFiles = files.filter(f => f.name.toLowerCase().endsWith('.json'));
-                                        const otherFiles = files.filter(f => !f.name.toLowerCase().endsWith('.json'));
-
-                                        console.log(`Success! Found ${jsonFiles.length} blueprints in ${target.repo}/${target.path}`);
-
-                                        jsonFiles.forEach(jf => {
-                                            const baseName = jf.name.slice(0, -5);
-                                            const pngMatch = otherFiles.find(f => f.name === `${baseName}.png`);
-                                            const svgMatch = otherFiles.find(f => f.name === `${baseName}.svg`);
-
-                                            const localRelativeFile = `templates/${jf.name}`;
-                                            let imageSrc = null;
-                                            if (pngMatch) imageSrc = `templates/${pngMatch.name}`;
-                                            else if (svgMatch) imageSrc = `templates/${svgMatch.name}`;
-
-                                            templatesToLoad.push({
-                                                id: baseName,
-                                                title: baseName.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
-                                                desc: `Remote pattern blueprint`,
-                                                file: localRelativeFile,
-                                                image: imageSrc,
-                                                isLocal: false,
-                                                svgPreview: null
-                                            });
-                                        });
-                                        
-                                        if (templatesToLoad.length > 0) {
-                                            break;
-                                        }
-                                    }
-                                }
-                            } catch (err) {
-                                console.warn(`GitHub API scanning failed for target ${target.repo}/${target.path}:`, err);
-                            }
-                        }
-
-                        if (templatesToLoad.length > 0) {
-                            this.defaultTemplates = templatesToLoad;
-                            this.renderTemplatesGrid();
+                            const repo = pathSegments[0];
+                            possibleApiUrls.push(`https://api.github.com/repos/${username}/${repo}/contents/templates`);
+                            possibleApiUrls.push(`https://api.github.com/repos/${username}/${username}.github.io/contents/${pathSegments.join('/')}/templates`);
                         } else {
-                            console.warn("All GitHub API routes exhausted or returned empty folders.");
+                            possibleApiUrls.push(`https://api.github.com/repos/${username}/${username}.github.io/contents/templates`);
+                        }
+
+                        let successfulFiles = null;
+                        for (const url of possibleApiUrls) {
+                            try {
+                                const response = await fetch(url);
+                                if (response.ok) {
+                                    successfulFiles = await response.json();
+                                    break;
+                                }
+                            } catch (err) {}
+                        }
+
+                        if (successfulFiles) {
+                            const jsonFiles = successfulFiles.filter(f => f.name.toLowerCase().endsWith('.json'));
+                            const otherFiles = successfulFiles.filter(f => !f.name.toLowerCase().endsWith('.json'));
+
+                            const templatesToLoad = [];
+                            jsonFiles.forEach(jf => {
+                                const baseName = jf.name.slice(0, -5);
+                                const pngMatch = otherFiles.find(f => f.name.toLowerCase() === `${baseName.toLowerCase()}.png`);
+                                const svgMatch = otherFiles.find(f => f.name.toLowerCase() === `${baseName.toLowerCase()}.svg`);
+
+                                let imageSrc = null;
+                                if (pngMatch) imageSrc = `templates/${pngMatch.name}`;
+                                else if (svgMatch) imageSrc = `templates/${svgMatch.name}`;
+
+                                templatesToLoad.push({
+                                    id: baseName,
+                                    title: baseName.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
+                                    file: `templates/${jf.name}`,
+                                    image: imageSrc,
+                                    isLocal: false,
+                                    svgPreview: null
+                                });
+                            });
+
+                            if (templatesToLoad.length > 0) {
+                                this.defaultTemplates = templatesToLoad;
+                                this.renderTemplatesGrid();
+                            }
                         }
                     } catch (e) {
                         console.warn("Unable to scan remote directory via GitHub API: ", e);
@@ -1945,13 +2384,10 @@
                 }
             }
 
-            // --- STREAMING_CHUNK: Directory loaders and template renders ---
             loadLocalFolder(filesList) {
                 const files = Array.from(filesList);
                 const jsonFiles = files.filter(f => f.name.toLowerCase().endsWith('.json'));
                 const mediaFiles = files.filter(f => f.name.toLowerCase().endsWith('.png') || f.name.toLowerCase().endsWith('.svg'));
-
-                console.log(`Local Scanning: found ${jsonFiles.length} blueprints and ${mediaFiles.length} image files.`);
 
                 if (jsonFiles.length === 0) {
                     this.showToast("No .json blueprints found in folder", "fa-solid fa-triangle-exclamation text-amber-400");
@@ -1968,11 +2404,14 @@
                     reader.onload = (e) => {
                         try {
                             const parsedData = JSON.parse(e.target.result);
+                            
                             const imgFile = mediaFiles.find(m => {
-                                const lastDot = m.name.lastIndexOf('.');
-                                const nameWithoutExt = lastDot !== -1 ? m.name.substring(0, lastDot) : m.name;
-                                return nameWithoutExt.toLowerCase() === baseName.toLowerCase();
+                                const mName = m.name.toLowerCase();
+                                const targetPng = `${baseName.toLowerCase()}.png`;
+                                const targetSvg = `${baseName.toLowerCase()}.svg`;
+                                return mName === targetPng || mName === targetSvg;
                             });
+
                             let imageUrl = null;
                             if (imgFile) {
                                 imageUrl = URL.createObjectURL(imgFile);
@@ -1981,7 +2420,6 @@
                             localTemplates.push({
                                 id: baseName,
                                 title: baseName.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
-                                desc: `Mapped local blueprint`,
                                 localData: parsedData,
                                 image: imageUrl,
                                 isLocal: true
@@ -1992,11 +2430,10 @@
                             loadedCount++;
                             if (loadedCount === jsonFiles.length) {
                                 this.localTemplates = localTemplates;
-                                
-                                const tabLocal = document.getElementById("tab-templates-local");
-                                if (tabLocal) tabLocal.click();
-
-                                this.showToast(`Loaded and compiled ${localTemplates.length} local templates!`, "fa-solid fa-circle-check text-emerald-400");
+                                this.activeTab = "local";
+                                this.updateTabUI();
+                                this.renderTemplatesGrid();
+                                this.showToast(`Imported ${localTemplates.length} local blueprints!`, "fa-solid fa-circle-check text-emerald-400");
                             }
                         }
                     };
@@ -2013,57 +2450,59 @@
                 });
             }
 
+            updateTabUI() {
+                const tabDefault = document.getElementById("tab-btn-default");
+                const tabLocal = document.getElementById("tab-btn-local");
+                const localControls = document.getElementById("local-tab-controls");
+
+                if (tabDefault && tabLocal && localControls) {
+                    if (this.activeTab === "default") {
+                        tabDefault.className = "flex-1 py-1.5 px-3 rounded-xl text-xs font-bold transition bg-white text-indigo-600 shadow-sm flex items-center justify-center gap-1.5";
+                        tabLocal.className = "flex-1 py-1.5 px-3 rounded-xl text-xs font-bold transition text-slate-500 hover:text-slate-800 flex items-center justify-center gap-1.5";
+                        localControls.classList.add("hidden");
+                    } else {
+                        tabLocal.className = "flex-1 py-1.5 px-3 rounded-xl text-xs font-bold transition bg-white text-indigo-600 shadow-sm flex items-center justify-center gap-1.5";
+                        tabDefault.className = "flex-1 py-1.5 px-3 rounded-xl text-xs font-bold transition text-slate-500 hover:text-slate-800 flex items-center justify-center gap-1.5";
+                        localControls.classList.remove("hidden");
+                    }
+                }
+            }
+
             renderTemplatesGrid() {
                 const grid = document.getElementById("templates-grid");
+                if (!grid) return;
                 grid.innerHTML = "";
 
-                const defaultBadge = document.getElementById("badge-default-count");
-                const localBadge = document.getElementById("badge-local-count");
-                if (defaultBadge) defaultBadge.textContent = this.defaultTemplates.length;
-                if (localBadge) localBadge.textContent = this.localTemplates.length;
+                const activeList = this.activeTab === "default" ? this.defaultTemplates : this.localTemplates;
 
-                const activeList = this.activeTemplatesTab === 'default' ? this.defaultTemplates : this.localTemplates;
+                let filtered = activeList;
+                if (this.searchQuery.trim().length > 0) {
+                    const q = this.searchQuery.toLowerCase().trim();
+                    filtered = activeList.filter(t => t.title.toLowerCase().includes(q));
+                }
 
-                if (activeList.length === 0) {
-                    if (this.activeTemplatesTab === 'local') {
+                if (filtered.length === 0) {
+                    if (this.activeTab === "local" && this.localTemplates.length === 0) {
                         grid.innerHTML = `
                             <div class="col-span-full py-12 flex flex-col items-center justify-center text-center gap-2">
                                 <i class="fa-solid fa-folder-open text-slate-300 text-4xl"></i>
-                                <span class="text-xs font-bold text-slate-400">No local patterns loaded</span>
-                                <span class="text-[10px] text-slate-400 max-w-xs leading-normal">Click "Select Folder" above to link your local blueprints folder sandbox.</span>
+                                <span class="text-xs font-bold text-slate-400">Folder is empty</span>
+                                <span class="text-[10px] text-slate-400">Click "Select Folder" above to import your local blueprint files.</span>
                             </div>
                         `;
                     } else {
                         grid.innerHTML = `
                             <div class="col-span-full py-12 flex flex-col items-center justify-center text-center gap-2">
-                                <i class="fa-solid fa-folder-open text-slate-300 text-4xl"></i>
-                                <span class="text-xs font-bold text-slate-400">Default gallery is empty</span>
-                                <span class="text-[10px] text-slate-400">Upload templates folder to repository root to display online presets.</span>
+                                <i class="fa-solid fa-magnifying-glass text-slate-300 text-4xl"></i>
+                                <span class="text-xs font-bold text-slate-400">No matching patterns</span>
+                                <span class="text-[10px] text-slate-400">Try searching for a different keyword.</span>
                             </div>
                         `;
                     }
                     return;
                 }
 
-                const searchInput = document.getElementById("template-search");
-                const query = searchInput ? searchInput.value.toLowerCase().trim() : "";
-
-                const filteredTemplates = activeList.filter(template => 
-                    template.title.toLowerCase().includes(query)
-                );
-
-                if (filteredTemplates.length === 0) {
-                    grid.innerHTML = `
-                        <div class="col-span-full py-12 flex flex-col items-center justify-center text-center gap-2">
-                            <i class="fa-solid fa-magnifying-glass text-slate-300 text-3xl"></i>
-                            <span class="text-xs font-bold text-slate-400">No matching templates found</span>
-                            <span class="text-[10px] text-slate-400">Try searching for a different keyword.</span>
-                        </div>
-                    `;
-                    return;
-                }
-
-                filteredTemplates.forEach(template => {
+                filtered.forEach(template => {
                     const card = document.createElement("button");
                     card.className = "flex flex-col text-left bg-white border border-slate-200 hover:border-indigo-500 rounded-2xl overflow-hidden transition hover:shadow-md active:scale-[0.98] group relative min-h-[140px]";
                     
@@ -2084,16 +2523,15 @@
                         <div class="w-full aspect-[4/3] bg-slate-50 flex items-center justify-center border-b border-slate-100 overflow-hidden relative">
                             ${previewHTML}
                         </div>
-                        <div class="p-3 flex flex-col justify-center flex-grow bg-white">
-                            <h4 class="font-bold text-xs text-slate-900 group-hover:text-indigo-600 transition leading-tight text-center truncate w-full" title="${template.title}">
-                                ${template.title}
-                            </h4>
+                        <div class="p-2.5 flex items-center justify-center flex-grow bg-white">
+                            <h4 class="font-bold text-xs text-slate-800 group-hover:text-indigo-600 transition leading-tight text-center line-clamp-1">${template.title}</h4>
                         </div>
                     `;
 
                     card.addEventListener("click", () => {
                         this.loadTemplate(template);
-                        document.getElementById("btn-close-templates").click(); 
+                        const btnClose = document.getElementById("btn-close-templates");
+                        if (btnClose) btnClose.click(); 
                     });
 
                     grid.appendChild(card);
@@ -2128,23 +2566,24 @@
                 }
             }
 
-            // --- STREAMING_CHUNK: Setting up workspace toast notifications... ---
             showToast(message, iconClass = "fa-solid fa-circle-info text-indigo-400") {
                 const toast = document.getElementById("notification-toast");
                 const icon = document.getElementById("notification-icon");
                 const msg = document.getElementById("notification-msg");
 
-                icon.className = iconClass;
-                msg.textContent = message;
+                if (toast && icon && msg) {
+                    icon.className = iconClass;
+                    msg.textContent = message;
 
-                toast.classList.remove("opacity-0", "pointer-events-none");
-                toast.classList.add("opacity-100");
+                    toast.classList.remove("opacity-0", "pointer-events-none");
+                    toast.classList.add("opacity-100");
 
-                if (this.toastTimeout) clearTimeout(this.toastTimeout);
-                this.toastTimeout = setTimeout(() => {
-                    toast.classList.add("opacity-0", "pointer-events-none");
-                    toast.classList.remove("opacity-100");
-                }, 3000);
+                    if (this.toastTimeout) clearTimeout(this.toastTimeout);
+                    this.toastTimeout = setTimeout(() => {
+                        toast.classList.add("opacity-0", "pointer-events-none");
+                        toast.classList.remove("opacity-100");
+                    }, 3000);
+                }
             }
 
             clearBoard() {
@@ -2152,11 +2591,13 @@
                 const polys = [...this.polygons];
                 polys.forEach(p => this.deletePiece(p));
                 sfx.playSnap();
+                this.updateBoardStats();
             }
 
             deletePiece(poly) {
                 poly.destroy(this.scene);
                 this.polygons = this.polygons.filter(p => p !== poly);
+                this.updateBoardStats();
             }
 
             saveBoardConfiguration() {
@@ -2299,7 +2740,6 @@
                 sfx.playSelect();
             }
 
-            // --- STREAMING_CHUNK: Setup Event Listeners ---
             setupEventListeners() {
                 const el = this.renderer.domElement;
                 el.addEventListener('contextmenu', e => e.preventDefault());
@@ -2377,11 +2817,13 @@
                             this.deselectAll();
 
                             const marquee = document.getElementById("selection-marquee");
-                            marquee.style.left = `${e.clientX}px`;
-                            marquee.style.top = `${e.clientY}px`;
-                            marquee.style.width = `0px`;
-                            marquee.style.height = `0px`;
-                            marquee.classList.remove("hidden");
+                            if (marquee) {
+                                marquee.style.left = `${e.clientX}px`;
+                                marquee.style.top = `${e.clientY}px`;
+                                marquee.style.width = `0px`;
+                                marquee.style.height = `0px`;
+                                marquee.classList.remove("hidden");
+                            }
                         }
                     }
                 };
@@ -2421,10 +2863,12 @@
                         const maxY = Math.max(startY, currentY);
 
                         const marquee = document.getElementById("selection-marquee");
-                        marquee.style.left = `${minX}px`;
-                        marquee.style.top = `${minY}px`;
-                        marquee.style.width = `${maxX - minX}px`;
-                        marquee.style.height = `${maxY - minY}px`;
+                        if (marquee) {
+                            marquee.style.left = `${minX}px`;
+                            marquee.style.top = `${minY}px`;
+                            marquee.style.width = `${maxX - minX}px`;
+                            marquee.style.height = `${maxY - minY}px`;
+                        }
 
                         const rect = el.getBoundingClientRect();
                         this.polygons.forEach(p => {
@@ -2502,6 +2946,7 @@
                                 }
                             }
                         }
+                        this.updateBoardStats();
                         return;
                     }
 
@@ -2514,6 +2959,7 @@
                         if (Math.abs(this.selectedPolygon.rotation - snappedAngle) > 0.01) {
                             this.selectedPolygon.setRotation(snappedAngle);
                             sfx.playRotate();
+                            this.updateBoardStats();
                         }
                     }
                 };
@@ -2528,7 +2974,7 @@
                     if (this.isSelectingBox) {
                         this.isSelectingBox = false;
                         const marquee = document.getElementById("selection-marquee");
-                        marquee.classList.add("hidden");
+                        if (marquee) marquee.classList.add("hidden");
 
                         const startX = this.selectionStart.x;
                         const startY = this.selectionStart.y;
@@ -2560,6 +3006,11 @@
 
                         if (boxedPolys.length > 0) {
                             this.selectedPolygons = boxedPolys;
+                            if (this.selectedPolygons.length === 1 && this.selectedPolygon) {
+                                this.createRotationRing(this.selectedPolygon);
+                                const picker = document.getElementById("piece-color-picker");
+                                if (picker) picker.value = this.selectedPolygon.color;
+                            }
                             this.updateSelectionPanelUI();
                             sfx.playSelect();
                         } else {
@@ -2602,6 +3053,7 @@
                         if (moveSuccessful) {
                             this.selectedPolygons.forEach(p => this.recreateInteractiveVisuals(p));
                             this.autoConnectAdjacentNeighbors();
+                            this.updateBoardStats();
                         }
                         this.draggedPolygon = null;
                     }
@@ -2626,7 +3078,7 @@
                     } else {
                         this.camera.zoom /= zoomFactor;
                     }
-                    this.camera.zoom = Math.max(0.4, Math.min(this.camera.zoom, 6.0));
+                    this.camera.zoom = Math.max(0.02, Math.min(this.camera.zoom, 10.0));
                     this.camera.updateProjectionMatrix();
                 };
 
@@ -2637,13 +3089,12 @@
                 el.addEventListener('wheel', onWheel, { passive: false });
 
                 window.addEventListener('keydown', (e) => {
+                    if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA')) {
+                        return;
+                    }
+
                     const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
                     const modifier = isMac ? e.metaKey : e.ctrlKey;
-
-                    // Exclude workspace keyboard bindings while typing inside input fields
-                    if (document.activeElement && document.activeElement.tagName === 'INPUT') {
-                        return; 
-                    }
 
                     if (modifier && e.key.toLowerCase() === 'z') {
                         e.preventDefault();
@@ -2716,6 +3167,7 @@
 
                                 this.autoConnectAdjacentNeighbors();
                                 this.selectedPolygons.forEach(p => this.recreateInteractiveVisuals(p));
+                                this.updateBoardStats();
                             } else {
                                 this.selectedPolygons.forEach(p => {
                                     p.center.x -= dx;
@@ -2772,7 +3224,7 @@
 
                 if (this.lastPinchDist > 0) {
                     const factor = dist / this.lastPinchDist;
-                    this.camera.zoom = Math.max(0.4, Math.min(this.startZoom * factor, 6.0));
+                    this.camera.zoom = Math.max(0.02, Math.min(this.startZoom * factor, 10.0));
                     this.camera.updateProjectionMatrix();
                 }
 
@@ -2791,7 +3243,6 @@
             }
 
             animateClusterBackToOrigin(clusterOrigins) {
-                const duration = 0.35;
                 const progress = { t: 0 };
                 
                 clusterOrigins.forEach(origin => {
@@ -2820,6 +3271,7 @@
                             this.recreateInteractiveVisuals(origin.polygon);
                         });
                         this.autoConnectAdjacentNeighbors();
+                        this.updateBoardStats();
                     }
                 };
                 step();
@@ -2831,23 +3283,42 @@
                 }
             }
 
-            // --- STREAMING_CHUNK: Setup UI Handlers ---
             setupUIHandlers() {
                 const drawer = document.getElementById("drawer-settings");
-                document.getElementById("btn-settings").addEventListener("click", () => {
-                    drawer.classList.toggle("translate-x-[340px]");
-                    drawer.classList.toggle("translate-x-0");
-                });
-                document.getElementById("btn-close-settings").addEventListener("click", () => {
-                    drawer.classList.add("translate-x-[340px]");
-                    drawer.classList.remove("translate-x-0");
-                });
+                const btnSettings = document.getElementById("btn-settings");
+                const btnCloseSettings = document.getElementById("btn-close-settings");
 
-                document.getElementById("btn-clear").addEventListener("click", () => {
-                    this.pushState();
-                    this.clearBoard();
-                    drawer.classList.add("translate-x-[340px]");
-                });
+                if (btnSettings && drawer) {
+                    btnSettings.addEventListener("click", () => {
+                        drawer.classList.toggle("translate-x-[340px]");
+                        drawer.classList.toggle("translate-x-0");
+                    });
+                }
+                if (btnCloseSettings && drawer) {
+                    btnCloseSettings.addEventListener("click", () => {
+                        drawer.classList.add("translate-x-[340px]");
+                        drawer.classList.remove("translate-x-0");
+                    });
+                }
+
+                const toggleAutoAttach = document.getElementById("toggle-auto-attach");
+                if (toggleAutoAttach) {
+                    toggleAutoAttach.checked = this.autoAttachEnabled;
+                    toggleAutoAttach.addEventListener("change", (e) => {
+                        this.autoAttachEnabled = e.target.checked;
+                        this.showToast(this.autoAttachEnabled ? "Auto-Attach Placement: Enabled" : "Auto-Attach Placement: Disabled", "fa-solid fa-magnet text-indigo-400");
+                        sfx.playSelect();
+                    });
+                }
+
+                const btnClear = document.getElementById("btn-clear");
+                if (btnClear) {
+                    btnClear.addEventListener("click", () => {
+                        this.pushState();
+                        this.clearBoard();
+                        if (drawer) drawer.classList.add("translate-x-[340px]");
+                    });
+                }
 
                 document.querySelectorAll(".btn-spawn").forEach(btn => {
                     btn.addEventListener("click", () => {
@@ -2861,150 +3332,192 @@
                 const exportCard = document.getElementById("export-card");
 
                 const openExportModal = () => {
-                    exportModal.classList.remove("hidden");
-                    setTimeout(() => {
-                        exportModal.classList.remove("opacity-0");
-                        exportCard.classList.remove("scale-95");
-                    }, 50);
-                    sfx.playSelect();
+                    if (exportModal && exportCard) {
+                        exportModal.classList.remove("hidden");
+                        setTimeout(() => {
+                            exportModal.classList.remove("opacity-0");
+                            exportCard.classList.remove("scale-95");
+                        }, 50);
+                        sfx.playSelect();
+                    }
                 };
 
                 const closeExportModal = () => {
-                    exportModal.classList.add("opacity-0");
-                    exportCard.classList.add("scale-95");
-                    setTimeout(() => {
-                        exportModal.classList.add("hidden");
-                    }, 300);
+                    if (exportModal && exportCard) {
+                        exportModal.classList.add("opacity-0");
+                        exportCard.classList.add("scale-95");
+                        setTimeout(() => {
+                            exportModal.classList.add("hidden");
+                        }, 300);
+                    }
                 };
 
-                document.getElementById("btn-save-trigger").addEventListener("click", () => {
-                    drawer.classList.add("translate-x-[340px]");
-                    openExportModal();
-                });
+                const btnSaveTrigger = document.getElementById("btn-save-trigger");
+                if (btnSaveTrigger) {
+                    btnSaveTrigger.addEventListener("click", () => {
+                        if (drawer) drawer.classList.add("translate-x-[340px]");
+                        openExportModal();
+                    });
+                }
 
-                document.getElementById("btn-close-export").addEventListener("click", closeExportModal);
-                exportModal.addEventListener("click", (e) => {
-                    if (e.target === exportModal) closeExportModal();
-                });
+                const btnCloseExport = document.getElementById("btn-close-export");
+                if (btnCloseExport) btnCloseExport.addEventListener("click", closeExportModal);
+                
+                if (exportModal) {
+                    exportModal.addEventListener("click", (e) => {
+                        if (e.target === exportModal) closeExportModal();
+                    });
+                }
 
-                document.getElementById("btn-dl-json").addEventListener("click", () => {
-                    this.saveBoardConfiguration();
-                    closeExportModal();
-                });
+                const btnDlJson = document.getElementById("btn-dl-json");
+                if (btnDlJson) {
+                    btnDlJson.addEventListener("click", () => {
+                        this.saveBoardConfiguration();
+                        closeExportModal();
+                    });
+                }
 
-                document.getElementById("btn-dl-png").addEventListener("click", () => {
-                    this.downloadRenderedImage();
-                    closeExportModal();
-                });
+                const btnDlPng = document.getElementById("btn-dl-png");
+                if (btnDlPng) {
+                    btnDlPng.addEventListener("click", () => {
+                        this.downloadRenderedImage();
+                        closeExportModal();
+                    });
+                }
 
-                document.getElementById("btn-dl-svg").addEventListener("click", () => {
-                    this.downloadRenderedSVG();
-                    closeExportModal();
-                });
+                const btnDlSvg = document.getElementById("btn-dl-svg");
+                if (btnDlSvg) {
+                    btnDlSvg.addEventListener("click", () => {
+                        this.downloadRenderedSVG();
+                        closeExportModal();
+                    });
+                }
 
                 const templatesModal = document.getElementById("modal-templates");
                 const templatesCard = document.getElementById("templates-card");
-                const searchInput = document.getElementById("template-search");
-
-                const tabDefault = document.getElementById("tab-templates-default");
-                const tabLocal = document.getElementById("tab-templates-local");
-                const localImporterBar = document.getElementById("local-importer-bar");
-
-                tabDefault.addEventListener("click", () => {
-                    this.activeTemplatesTab = 'default';
-                    tabDefault.className = "flex-1 py-2 text-xs font-bold rounded-xl transition bg-white text-indigo-600 shadow-sm flex items-center justify-center gap-1.5";
-                    tabLocal.className = "flex-1 py-2 text-xs font-bold rounded-xl transition text-slate-500 hover:text-slate-800 flex items-center justify-center gap-1.5";
-                    localImporterBar.classList.add("hidden");
-                    this.renderTemplatesGrid();
-                });
-
-                tabLocal.addEventListener("click", () => {
-                    this.activeTemplatesTab = 'local';
-                    tabLocal.className = "flex-1 py-2 text-xs font-bold rounded-xl transition bg-white text-indigo-600 shadow-sm flex items-center justify-center gap-1.5";
-                    tabDefault.className = "flex-1 py-2 text-xs font-bold rounded-xl transition text-slate-500 hover:text-slate-800 flex items-center justify-center gap-1.5";
-                    localImporterBar.classList.remove("hidden");
-                    this.renderTemplatesGrid();
-                });
 
                 const openTemplatesModal = () => {
+                    this.searchQuery = "";
+                    const searchInput = document.getElementById("template-search-input");
                     if (searchInput) searchInput.value = "";
+                    this.updateTabUI();
                     this.renderTemplatesGrid();
-                    templatesModal.classList.remove("hidden");
-                    setTimeout(() => {
-                        templatesModal.classList.remove("opacity-0");
-                        templatesCard.classList.remove("scale-95");
-                        if (searchInput) searchInput.focus();
-                    }, 50);
-                    sfx.playSelect();
+                    if (templatesModal && templatesCard) {
+                        templatesModal.classList.remove("hidden");
+                        setTimeout(() => {
+                            templatesModal.classList.remove("opacity-0");
+                            templatesCard.classList.remove("scale-95");
+                        }, 50);
+                        sfx.playSelect();
+                    }
                 };
 
                 const closeTemplatesModal = () => {
-                    templatesModal.classList.add("opacity-0");
-                    templatesCard.classList.add("scale-95");
-                    setTimeout(() => {
-                        templatesModal.classList.add("hidden");
-                    }, 300);
+                    if (templatesModal && templatesCard) {
+                        templatesModal.classList.add("opacity-0");
+                        templatesCard.classList.add("scale-95");
+                        setTimeout(() => {
+                            templatesModal.classList.add("hidden");
+                        }, 300);
+                    }
                 };
 
-                document.getElementById("btn-drawer-templates").addEventListener("click", () => {
-                    drawer.classList.add("translate-x-[340px]");
-                    openTemplatesModal();
-                });
-                document.getElementById("btn-close-templates").addEventListener("click", closeTemplatesModal);
-                templatesModal.addEventListener("click", (e) => {
-                    if (e.target === templatesModal) closeTemplatesModal();
-                });
+                const btnDrawerTemplates = document.getElementById("btn-drawer-templates");
+                if (btnDrawerTemplates) {
+                    btnDrawerTemplates.addEventListener("click", () => {
+                        if (drawer) drawer.classList.add("translate-x-[340px]");
+                        openTemplatesModal();
+                    });
+                }
 
-                if (searchInput) {
-                    searchInput.addEventListener("input", () => {
+                const btnCloseTemplates = document.getElementById("btn-close-templates");
+                if (btnCloseTemplates) btnCloseTemplates.addEventListener("click", closeTemplatesModal);
+                
+                if (templatesModal) {
+                    templatesModal.addEventListener("click", (e) => {
+                        if (e.target === templatesModal) closeTemplatesModal();
+                    });
+                }
+
+                const tabBtnDefault = document.getElementById("tab-btn-default");
+                if (tabBtnDefault) {
+                    tabBtnDefault.addEventListener("click", () => {
+                        this.activeTab = "default";
+                        this.updateTabUI();
+                        this.renderTemplatesGrid();
+                        sfx.playSelect();
+                    });
+                }
+
+                const tabBtnLocal = document.getElementById("tab-btn-local");
+                if (tabBtnLocal) {
+                    tabBtnLocal.addEventListener("click", () => {
+                        this.activeTab = "local";
+                        this.updateTabUI();
+                        this.renderTemplatesGrid();
+                        sfx.playSelect();
+                    });
+                }
+
+                const templateSearchInput = document.getElementById("template-search-input");
+                if (templateSearchInput) {
+                    templateSearchInput.addEventListener("input", (e) => {
+                        this.searchQuery = e.target.value;
                         this.renderTemplatesGrid();
                     });
                 }
 
                 const folderInput = document.getElementById("folder-loader");
-                document.getElementById("btn-import-folder").addEventListener("click", () => {
-                    folderInput.click();
-                });
-                folderInput.addEventListener("change", (e) => {
-                    if (e.target.files.length > 0) {
-                        this.loadLocalFolder(e.target.files);
-                    }
-                });
-
-                document.getElementById("btn-undo").addEventListener("click", () => this.undo());
-                document.getElementById("btn-redo").addEventListener("click", () => this.redo());
-
-                document.getElementById("btn-rotate-ccw").addEventListener("click", () => {
-                    this.rotateSelectedCluster(Math.PI / 12);
-                });
-
-                document.getElementById("btn-toggle-borders").addEventListener("click", () => {
-                    if (this.selectedPolygons.length === 0) return;
-                    this.pushState();
-
-                    const allHaveBorders = this.selectedPolygons.every(p => p.showBorders);
-                    const targetState = !allHaveBorders;
-
-                    this.selectedPolygons.forEach(p => {
-                        p.showBorders = targetState;
-                        p.updateBorder();
+                const btnImportFolder = document.getElementById("btn-import-folder");
+                if (btnImportFolder && folderInput) {
+                    btnImportFolder.addEventListener("click", () => {
+                        folderInput.click();
                     });
+                    folderInput.addEventListener("change", (e) => {
+                        if (e.target.files.length > 0) {
+                            this.loadLocalFolder(e.target.files);
+                        }
+                    });
+                }
 
-                    const btnBorders = document.getElementById("btn-toggle-borders");
-                    if (targetState) {
-                        btnBorders.classList.add("bg-indigo-50", "text-indigo-600", "border-indigo-200");
-                        btnBorders.classList.remove("bg-slate-100", "text-slate-600");
-                    } else {
-                        btnBorders.classList.remove("bg-indigo-50", "text-indigo-600", "border-indigo-200");
-                        btnBorders.classList.add("bg-slate-100", "text-slate-600");
-                    }
+                const btnUndo = document.getElementById("btn-undo");
+                if (btnUndo) btnUndo.addEventListener("click", () => this.undo());
 
-                    sfx.playSelect();
-                });
+                const btnRedo = document.getElementById("btn-redo");
+                if (btnRedo) btnRedo.addEventListener("click", () => this.redo());
 
-                document.getElementById("btn-duplicate").addEventListener("click", () => {
-                    this.duplicateSelection();
-                });
+                const btnRotateCcw = document.getElementById("btn-rotate-ccw");
+                if (btnRotateCcw) {
+                    btnRotateCcw.addEventListener("click", () => {
+                        this.rotateSelectedCluster(Math.PI / 12);
+                    });
+                }
+
+                const btnToggleBorders = document.getElementById("btn-toggle-borders");
+                if (btnToggleBorders) {
+                    btnToggleBorders.addEventListener("click", () => {
+                        if (this.selectedPolygons.length === 0) return;
+                        this.pushState();
+
+                        const allHaveBorders = this.selectedPolygons.every(p => p.showBorders);
+                        const targetState = !allHaveBorders;
+
+                        this.selectedPolygons.forEach(p => {
+                            p.showBorders = targetState;
+                            p.updateBorder();
+                        });
+
+                        if (targetState) {
+                            btnToggleBorders.classList.add("bg-indigo-50", "text-indigo-600", "border-indigo-200");
+                            btnToggleBorders.classList.remove("bg-slate-100", "text-slate-600");
+                        } else {
+                            btnToggleBorders.classList.remove("bg-indigo-50", "text-indigo-600", "border-indigo-200");
+                            btnToggleBorders.classList.add("bg-slate-100", "text-slate-600");
+                        }
+
+                        sfx.playSelect();
+                    });
+                }
 
                 const btnLayerGradient = document.getElementById("btn-layer-gradient");
                 if (btnLayerGradient) {
@@ -3013,88 +3526,61 @@
                     });
                 }
 
-                const colorPicker = document.getElementById("piece-color-picker");
-                colorPicker.addEventListener("input", (e) => {
-                    const color = e.target.value;
-                    if (this.selectedPolygons.length > 0) {
-                        this.selectedPolygons.forEach(p => {
-                            p.setColor(color);
-                            this.shapeColorsMemory[p.numSides] = color; 
-                        });
-                        this.updateSpawnerButtonColors(); 
-                    }
-                    this.lastSelectedColor = color;
-                });
-                colorPicker.addEventListener("change", (e) => {
-                    const color = e.target.value;
-                    this.pushState();
-                    
-                    if (!this.recentColors.includes(color)) {
-                        this.recentColors.unshift(color);
-                        if (this.recentColors.length > 5) this.recentColors.pop();
-                    }
-                    this.updateColorSwatches();
-                    sfx.playSelect();
-                });
-
-                document.getElementById("btn-delete-piece").addEventListener("click", () => {
-                    if (this.selectedPolygons.length > 0) {
-                        this.pushState();
-                        const polysToDelete = [...this.selectedPolygons];
-                        polysToDelete.forEach(p => this.deletePiece(p));
-                        this.deselectAll();
-                        sfx.playError();
-                    }
-                });
-
-                const fileLoader = document.getElementById("file-loader");
-                document.getElementById("btn-load-trigger").addEventListener("click", () => {
-                    drawer.classList.add("translate-x-[340px]");
-                    fileLoader.click();
-                });
-                fileLoader.addEventListener("change", (e) => this.loadBoardConfiguration(e));
-            }
-
-            duplicateSelection() {
-                if (this.selectedPolygons.length === 0) return;
-                
-                if (this.selectedPolygons.length > 1) {
-                    this.memorizeCustomGroup(this.selectedPolygons);
+                const btnDuplicate = document.getElementById("btn-duplicate");
+                if (btnDuplicate) {
+                    btnDuplicate.addEventListener("click", () => {
+                        this.duplicateSelection();
+                    });
                 }
 
-                this.clipboard = this.selectedPolygons.map(p => ({
-                    numSides: p.numSides,
-                    rotation: p.rotation,
-                    color: p.color,
-                    showBorders: p.showBorders,
-                    center: { x: p.center.x, y: p.center.y }
-                }));
+                const colorPicker = document.getElementById("piece-color-picker");
+                if (colorPicker) {
+                    colorPicker.addEventListener("input", (e) => {
+                        const color = e.target.value;
+                        if (this.selectedPolygons.length > 0) {
+                            this.selectedPolygons.forEach(p => {
+                                p.setColor(color);
+                                this.shapeColorsMemory[p.numSides] = color; 
+                            });
+                            this.updateSpawnerButtonColors(); 
+                        }
+                        this.lastSelectedColor = color;
+                    });
+                    colorPicker.addEventListener("change", (e) => {
+                        const color = e.target.value;
+                        this.pushState();
+                        
+                        if (!this.recentColors.includes(color)) {
+                            this.recentColors.unshift(color);
+                            if (this.recentColors.length > 5) this.recentColors.pop();
+                        }
+                        this.updateColorSwatches();
+                        sfx.playSelect();
+                    });
+                }
 
-                const offset = this.findClusterLegalOffset(this.clipboard);
-                const pastedPolys = [];
-                this.deselectAll();
+                const btnDeletePiece = document.getElementById("btn-delete-piece");
+                if (btnDeletePiece) {
+                    btnDeletePiece.addEventListener("click", () => {
+                        if (this.selectedPolygons.length > 0) {
+                            this.pushState();
+                            const polysToDelete = [...this.selectedPolygons];
+                            polysToDelete.forEach(p => this.deletePiece(p));
+                            this.deselectAll();
+                            sfx.playError();
+                        }
+                    });
+                }
 
-                this.clipboard.forEach(item => {
-                    const poly = new PatternPolygon(
-                        item.numSides,
-                        new THREE.Vector2(item.center.x + offset.x, item.center.y + offset.y),
-                        item.rotation,
-                        item.color
-                    );
-                    poly.showBorders = item.showBorders !== undefined ? item.showBorders : true;
-                    poly.updateBorder();
-                    poly.updateMeshTransform();
-                    this.scene.add(poly.mesh);
-                    this.polygons.push(poly);
-                    pastedPolys.push(poly);
-                });
-
-                this.selectedPolygons = pastedPolys;
-                this.selectedPolygons.forEach(p => p.material.emissive.setHex(0x111111));
-                
-                this.autoConnectAdjacentNeighbors();
-                this.updateSelectionPanelUI();
-                sfx.playSnap();
+                const fileLoader = document.getElementById("file-loader");
+                const btnLoadTrigger = document.getElementById("btn-load-trigger");
+                if (btnLoadTrigger && fileLoader) {
+                    btnLoadTrigger.addEventListener("click", () => {
+                        if (drawer) drawer.classList.add("translate-x-[340px]");
+                        fileLoader.click();
+                    });
+                    fileLoader.addEventListener("change", (e) => this.loadBoardConfiguration(e));
+                }
             }
 
             loadBoardConfiguration(event) {
@@ -3126,6 +3612,7 @@
 
                         this.autoConnectAdjacentNeighbors();
                         this.updateSpawnerButtonColors();
+                        this.updateBoardStats();
                         sfx.playSnap();
                     } catch (err) {
                         sfx.playError();
@@ -3174,6 +3661,7 @@
                         anim.polygon.updateMeshTransform(0);
 
                         this.autoConnectAdjacentNeighbors();
+                        this.updateBoardStats();
 
                         this.triggerSnapJuice(anim.polygon, {
                             targetPolygon: anim.polygon.neighbors[anim.edgeA],
