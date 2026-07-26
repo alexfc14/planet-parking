@@ -146,16 +146,16 @@
 
             <div class="w-[1px] h-5 bg-slate-200"></div>
 
-            <div class="flex items-center gap-2 cursor-help group" title="Compactness Score: C = (2 * √(π * Area)) / Perimeter">
-                <i class="fa-solid fa-circle-notch text-amber-500 text-base group-hover:scale-110 transition"></i>
-                <span id="stat-compactness" class="text-xs font-bold text-slate-800 leading-none">0.0%</span>
+            <div class="flex items-center gap-2 cursor-help group" title="Interior %: Percentage of total edges that are shared interior edges">
+                <i class="fa-solid fa-puzzle-piece text-emerald-600 text-base group-hover:scale-110 transition"></i>
+                <span id="stat-interior-pct" class="text-xs font-bold text-slate-800 leading-none">0.0%</span>
             </div>
 
             <div class="w-[1px] h-5 bg-slate-200"></div>
 
-            <div class="flex items-center gap-2 cursor-help group" title="Boundary %: Percentage of total edges that are unattached boundary edges">
-                <i class="fa-solid fa-border-none text-emerald-600 text-base group-hover:scale-110 transition"></i>
-                <span id="stat-boundary-pct" class="text-xs font-bold text-slate-800 leading-none">0.0%</span>
+            <div class="flex items-center gap-2 cursor-help group" title="Convex Hull Coverage: Percentage of Convex Hull area covered by pieces">
+                <i class="fa-solid fa-draw-polygon text-amber-500 text-base group-hover:scale-110 transition"></i>
+                <span id="stat-hull-coverage" class="text-xs font-bold text-slate-800 leading-none">0.0%</span>
             </div>
 
             <div class="w-[1px] h-5 bg-slate-200"></div>
@@ -316,6 +316,55 @@
             }
         };
         let activePaletteKey = "classic";
+
+        function getConvexHull(points) {
+            if (!points || points.length < 3) return points ? [...points] : [];
+            const pts = points.map(p => ({ x: p.x, y: p.y }));
+            pts.sort((a, b) => a.x === b.x ? a.y - b.y : a.x - b.x);
+            
+            const unique = [];
+            for (let i = 0; i < pts.length; i++) {
+                if (i === 0 || Math.hypot(pts[i].x - unique[unique.length - 1].x, pts[i].y - unique[unique.length - 1].y) > 1e-5) {
+                    unique.push(pts[i]);
+                }
+            }
+            if (unique.length < 3) return unique;
+
+            const cross = (o, a, b) => (a.x - o.x) * (b.y - o.y) - (a.y - o.y) * (b.x - o.x);
+
+            const lower = [];
+            for (const p of unique) {
+                while (lower.length >= 2 && cross(lower[lower.length - 2], lower[lower.length - 1], p) <= 0) {
+                    lower.pop();
+                }
+                lower.push(p);
+            }
+
+            const upper = [];
+            for (let i = unique.length - 1; i >= 0; i--) {
+                const p = unique[i];
+                while (upper.length >= 2 && cross(upper[upper.length - 2], upper[upper.length - 1], p) <= 0) {
+                    upper.pop();
+                }
+                upper.push(p);
+            }
+
+            lower.pop();
+            upper.pop();
+            return lower.concat(upper);
+        }
+
+        function getPolygonArea(vertices) {
+            if (!vertices || vertices.length < 3) return 0;
+            let area = 0;
+            const n = vertices.length;
+            for (let i = 0; i < n; i++) {
+                const j = (i + 1) % n;
+                area += vertices[i].x * vertices[j].y;
+                area -= vertices[j].x * vertices[i].y;
+            }
+            return Math.abs(area) / 2;
+        }
 
         class SoundSynth {
             constructor() {
@@ -863,6 +912,7 @@
                 this.setupLights();
                 this.setupDeskGrid();
                 this.setupEnclosingCircleVisual();
+                this.setupConvexHullVisual();
                 this.setupRaycasting();
                 this.setupEventListeners();
                 this.setupUIHandlers();
@@ -949,6 +999,23 @@
                 this.scene.add(this.enclosingCircleMesh);
             }
 
+            setupConvexHullVisual() {
+                const geometry = new THREE.BufferGeometry();
+                const material = new THREE.LineDashedMaterial({
+                    color: 0x64748b, // Slate-500 crisp gray
+                    dashSize: 0.25,
+                    gapSize: 0.15,
+                    linewidth: 2,
+                    transparent: true,
+                    opacity: 0.8
+                });
+
+                this.convexHullMesh = new THREE.LineLoop(geometry, material);
+                this.convexHullMesh.position.set(0, 0, -0.01);
+                this.convexHullMesh.visible = false;
+                this.scene.add(this.convexHullMesh);
+            }
+
             setupRaycasting() {
                 this.raycaster = new THREE.Raycaster();
                 this.pointer = new THREE.Vector2();
@@ -1002,40 +1069,33 @@
                     }
                 });
 
-                let compactnessVal = 0;
-                let boundaryPctVal = 0;
+                const totalInteriorEdges = totalEdges - totalBoundaryEdges;
+                let interiorPctVal = 0;
 
-                if (totalBoundaryEdges > 0) {
-                    compactnessVal = (2 * Math.sqrt(Math.PI * totalArea)) / totalBoundaryEdges;
-                }
                 if (totalEdges > 0) {
-                    boundaryPctVal = (totalBoundaryEdges / totalEdges) * 100;
+                    interiorPctVal = (totalInteriorEdges / totalEdges) * 100;
                 }
 
-                const elCompactness = document.getElementById("stat-compactness");
-                if (elCompactness) {
-                    elCompactness.textContent = (compactnessVal * 100).toFixed(1) + "%";
-                }
-
-                const elBoundaryPct = document.getElementById("stat-boundary-pct");
-                if (elBoundaryPct) {
-                    elBoundaryPct.textContent = boundaryPctVal.toFixed(1) + "%";
+                const elInteriorPct = document.getElementById("stat-interior-pct");
+                if (elInteriorPct) {
+                    elInteriorPct.textContent = interiorPctVal.toFixed(1) + "%";
                 }
 
                 // Update Enclosing Circle visual and Coverage Metric
                 const elCircleCoverage = document.getElementById("stat-circle-coverage");
+                const elHullCoverage = document.getElementById("stat-hull-coverage");
 
                 if (allVertices.length > 0) {
                     const mec = getMinimumEnclosingCircle(allVertices);
                     const circleArea = Math.PI * mec.radius * mec.radius;
 
-                    let coveragePct = 0;
+                    let circleCoveragePct = 0;
                     if (circleArea > 0) {
-                        coveragePct = Math.min(100, (totalArea / circleArea) * 100);
+                        circleCoveragePct = Math.min(100, (totalArea / circleArea) * 100);
                     }
 
                     if (elCircleCoverage) {
-                        elCircleCoverage.textContent = coveragePct.toFixed(1) + "%";
+                        elCircleCoverage.textContent = circleCoveragePct.toFixed(1) + "%";
                     }
 
                     if (this.enclosingCircleMesh) {
@@ -1043,9 +1103,35 @@
                         this.enclosingCircleMesh.scale.set(mec.radius, mec.radius, 1);
                         this.enclosingCircleMesh.visible = mec.radius > 0;
                     }
+
+                    // Calculate Convex Hull and Hull Coverage %
+                    const hullVerts = getConvexHull(allVertices);
+                    const hullArea = getPolygonArea(hullVerts);
+                    let hullCoveragePct = 0;
+                    if (hullArea > 0) {
+                        hullCoveragePct = Math.min(100, (totalArea / hullArea) * 100);
+                    }
+
+                    if (elHullCoverage) {
+                        elHullCoverage.textContent = hullCoveragePct.toFixed(1) + "%";
+                    }
+
+                    if (this.convexHullMesh) {
+                        if (hullVerts.length >= 3) {
+                            const hull3DPoints = hullVerts.map(v => new THREE.Vector3(v.x, v.y, 0));
+                            this.convexHullMesh.geometry.dispose();
+                            this.convexHullMesh.geometry = new THREE.BufferGeometry().setFromPoints(hull3DPoints);
+                            this.convexHullMesh.computeLineDistances();
+                            this.convexHullMesh.visible = true;
+                        } else {
+                            this.convexHullMesh.visible = false;
+                        }
+                    }
                 } else {
                     if (elCircleCoverage) elCircleCoverage.textContent = "0.0%";
+                    if (elHullCoverage) elHullCoverage.textContent = "0.0%";
                     if (this.enclosingCircleMesh) this.enclosingCircleMesh.visible = false;
+                    if (this.convexHullMesh) this.convexHullMesh.visible = false;
                 }
             }
 
@@ -1061,6 +1147,7 @@
                 let maxSharedEdges = -1;
                 let minUnfillableGaps = Infinity;
                 let minEnclosingRadius = Infinity;
+                let minHullArea = Infinity;
 
                 const cog = new THREE.Vector2(0, 0);
                 incomingItems.forEach(item => cog.add(new THREE.Vector2(item.center.x, item.center.y)));
@@ -1154,14 +1241,19 @@
                                     const mec = getMinimumEnclosingCircle(allOuterVerts);
                                     const candRadius = mec ? mec.radius : Infinity;
 
-                                    // Primary: 1) Zero acute/pinch gaps, 2) Maximize shared edges, 3) Minimize Enclosing Circle Radius (compact roundness)
+                                    const candHullVerts = getConvexHull(allOuterVerts);
+                                    const candHullArea = getPolygonArea(candHullVerts);
+
+                                    // Primary: 1) Zero acute/pinch gaps, 2) Max shared edges, 3) Min Enclosing Circle Radius, 4) Min Convex Hull Area (Max Hull Coverage)
                                     if (unfillableGaps < minUnfillableGaps || 
                                        (unfillableGaps === minUnfillableGaps && sharedEdgeCount > maxSharedEdges) ||
-                                       (unfillableGaps === minUnfillableGaps && sharedEdgeCount === maxSharedEdges && candRadius < minEnclosingRadius)) {
+                                       (unfillableGaps === minUnfillableGaps && sharedEdgeCount === maxSharedEdges && candRadius < minEnclosingRadius - 1e-5) ||
+                                       (unfillableGaps === minUnfillableGaps && sharedEdgeCount === maxSharedEdges && Math.abs(candRadius - minEnclosingRadius) <= 1e-5 && candHullArea < minHullArea)) {
                                         
                                         minUnfillableGaps = unfillableGaps;
                                         maxSharedEdges = sharedEdgeCount;
                                         minEnclosingRadius = candRadius;
+                                        minHullArea = candHullArea;
 
                                         bestPlacement = {
                                             candidatePositions: tempCandidatePolys.map(tp => ({
@@ -1560,7 +1652,6 @@
             pushState() {
                 const snapshot = this.getBoardStateSnapshot();
                 this.undoStack.push(JSON.stringify(snapshot));
-                if (this.undoStack.length > 50) this.undoStack.shift();
                 this.redoStack = []; 
                 this.updateUndoRedoButtonStates();
             }
