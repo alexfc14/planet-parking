@@ -1,0 +1,1467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>3D Lawn Mower Driving Challenge</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Three.js CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #1a202c;
+        }
+
+        #canvas-container {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+
+        /* Touch Control Buttons styling */
+        .dpad-btn {
+            background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+            transition: all 0.1s ease;
+        }
+        .dpad-btn:active, .dpad-btn.active {
+            background: rgba(59, 130, 246, 0.6);
+            border-color: rgba(255, 255, 255, 0.8);
+            transform: scale(0.95);
+        }
+
+        /* Floating Score Text Animation */
+        @keyframes floatUp {
+            0% { opacity: 1; transform: translateY(0) scale(1); }
+            100% { opacity: 0; transform: translateY(-40px) scale(1.2); }
+        }
+        .float-text {
+            animation: floatUp 1s ease-out forwards;
+            position: absolute;
+            pointer-events: none;
+            font-weight: bold;
+            color: #facc15;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+        }
+
+        /* Custom Scrollbar for level select */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(0,0,0,0.2);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.4);
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-white select-none">
+
+    <!-- 3D Render Canvas Container -->
+    <div id="canvas-container"></div>
+
+    <!-- HUD Overlay -->
+    <div id="hud-container" class="absolute inset-0 z-10 pointer-events-none flex flex-col justify-between p-4 md:p-6">
+        <!-- Top Stats Bar -->
+        <div class="flex justify-between items-start w-full gap-2">
+            <!-- Left: Level Info & Mown Progress -->
+            <div class="bg-slate-900/80 backdrop-blur-md p-3 md:p-4 rounded-2xl border border-white/10 shadow-lg pointer-events-auto flex flex-col gap-2 min-w-[160px] md:min-w-[220px]">
+                <div class="flex items-center justify-between">
+                    <span id="level-title" class="text-xs md:text-sm font-bold tracking-wider text-emerald-400 uppercase">Level 1</span>
+                    <button id="btn-settings" class="text-gray-400 hover:text-white transition p-1">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                    </button>
+                </div>
+                
+                <!-- Lawn Cut Progress Bar -->
+                <div>
+                    <div class="flex justify-between text-xs font-semibold mb-1">
+                        <span>Lawn Mown</span>
+                        <span id="mown-text" class="text-emerald-300">0%</span>
+                    </div>
+                    <div class="w-full bg-slate-700/60 rounded-full h-3 overflow-hidden border border-white/10">
+                        <div id="mown-bar" class="bg-emerald-500 h-full transition-all duration-300 rounded-full w-0"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Fuel & Timer Metrics -->
+            <div class="bg-slate-900/80 backdrop-blur-md p-3 md:p-4 rounded-2xl border border-white/10 shadow-lg pointer-events-auto flex flex-col gap-2 min-w-[150px] md:min-w-[200px]">
+                <!-- Fuel Gauge -->
+                <div>
+                    <div class="flex justify-between text-xs font-semibold mb-1">
+                        <span class="flex items-center gap-1">⛽ Fuel</span>
+                        <span id="fuel-text" class="text-amber-400">100%</span>
+                    </div>
+                    <div class="w-full bg-slate-700/60 rounded-full h-2.5 overflow-hidden border border-white/10">
+                        <div id="fuel-bar" class="bg-amber-400 h-full transition-all duration-200 rounded-full w-full"></div>
+                    </div>
+                </div>
+
+                <!-- Time Elapsed -->
+                <div class="flex justify-between items-center text-xs font-semibold pt-1 border-t border-white/10">
+                    <span class="text-gray-400 flex items-center gap-1">⏱️ Time</span>
+                    <span id="time-text" class="text-white font-mono text-sm">00:00</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Touch Controls (Mobile / Tablet) -->
+        <div class="flex justify-between items-end w-full pb-2 md:pb-4 pointer-events-auto">
+            <!-- Steering Pad (Left / Right) -->
+            <div class="flex gap-3">
+                <button id="btn-left" class="dpad-btn w-16 h-16 md:w-20 md:h-20 rounded-2xl flex items-center justify-center active:scale-95 text-2xl font-bold">
+                    ◀
+                </button>
+                <button id="btn-right" class="dpad-btn w-16 h-16 md:w-20 md:h-20 rounded-2xl flex items-center justify-center active:scale-95 text-2xl font-bold">
+                    ▶
+                </button>
+            </div>
+
+            <!-- Camera Reset / View Mode -->
+            <button id="btn-cam" class="dpad-btn w-12 h-12 md:w-14 md:h-14 rounded-full flex items-center justify-center text-lg shadow-md mb-2">
+                🎥
+            </button>
+
+            <!-- Drive Pad (Forward / Reverse) -->
+            <div class="flex flex-col gap-3">
+                <button id="btn-up" class="dpad-btn w-16 h-16 md:w-20 md:h-20 rounded-2xl flex items-center justify-center active:scale-95 text-2xl font-bold">
+                    ▲
+                </button>
+                <button id="btn-down" class="dpad-btn w-16 h-16 md:w-20 md:h-20 rounded-2xl flex items-center justify-center active:scale-95 text-2xl font-bold">
+                    ▼
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals Overlay Container -->
+    <div id="modal-container" class="absolute inset-0 z-20 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+        
+        <!-- Start / Level Select Modal -->
+        <div id="modal-start" class="bg-slate-800 border border-slate-700 rounded-3xl p-6 max-w-md w-full shadow-2xl flex flex-col gap-5 text-center">
+            <div class="flex flex-col items-center">
+                <div class="w-16 h-16 bg-emerald-500/20 text-emerald-400 rounded-2xl flex items-center justify-center text-3xl mb-3 border border-emerald-500/30">
+                    🚜
+                </div>
+                <h1 class="text-2xl font-bold text-white tracking-wide">Lawn Master 3D</h1>
+                <p class="text-slate-400 text-sm mt-1">Mow the lawn completely while optimizing route, time, and fuel!</p>
+            </div>
+
+            <div class="flex flex-col gap-2 max-h-48 overflow-y-auto pr-1" id="level-list">
+                <!-- Dynamically populated level list -->
+            </div>
+
+            <button id="btn-start-game" class="w-full py-3.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold rounded-2xl shadow-lg transition duration-200 text-lg">
+                START MOWING
+            </button>
+        </div>
+
+        <!-- Level Complete Modal -->
+        <div id="modal-complete" class="hidden bg-slate-800 border border-slate-700 rounded-3xl p-6 max-w-md w-full shadow-2xl flex flex-col gap-5 text-center">
+            <div class="flex flex-col items-center">
+                <div class="text-5xl mb-2">🏆</div>
+                <h2 class="text-2xl font-bold text-white">Lawn Completed!</h2>
+                <p id="complete-subtitle" class="text-slate-400 text-sm">Great job keeping the yard tidy!</p>
+            </div>
+
+            <!-- Stars display -->
+            <div class="flex justify-center gap-2 text-4xl" id="star-rating">
+                <span class="text-amber-400">★</span>
+                <span class="text-amber-400">★</span>
+                <span class="text-amber-400">★</span>
+            </div>
+
+            <!-- Summary Table -->
+            <div class="bg-slate-900/60 rounded-2xl p-4 border border-white/5 flex flex-col gap-2 text-sm">
+                <div class="flex justify-between text-slate-300">
+                    <span>Lawn Cut:</span>
+                    <span id="res-mown" class="font-bold text-emerald-400">98%</span>
+                </div>
+                <div class="flex justify-between text-slate-300">
+                    <span>Fuel Remaining:</span>
+                    <span id="res-fuel" class="font-bold text-amber-400">45%</span>
+                </div>
+                <div class="flex justify-between text-slate-300">
+                    <span>Time Taken:</span>
+                    <span id="res-time" class="font-bold text-white">01:15</span>
+                </div>
+                <div class="flex justify-between text-slate-300 pt-2 border-t border-white/10 font-semibold text-base">
+                    <span>Efficiency Score:</span>
+                    <span id="res-score" class="text-yellow-400">2,450</span>
+                </div>
+            </div>
+
+            <div class="flex gap-3">
+                <button id="btn-retry" class="flex-1 py-3 bg-slate-700 hover:bg-slate-600 font-bold rounded-2xl transition">
+                    Retry
+                </button>
+                <button id="btn-next-level" class="flex-1 py-3 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-2xl transition shadow-md">
+                    Next Level
+                </button>
+            </div>
+        </div>
+
+        <!-- Pause / Settings Modal -->
+        <div id="modal-settings" class="hidden bg-slate-800 border border-slate-700 rounded-3xl p-6 max-w-sm w-full shadow-2xl flex flex-col gap-4">
+            <h3 class="text-xl font-bold text-white text-center">Game Settings</h3>
+            
+            <div class="flex justify-between items-center py-2 border-b border-white/10">
+                <span class="text-sm text-slate-300">Sound Effects</span>
+                <button id="btn-toggle-sound" class="px-4 py-1.5 bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 rounded-xl font-semibold text-xs">
+                    ON
+                </button>
+            </div>
+
+            <div class="flex justify-between items-center py-2 border-b border-white/10">
+                <span class="text-sm text-slate-300">Camera View</span>
+                <button id="btn-toggle-cam-setting" class="px-4 py-1.5 bg-slate-700 text-white rounded-xl font-semibold text-xs">
+                    CHASE
+                </button>
+            </div>
+
+            <div class="flex flex-col gap-2 pt-2">
+                <button id="btn-restart-current" class="w-full py-2.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30 rounded-xl font-bold text-sm transition">
+                    Restart Level
+                </button>
+                <button id="btn-close-settings" class="w-full py-2.5 bg-slate-700 hover:bg-slate-600 rounded-xl font-bold text-sm transition">
+                    Resume
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Audio Engine using Web Audio API (compatible with iOS/iPad)
+        if (navigator.audioSession) {
+            try { navigator.audioSession.type = "playback"; } catch(e) {}
+        }
+
+        class SoundController {
+            constructor() {
+                this.ctx = null;
+                this.enabled = true;
+                this.engineOsc = null;
+                this.engineGain = null;
+                this.mowerGain = null;
+                this.initialized = false;
+            }
+
+            init() {
+                if (this.initialized) return;
+                try {
+                    const AudioContext = window.AudioContext || window.webkitAudioContext;
+                    this.ctx = new AudioContext();
+
+                    // Engine rumble oscillator
+                    this.engineOsc = this.ctx.createOscillator();
+                    this.engineOsc.type = 'sawtooth';
+                    this.engineOsc.frequency.setValueAtTime(45, this.ctx.currentTime);
+
+                    const filter = this.ctx.createBiquadFilter();
+                    filter.type = 'lowpass';
+                    filter.frequency.setValueAtTime(160, this.ctx.currentTime);
+
+                    this.engineGain = this.ctx.createGain();
+                    this.engineGain.gain.setValueAtTime(0.05, this.ctx.currentTime);
+
+                    this.engineOsc.connect(filter);
+                    filter.connect(this.engineGain);
+                    this.engineGain.connect(this.ctx.destination);
+                    this.engineOsc.start();
+
+                    // Mower blade noise (synthesized white noise)
+                    const bufferSize = this.ctx.sampleRate * 2;
+                    const noiseBuffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+                    const output = noiseBuffer.getChannelData(0);
+                    for (let i = 0; i < bufferSize; i++) {
+                        output[i] = Math.random() * 2 - 1;
+                    }
+
+                    const whiteNoise = this.ctx.createBufferSource();
+                    whiteNoise.buffer = noiseBuffer;
+                    whiteNoise.loop = true;
+
+                    const mowerFilter = this.ctx.createBiquadFilter();
+                    mowerFilter.type = 'bandpass';
+                    mowerFilter.frequency.setValueAtTime(800, this.ctx.currentTime);
+                    mowerFilter.Q.setValueAtTime(3.0, this.ctx.currentTime);
+
+                    this.mowerGain = this.ctx.createGain();
+                    this.mowerGain.gain.setValueAtTime(0, this.ctx.currentTime);
+
+                    whiteNoise.connect(mowerFilter);
+                    mowerFilter.connect(this.mowerGain);
+                    this.mowerGain.connect(this.ctx.destination);
+                    whiteNoise.start();
+
+                    this.initialized = true;
+                } catch(e) {
+                    console.log("Audio Context initialization deferred:", e);
+                }
+            }
+
+            updateEngine(speedRatio, isAccelerating) {
+                if (!this.initialized || !this.enabled || !this.ctx) return;
+                if (this.ctx.state === 'suspended') {
+                    this.ctx.resume();
+                }
+
+                const targetFreq = 40 + Math.abs(speedRatio) * 65 + (isAccelerating ? 20 : 0);
+                const targetGain = 0.04 + Math.abs(speedRatio) * 0.08;
+
+                this.engineOsc.frequency.setTargetAtTime(targetFreq, this.ctx.currentTime, 0.1);
+                this.engineGain.gain.setTargetAtTime(targetGain, this.ctx.currentTime, 0.1);
+            }
+
+            setMowerActive(active) {
+                if (!this.initialized || !this.enabled || !this.ctx) return;
+                const targetGain = active ? 0.06 : 0.0;
+                this.mowerGain.gain.setTargetAtTime(targetGain, this.ctx.currentTime, 0.05);
+            }
+
+            playPopSound() {
+                if (!this.initialized || !this.enabled || !this.ctx) return;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(300, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(800, this.ctx.currentTime + 0.08);
+
+                gain.gain.setValueAtTime(0.1, this.ctx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.08);
+
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.09);
+            }
+
+            playLevelComplete() {
+                if (!this.initialized || !this.enabled || !this.ctx) return;
+                const notes = [440, 554.37, 659.25, 880];
+                notes.forEach((freq, idx) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.frequency.setValueAtTime(freq, this.ctx.currentTime + idx * 0.12);
+                    gain.gain.setValueAtTime(0.12, this.ctx.currentTime + idx * 0.12);
+                    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + idx * 0.12 + 0.4);
+
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(this.ctx.currentTime + idx * 0.12);
+                    osc.stop(this.ctx.currentTime + idx * 0.12 + 0.45);
+                });
+            }
+        }
+
+        const sound = new SoundController();
+
+        const LEVELS = [
+            {
+                id: 1,
+                name: "Suburban Yard",
+                shape: "rect",
+                width: 32,
+                height: 24,
+                fuel: 100,
+                obstacles: [],
+                targetMow: 99
+            },
+            {
+                id: 2,
+                name: "Courtyard Fountain",
+                shape: "circle",
+                radius: 16,
+                fuel: 100,
+                obstacles: [
+                    { type: 'fountain', x: 0, z: 0, radius: 4.5 }
+                ],
+                targetMow: 99
+            },
+            {
+                id: 3,
+                name: "The L-Estate",
+                shape: "l_shape",
+                width: 36,
+                height: 36,
+                cutoutSize: 18, // Top-right cutout
+                fuel: 100,
+                obstacles: [
+                    { type: 'tree', x: -8, z: -8, radius: 1.5 },
+                    { type: 'tree', x: 6, z: 8, radius: 1.5 },
+                    { type: 'rock', x: -5, z: 10, radius: 1.2 }
+                ],
+                targetMow: 99
+            },
+            {
+                id: 4,
+                name: "Park Obstacle Loop",
+                shape: "rect",
+                width: 40,
+                height: 28,
+                fuel: 100,
+                obstacles: [
+                    { type: 'tree', x: -10, z: -5, radius: 1.5 },
+                    { type: 'tree', x: 10, z: -5, radius: 1.5 },
+                    { type: 'tree', x: 0, z: 6, radius: 1.5 },
+                    { type: 'fountain', x: -12, z: 6, radius: 3.0 },
+                    { type: 'rock', x: 12, z: 5, radius: 1.4 },
+                    { type: 'rock', x: 0, z: -8, radius: 1.4 }
+                ],
+                targetMow: 99
+            }
+        ];
+
+        let scene, camera, renderer;
+        let tractorMesh, mowerDeckMesh;
+        let groundMesh, groundCanvas, groundCtx, groundTexture;
+        let grassParticles = [];
+        let exhaustParticles = [];
+        let levelObstacleMeshes = [];
+
+        let currentLevelIdx = 0;
+        let gameState = 'START'; // 'START', 'PLAYING', 'PAUSED', 'COMPLETE', 'GAMEOVER'
+        
+        // Physics & Tractor State
+        const tractorState = {
+            x: 0,
+            z: 0,
+            angle: 0,
+            speed: 0,
+            maxSpeed: 0.15,
+            maxReverseSpeed: -0.06,
+            acceleration: 0.003, // Slower realistic acceleration
+            friction: 0.93,       // Higher ground friction
+            steerAngle: 0,
+            maxSteer: 0.45,      // Steering angle limit in radians (~25 deg)
+            wheelbase: 1.8,       // Distance between front and rear axles
+            wheelTurn: 0,
+            fuel: 100,
+            mowedCount: 0,
+            totalLawnPixels: 1,
+            timeElapsed: 0
+        };
+
+        // Input Controller State
+        const inputs = {
+            up: false,
+            down: false,
+            left: false,
+            right: false
+        };
+
+        let cameraMode = 'CHASE'; // 'CHASE', 'TOPDOWN'
+        let timerInterval = null;
+
+        function initThreeJS() {
+            const container = document.getElementById('canvas-container');
+            
+            // Scene
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x87ceeb); // Bright clear sky
+            scene.fog = new THREE.FogExp2(0x87ceeb, 0.012);
+
+            // Camera
+            camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 500);
+            
+            // Renderer
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            container.appendChild(renderer.domElement);
+
+            // Lighting
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.65);
+            scene.add(ambientLight);
+
+            const sunLight = new THREE.DirectionalLight(0xfffaed, 0.85);
+            sunLight.position.set(30, 50, 20);
+            sunLight.castShadow = true;
+            sunLight.shadow.mapSize.width = 2048;
+            sunLight.shadow.mapSize.height = 2048;
+            sunLight.shadow.camera.near = 0.5;
+            sunLight.shadow.camera.far = 150;
+            const d = 35;
+            sunLight.shadow.camera.left = -d;
+            sunLight.shadow.camera.right = d;
+            sunLight.shadow.camera.top = d;
+            sunLight.shadow.camera.bottom = -d;
+            scene.add(sunLight);
+
+            // Build Procedural Tractor Model
+            buildTractorModel();
+
+            // Window Resize Listener
+            window.addEventListener('resize', onWindowResize);
+        }
+
+        function buildTractorModel() {
+            tractorMesh = new THREE.Group();
+
+            // Main Chassis (Green/Orange body)
+            const bodyMat = new THREE.MeshStandardMaterial({ color: 0x2e7d32, roughness: 0.4, metalness: 0.1 });
+            const hoodMat = new THREE.MeshStandardMaterial({ color: 0x1b5e20, roughness: 0.3 });
+            const yellowMat = new THREE.MeshStandardMaterial({ color: 0xfbc02d, roughness: 0.5 });
+            const darkMat = new THREE.MeshStandardMaterial({ color: 0x212121, roughness: 0.8 });
+            const metalMat = new THREE.MeshStandardMaterial({ color: 0x9e9e9e, metalness: 0.8, roughness: 0.2 });
+
+            // Body Engine Block
+            const bodyGeo = new THREE.BoxGeometry(1.4, 1.1, 2.2);
+            const body = new THREE.Mesh(bodyGeo, bodyMat);
+            body.position.y = 0.9;
+            body.castShadow = true;
+            body.receiveShadow = true;
+            tractorMesh.add(body);
+
+            // Engine Hood Front
+            const hoodGeo = new THREE.BoxGeometry(1.35, 0.9, 1.2);
+            const hood = new THREE.Mesh(hoodGeo, hoodMat);
+            hood.position.set(0, 0.85, -1.3);
+            hood.castShadow = true;
+            tractorMesh.add(hood);
+
+            // Grille
+            const grilleGeo = new THREE.BoxGeometry(1.2, 0.7, 0.1);
+            const grille = new THREE.Mesh(grilleGeo, darkMat);
+            grille.position.set(0, 0.85, -1.91);
+            tractorMesh.add(grille);
+
+            // Headlights
+            const headLightGeo = new THREE.CylinderGeometry(0.12, 0.12, 0.1, 12);
+            headLightGeo.rotateX(Math.PI / 2);
+            const lightMat = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xffffaa, emissiveIntensity: 0.6 });
+            
+            const hlLeft = new THREE.Mesh(headLightGeo, lightMat);
+            hlLeft.position.set(-0.45, 0.95, -1.92);
+            tractorMesh.add(hlLeft);
+
+            const hlRight = new THREE.Mesh(headLightGeo, lightMat);
+            hlRight.position.set(0.45, 0.95, -1.92);
+            tractorMesh.add(hlRight);
+
+            // Driver Seat & Mudguards
+            const seatGeo = new THREE.BoxGeometry(0.8, 0.6, 0.7);
+            const seatMat = new THREE.MeshStandardMaterial({ color: 0x37474f });
+            const seat = new THREE.Mesh(seatGeo, seatMat);
+            seat.position.set(0, 1.4, 0.5);
+            tractorMesh.add(seat);
+
+            // Steering Wheel
+            const wheelRimGeo = new THREE.TorusGeometry(0.22, 0.04, 8, 16);
+            const steeringWheel = new THREE.Mesh(wheelRimGeo, darkMat);
+            steeringWheel.rotation.x = Math.PI / 3;
+            steeringWheel.position.set(0, 1.5, -0.1);
+            tractorMesh.add(steeringWheel);
+
+            // Rear Mudguards
+            const guardGeo = new THREE.BoxGeometry(0.4, 0.6, 1.3);
+            const guardL = new THREE.Mesh(guardGeo, bodyMat);
+            guardL.position.set(-0.95, 1.2, 0.4);
+            guardL.castShadow = true;
+            tractorMesh.add(guardL);
+
+            const guardR = new THREE.Mesh(guardGeo, bodyMat);
+            guardR.position.set(0.95, 1.2, 0.4);
+            guardR.castShadow = true;
+            tractorMesh.add(guardR);
+
+            // Exhaust Stack Pipe
+            const pipeGeo = new THREE.CylinderGeometry(0.05, 0.05, 1.2, 8);
+            const pipe = new THREE.Mesh(pipeGeo, metalMat);
+            pipe.position.set(0.5, 1.6, -1.4);
+            pipe.castShadow = true;
+            tractorMesh.add(pipe);
+
+            // Exhaust tip cap
+            const capGeo = new THREE.CylinderGeometry(0.07, 0.05, 0.15, 8);
+            const cap = new THREE.Mesh(capGeo, darkMat);
+            cap.position.set(0.5, 2.2, -1.35);
+            tractorMesh.add(cap);
+
+            // Wheels Assembly
+            // Rear Wheels (Large)
+            const rearWheelGeo = new THREE.CylinderGeometry(0.75, 0.75, 0.45, 18);
+            rearWheelGeo.rotateZ(Math.PI / 2);
+            const tireMat = new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.9 });
+            const rimMat = new THREE.MeshStandardMaterial({ color: 0xfbc02d });
+
+            tractorMesh.rearWheels = [];
+            [-0.95, 0.95].forEach(x => {
+                const wheelGroup = new THREE.Group();
+                const tire = new THREE.Mesh(rearWheelGeo, tireMat);
+                tire.castShadow = true;
+                wheelGroup.add(tire);
+
+                const rim = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.45, 0.46, 12), rimMat);
+                rim.rotation.z = Math.PI / 2;
+                wheelGroup.add(rim);
+
+                wheelGroup.position.set(x, 0.75, 0.5);
+                tractorMesh.add(wheelGroup);
+                tractorMesh.rearWheels.push(wheelGroup);
+            });
+
+            // Front Wheels (Smaller, Steering)
+            const frontWheelGeo = new THREE.CylinderGeometry(0.45, 0.45, 0.3, 16);
+            frontWheelGeo.rotateZ(Math.PI / 2);
+
+            tractorMesh.frontWheels = [];
+            [-0.8, 0.8].forEach(x => {
+                const pivot = new THREE.Group();
+                pivot.position.set(x, 0.45, -1.3);
+
+                const tire = new THREE.Mesh(frontWheelGeo, tireMat);
+                tire.castShadow = true;
+                pivot.add(tire);
+
+                const rim = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.25, 0.31, 10), rimMat);
+                rim.rotation.z = Math.PI / 2;
+                pivot.add(rim);
+
+                tractorMesh.add(pivot);
+                tractorMesh.frontWheels.push(pivot);
+            });
+
+            // Underbody Mower Deck Unit
+            const deckGeo = new THREE.CylinderGeometry(0.95, 1.05, 0.25, 16);
+            const deckMat = new THREE.MeshStandardMaterial({ color: 0x333333, metalness: 0.5 });
+            mowerDeckMesh = new THREE.Mesh(deckGeo, deckMat);
+            mowerDeckMesh.position.set(0, 0.25, -0.3);
+            mowerDeckMesh.castShadow = true;
+            tractorMesh.add(mowerDeckMesh);
+
+            scene.add(tractorMesh);
+        }
+
+        function setupLawnTerrain(level) {
+            // Remove previous obstacles
+            levelObstacleMeshes.forEach(obj => scene.remove(obj));
+            levelObstacleMeshes = [];
+
+            // Calculate grid dimension sizes
+            let w = level.width || level.radius * 2 || 30;
+            let h = level.height || level.radius * 2 || 30;
+            const pad = 3; // Garden bed border around lawn
+            const fullW = w + pad * 2;
+            const fullH = h + pad * 2;
+
+            // Prepare Dynamic Canvas for Lawn Texture (Resolution: 1024x1024)
+            if (!groundCanvas) {
+                groundCanvas = document.createElement('canvas');
+                groundCanvas.width = 1024;
+                groundCanvas.height = 1024;
+                groundCtx = groundCanvas.getContext('2d');
+            }
+
+            const ctx = groundCtx;
+            ctx.fillStyle = '#4a2f1b'; // Dark soil border color
+            ctx.fillRect(0, 0, 1024, 1024);
+
+            // Coordinates transformation factors
+            const scaleX = 1024 / fullW;
+            const scaleY = 1024 / fullH;
+
+            const centerX = 1024 / 2;
+            const centerY = 1024 / 2;
+
+            // Define lawn geometry path
+            ctx.beginPath();
+            if (level.shape === 'rect') {
+                const lw = level.width * scaleX;
+                const lh = level.height * scaleY;
+                ctx.rect(centerX - lw / 2, centerY - lh / 2, lw, lh);
+            } else if (level.shape === 'circle') {
+                const r = level.radius * scaleX;
+                ctx.arc(centerX, centerY, r, 0, Math.PI * 2);
+            } else if (level.shape === 'l_shape') {
+                const lw = level.width * scaleX;
+                const lh = level.height * scaleY;
+                const cut = level.cutoutSize * scaleX;
+
+                ctx.moveTo(centerX - lw / 2, centerY - lh / 2);
+                ctx.lineTo(centerX + lw / 2 - cut, centerY - lh / 2);
+                ctx.lineTo(centerX + lw / 2 - cut, centerY + lh / 2 - cut);
+                ctx.lineTo(centerX + lw / 2, centerY + lh / 2 - cut);
+                ctx.lineTo(centerX + lw / 2, centerY + lh / 2);
+                ctx.lineTo(centerX - lw / 2, centerY + lh / 2);
+                ctx.closePath();
+            }
+
+            // Fill uncut grass base color
+            ctx.fillStyle = '#2e7d32';
+            ctx.fill();
+
+            // Clip grass stripe detail so lines never spill into surrounding dirt
+            ctx.save();
+            ctx.clip();
+            ctx.strokeStyle = '#256a29';
+            ctx.lineWidth = 3;
+            for (let i = 0; i < 1024; i += 16) {
+                ctx.beginPath();
+                ctx.moveTo(i, 0);
+                ctx.lineTo(i, 1024);
+                ctx.stroke();
+            }
+            ctx.restore();
+
+            // Draw obstacles into texture & spawn 3D obstacle models
+            level.obstacles.forEach(obs => {
+                const mapX = centerX + obs.x * scaleX;
+                const mapY = centerY + obs.z * scaleY;
+                const r = obs.radius * scaleX;
+
+                // Mask obstacle on texture so grass isn't expected there
+                ctx.fillStyle = '#4a2f1b';
+                ctx.beginPath();
+                ctx.arc(mapX, mapY, r + 4, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Spawn 3D Obstacle Mesh
+                create3DObstacle(obs);
+            });
+
+            // Calculate total valid lawn pixels for percentage metric
+            const imgData = ctx.getImageData(0, 0, 1024, 1024).data;
+            let lawnPixels = 0;
+            for (let i = 0; i < imgData.length; i += 4) {
+                // Check for green grass channel dominance
+                if (imgData[i + 1] > 100 && imgData[i] < 80) {
+                    lawnPixels++;
+                }
+            }
+            tractorState.totalLawnPixels = lawnPixels;
+            tractorState.mowedCount = 0;
+
+            // Create or Update Ground Mesh Texture
+            if (!groundTexture) {
+                groundTexture = new THREE.CanvasTexture(groundCanvas);
+                groundTexture.magFilter = THREE.LinearFilter;
+                groundTexture.minFilter = THREE.LinearFilter;
+
+                const groundGeo = new THREE.PlaneGeometry(fullW, fullH);
+                groundGeo.rotateX(-Math.PI / 2);
+                const groundMat = new THREE.MeshStandardMaterial({
+                    map: groundTexture,
+                    roughness: 0.8,
+                    metalness: 0.1
+                });
+
+                groundMesh = new THREE.Mesh(groundGeo, groundMat);
+                groundMesh.receiveShadow = true;
+                scene.add(groundMesh);
+            } else {
+                groundMesh.geometry.dispose();
+                groundMesh.geometry = new THREE.PlaneGeometry(fullW, fullH);
+                groundMesh.geometry.rotateX(-Math.PI / 2);
+                groundTexture.needsUpdate = true;
+            }
+
+            // Save terrain scaling info for mowing logic
+            groundMesh.userData = { fullW, fullH, scaleX, scaleY, centerX, centerY };
+
+            // Add surrounding fence / garden perimeter border
+            buildPerimeterFence(fullW, fullH);
+        }
+
+        function create3DObstacle(obs) {
+            const group = new THREE.Group();
+            group.position.set(obs.x, 0, obs.z);
+
+            if (obs.type === 'tree') {
+                // Trunk
+                const trunkGeo = new THREE.CylinderGeometry(0.3, 0.45, 2.5, 8);
+                const trunkMat = new THREE.MeshStandardMaterial({ color: 0x4e342e, roughness: 0.9 });
+                const trunk = new THREE.Mesh(trunkGeo, trunkMat);
+                trunk.position.y = 1.25;
+                trunk.castShadow = true;
+                group.add(trunk);
+
+                // Foliage (Puff layers)
+                const foliageMat = new THREE.MeshStandardMaterial({ color: 0x1b5e20, roughness: 0.5 });
+                const f1 = new THREE.Mesh(new THREE.ConeGeometry(obs.radius * 1.2, 3, 8), foliageMat);
+                f1.position.y = 3.0;
+                f1.castShadow = true;
+                group.add(f1);
+
+                const f2 = new THREE.Mesh(new THREE.ConeGeometry(obs.radius * 0.9, 2.5, 8), foliageMat);
+                f2.position.y = 4.2;
+                f2.castShadow = true;
+                group.add(f2);
+            } else if (obs.type === 'rock') {
+                const rockGeo = new THREE.DodecahedronGeometry(obs.radius, 1);
+                const rockMat = new THREE.MeshStandardMaterial({ color: 0x78909c, roughness: 0.8 });
+                const rock = new THREE.Mesh(rockGeo, rockMat);
+                rock.scale.set(1, 0.6, 1);
+                rock.position.y = obs.radius * 0.4;
+                rock.rotation.y = Math.random() * Math.PI;
+                rock.castShadow = true;
+                group.add(rock);
+            } else if (obs.type === 'fountain') {
+                const baseGeo = new THREE.CylinderGeometry(obs.radius, obs.radius * 1.1, 0.8, 16);
+                const stoneMat = new THREE.MeshStandardMaterial({ color: 0xb0bec5, roughness: 0.3 });
+                const base = new THREE.Mesh(baseGeo, stoneMat);
+                base.position.y = 0.4;
+                base.castShadow = true;
+                group.add(base);
+
+                // Water inside
+                const waterGeo = new THREE.CylinderGeometry(obs.radius * 0.85, obs.radius * 0.85, 0.1, 16);
+                const waterMat = new THREE.MeshStandardMaterial({ color: 0x0288d1, roughness: 0.1, transparent: true, opacity: 0.8 });
+                const water = new THREE.Mesh(waterGeo, waterMat);
+                water.position.y = 0.8;
+                group.add(water);
+
+                // Center Pillar
+                const pillarGeo = new THREE.CylinderGeometry(0.3, 0.4, 1.8, 12);
+                const pillar = new THREE.Mesh(pillarGeo, stoneMat);
+                pillar.position.y = 1.2;
+                pillar.castShadow = true;
+                group.add(pillar);
+            }
+
+            scene.add(group);
+            levelObstacleMeshes.push(group);
+        }
+
+        function buildPerimeterFence(fullW, fullH) {
+            const fenceGroup = new THREE.Group();
+            const postGeo = new THREE.BoxGeometry(0.3, 1.2, 0.3);
+            const railGeo = new THREE.BoxGeometry(fullW, 0.15, 0.1);
+            const woodMat = new THREE.MeshStandardMaterial({ color: 0xd7ccc8, roughness: 0.7 });
+
+            // Borders at edge of ground plane
+            const hW = fullW / 2 - 0.5;
+            const hH = fullH / 2 - 0.5;
+
+            // North / South Rails
+            const rN = new THREE.Mesh(railGeo, woodMat);
+            rN.position.set(0, 0.7, -hH);
+            fenceGroup.add(rN);
+
+            const rS = new THREE.Mesh(railGeo, woodMat);
+            rS.position.set(0, 0.7, hH);
+            fenceGroup.add(rS);
+
+            // West / East Rails
+            const railGeoV = new THREE.BoxGeometry(0.1, 0.15, fullH);
+            const rW = new THREE.Mesh(railGeoV, woodMat);
+            rW.position.set(-hW, 0.7, 0);
+            fenceGroup.add(rW);
+
+            const rE = new THREE.Mesh(railGeoV, woodMat);
+            rE.position.set(hW, 0.7, 0);
+            fenceGroup.add(rE);
+
+            scene.add(fenceGroup);
+            levelObstacleMeshes.push(fenceGroup);
+        }
+
+        function applyMowStamp(worldX, worldZ) {
+            if (!groundCtx || !groundMesh.userData) return;
+            const { fullW, fullH, scaleX, scaleY, centerX, centerY } = groundMesh.userData;
+
+            // Map world space coordinates to 1024x1024 canvas space
+            const canX = centerX + worldX * scaleX;
+            const canY = centerY + worldZ * scaleY;
+            const radius = 1.2 * scaleX; // Mower deck cutting width radius
+
+            const ctx = groundCtx;
+            
+            // Check before stamping how many uncut grass pixels will be mowed
+            const startX = Math.max(0, Math.floor(canX - radius));
+            const startY = Math.max(0, Math.floor(canY - radius));
+            const size = Math.ceil(radius * 2);
+            
+            if (startX + size >= 1024 || startY + size >= 1024) return;
+
+            const imgData = ctx.getImageData(startX, startY, size, size);
+            let newlyMowed = 0;
+
+            for (let py = 0; py < size; py++) {
+                for (let px = 0; px < size; px++) {
+                    const dx = (startX + px) - canX;
+                    const dy = (startY + py) - canY;
+                    if (dx * dx + dy * dy <= radius * radius) {
+                        const idx = (py * size + px) * 4;
+                        const r = imgData.data[idx];
+                        const g = imgData.data[idx + 1];
+                        const b = imgData.data[idx + 2];
+
+                        // Uncut grass detected (dark green dominance)
+                        if (g > 100 && r < 80) {
+                            // Convert pixel to Mowed Grass Pattern Color (Light fresh stripe green)
+                            imgData.data[idx] = 139;     // R
+                            imgData.data[idx + 1] = 195; // G
+                            imgData.data[idx + 2] = 74;  // B
+                            newlyMowed++;
+                        }
+                    }
+                }
+            }
+
+            if (newlyMowed > 0) {
+                ctx.putImageData(imgData, startX, startY);
+                groundTexture.needsUpdate = true;
+                tractorState.mowedCount += newlyMowed;
+
+                // Spawn Grass Particle Flying FX
+                spawnGrassParticles(worldX, worldZ);
+                sound.setMowerActive(true);
+            } else {
+                sound.setMowerActive(false);
+            }
+        }
+
+        function spawnGrassParticles(x, z) {
+            for (let i = 0; i < 3; i++) {
+                const pGeo = new THREE.PlaneGeometry(0.12, 0.25);
+                const pMat = new THREE.MeshBasicMaterial({ color: 0x8bc34a, side: THREE.DoubleSide });
+                const particle = new THREE.Mesh(pGeo, pMat);
+
+                particle.position.set(
+                    x + (Math.random() - 0.5) * 1.2,
+                    0.3,
+                    z + (Math.random() - 0.5) * 1.2
+                );
+
+                particle.userData = {
+                    vx: (Math.random() - 0.5) * 0.08,
+                    vy: 0.08 + Math.random() * 0.08,
+                    vz: (Math.random() - 0.5) * 0.08,
+                    rotSpeed: (Math.random() - 0.5) * 0.2,
+                    life: 1.0
+                };
+
+                scene.add(particle);
+                grassParticles.push(particle);
+            }
+        }
+
+        function spawnExhaustSmoke() {
+            if (Math.random() > 0.4) return;
+            // Exhaust stack local pos: (0.5, 2.2, -1.35)
+            const exhaustPos = new THREE.Vector3(0.5, 2.2, -1.35);
+            exhaustPos.applyMatrix4(tractorMesh.matrixWorld);
+
+            const sGeo = new THREE.SphereGeometry(0.08 + Math.random() * 0.05, 6, 6);
+            const sMat = new THREE.MeshBasicMaterial({ color: 0xcccccc, transparent: true, opacity: 0.5 });
+            const smoke = new THREE.Mesh(sGeo, sMat);
+            smoke.position.copy(exhaustPos);
+
+            smoke.userData = {
+                vy: 0.03 + Math.random() * 0.02,
+                grow: 1.03,
+                life: 1.0
+            };
+
+            scene.add(smoke);
+            exhaustParticles.push(smoke);
+        }
+
+        function updateParticles() {
+            // Update Grass Clippings
+            for (let i = grassParticles.length - 1; i >= 0; i--) {
+                const p = grassParticles[i];
+                p.position.x += p.userData.vx;
+                p.position.y += p.userData.vy;
+                p.position.z += p.userData.vz;
+                p.userData.vy -= 0.006; // Gravity
+                p.rotation.z += p.userData.rotSpeed;
+                p.userData.life -= 0.04;
+
+                if (p.userData.life <= 0 || p.position.y <= 0) {
+                    scene.remove(p);
+                    p.geometry.dispose();
+                    p.material.dispose();
+                    grassParticles.splice(i, 1);
+                }
+            }
+
+            // Update Exhaust Smoke
+            for (let i = exhaustParticles.length - 1; i >= 0; i--) {
+                const s = exhaustParticles[i];
+                s.position.y += s.userData.vy;
+                s.scale.multiplyScalar(s.userData.grow);
+                s.material.opacity -= 0.025;
+                s.userData.life -= 0.035;
+
+                if (s.userData.life <= 0) {
+                    scene.remove(s);
+                    s.geometry.dispose();
+                    s.material.dispose();
+                    exhaustParticles.splice(i, 1);
+                }
+            }
+        }
+
+        function updateTractorPhysics() {
+            if (gameState !== 'PLAYING') return;
+
+            const lvl = LEVELS[currentLevelIdx];
+
+            // Steering Logic (Front wheel angle response)
+            if (inputs.left) {
+                tractorState.steerAngle = Math.min(tractorState.steerAngle + 0.03, tractorState.maxSteer);
+            } else if (inputs.right) {
+                tractorState.steerAngle = Math.max(tractorState.steerAngle - 0.03, -tractorState.maxSteer);
+            } else {
+                tractorState.steerAngle *= 0.75; // Return to center
+            }
+
+            // Steering visual wheel rotation
+            tractorMesh.frontWheels.forEach(w => {
+                w.rotation.y = tractorState.steerAngle;
+            });
+
+            // Acceleration & Reverse Logic
+            let isAccelerating = false;
+            if (inputs.up) {
+                tractorState.speed = Math.min(tractorState.speed + tractorState.acceleration, tractorState.maxSpeed);
+                isAccelerating = true;
+            } else if (inputs.down) {
+                tractorState.speed = Math.max(tractorState.speed - tractorState.acceleration, tractorState.maxReverseSpeed);
+                isAccelerating = true;
+            } else {
+                tractorState.speed *= tractorState.friction;
+            }
+
+            // Realistic Wheeled Vehicle Turning (Ackermann steering geometry: dAngle = (speed / wheelbase) * tan(steerAngle))
+            if (Math.abs(tractorState.speed) > 0.0001) {
+                const turnAmount = (tractorState.speed / tractorState.wheelbase) * Math.tan(tractorState.steerAngle);
+                tractorState.angle += turnAmount;
+            }
+
+            // Calculate target new position
+            const nextX = tractorState.x - Math.sin(tractorState.angle) * tractorState.speed;
+            const nextZ = tractorState.z - Math.cos(tractorState.angle) * tractorState.speed;
+
+            // Obstacle & Boundary Collision Detection
+            let collision = checkCollisions(nextX, nextZ, lvl);
+
+            if (!collision) {
+                tractorState.x = nextX;
+                tractorState.z = nextZ;
+            } else {
+                tractorState.speed = -tractorState.speed * 0.4; // Bounce off
+            }
+
+            // Update 3D Mesh Position & Orientation
+            tractorMesh.position.set(tractorState.x, 0, tractorState.z);
+            tractorMesh.rotation.y = tractorState.angle;
+
+            // Animate Wheels Turning
+            const wheelRot = tractorState.speed / 0.75;
+            tractorMesh.rearWheels.forEach(w => w.children[0].rotation.x += wheelRot);
+            tractorMesh.frontWheels.forEach(w => w.children[0].rotation.x += wheelRot);
+
+            // Audio engine modulation
+            sound.updateEngine(tractorState.speed / tractorState.maxSpeed, isAccelerating);
+
+            // Exhaust Smoke Spawn
+            if (Math.abs(tractorState.speed) > 0.01) {
+                spawnExhaustSmoke();
+            }
+
+            // Apply Lawn Cutting Stamp under mower deck
+            const deckWorld = new THREE.Vector3();
+            mowerDeckMesh.getWorldPosition(deckWorld);
+            applyMowStamp(deckWorld.x, deckWorld.z);
+
+            // Aggressive Fuel Drain Physics
+            if (Math.abs(tractorState.speed) > 0.001 || isAccelerating) {
+                let drainRate = 0.04;
+
+                // High load penalty when accelerating from stationary / low speed
+                if (isAccelerating) {
+                    const speedRatio = Math.abs(tractorState.speed) / tractorState.maxSpeed;
+                    // Lower current speed = higher inertia resistance = higher load/fuel burn (up to 4x multiplier at zero speed)
+                    const inertiaLoad = 1.0 + (1.0 - speedRatio) * 3.0;
+                    drainRate += 0.08 * inertiaLoad;
+                }
+
+                // Extra burn for keeping speed against high ground friction
+                drainRate += Math.abs(tractorState.speed) * 0.15;
+
+                tractorState.fuel = Math.max(0, tractorState.fuel - drainRate * 0.05);
+                updateFuelUI();
+            }
+
+            // Check Win / Out of Fuel Conditions
+            checkLevelProgress();
+        }
+
+        function checkCollisions(px, pz, lvl) {
+            const tractorRadius = 1.0;
+            const pad = 3;
+            const w = lvl.width || lvl.radius * 2 || 30;
+            const h = lvl.height || lvl.radius * 2 || 30;
+            const fullW = w + pad * 2;
+            const fullH = h + pad * 2;
+
+            // Boundary collision matches the exact visible fence position
+            const hw = fullW / 2 - 0.8;
+            const hh = fullH / 2 - 0.8;
+
+            if (Math.abs(px) > hw || Math.abs(pz) > hh) {
+                return true;
+            }
+
+            // Non-convex cutout bounds (e.g. house corner on L-shape estate)
+            if (lvl.shape === 'l_shape') {
+                const lawnHW = lvl.width / 2;
+                const lawnHH = lvl.height / 2;
+                const cut = lvl.cutoutSize;
+                if (px > (lawnHW - cut) && pz < (-lawnHH + cut)) {
+                    return true;
+                }
+            }
+
+            // Level Specific Obstacles Collisions
+            for (let obs of lvl.obstacles) {
+                const dx = px - obs.x;
+                const dz = pz - obs.z;
+                const dist = Math.sqrt(dx * dx + dz * dz);
+                if (dist < obs.radius + tractorRadius) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        function updateCamera() {
+            if (!tractorMesh) return;
+
+            if (cameraMode === 'CHASE') {
+                const targetPos = new THREE.Vector3();
+                tractorMesh.getWorldPosition(targetPos);
+
+                // Calculate chase camera offset behind tractor
+                const camOffset = new THREE.Vector3(0, 8, 14);
+                camOffset.applyAxisAngle(new THREE.Vector3(0, 1, 0), tractorState.angle);
+                
+                const desiredCamPos = targetPos.clone().add(camOffset);
+                camera.position.lerp(desiredCamPos, 0.1);
+                camera.lookAt(targetPos.clone().add(new THREE.Vector3(0, 1, 0)));
+            } else if (cameraMode === 'TOPDOWN') {
+                const targetPos = new THREE.Vector3(tractorState.x, 35, tractorState.z + 0.1);
+                camera.position.lerp(targetPos, 0.1);
+                camera.lookAt(tractorState.x, 0, tractorState.z);
+            }
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        function updateFuelUI() {
+            const fuelBar = document.getElementById('fuel-bar');
+            const fuelText = document.getElementById('fuel-text');
+            const pct = Math.round(tractorState.fuel);
+            
+            fuelBar.style.width = pct + '%';
+            fuelText.textContent = pct + '%';
+
+            if (pct < 20) {
+                fuelBar.className = "bg-red-500 h-full transition-all duration-200 rounded-full w-full";
+            } else if (pct < 50) {
+                fuelBar.className = "bg-amber-400 h-full transition-all duration-200 rounded-full w-full";
+            } else {
+                fuelBar.className = "bg-emerald-400 h-full transition-all duration-200 rounded-full w-full";
+            }
+        }
+
+        function checkLevelProgress() {
+            const mowedRatio = tractorState.mowedCount / tractorState.totalLawnPixels;
+            const mowedPct = Math.min(100, Math.round(mowedRatio * 100));
+
+            document.getElementById('mown-bar').style.width = mowedPct + '%';
+            document.getElementById('mown-text').textContent = mowedPct + '%';
+
+            const lvl = LEVELS[currentLevelIdx];
+
+            // Win Condition
+            if (mowedPct >= lvl.targetMow && gameState === 'PLAYING') {
+                triggerLevelComplete(mowedPct);
+            } 
+            // Out of Fuel Condition
+            else if (tractorState.fuel <= 0 && gameState === 'PLAYING') {
+                triggerGameOver("Out of Fuel!");
+            }
+        }
+
+        function startTimer() {
+            clearInterval(timerInterval);
+            tractorState.timeElapsed = 0;
+            const timeText = document.getElementById('time-text');
+            
+            timerInterval = setInterval(() => {
+                if (gameState === 'PLAYING') {
+                    tractorState.timeElapsed++;
+                    const mins = Math.floor(tractorState.timeElapsed / 60).toString().padStart(2, '0');
+                    const secs = (tractorState.timeElapsed % 60).toString().padStart(2, '0');
+                    timeText.textContent = `${mins}:${secs}`;
+                }
+            }, 1000);
+        }
+
+        function loadLevel(idx) {
+            currentLevelIdx = idx;
+            const lvl = LEVELS[currentLevelIdx];
+
+            // Reset Tractor State
+            tractorState.x = 0;
+            tractorState.z = (lvl.height || lvl.radius * 2) / 3;
+            tractorState.angle = Math.PI;
+            tractorState.speed = 0;
+            tractorState.steerAngle = 0;
+            tractorState.fuel = lvl.fuel;
+            tractorState.timeElapsed = 0;
+
+            document.getElementById('level-title').textContent = `${lvl.name}`;
+            updateFuelUI();
+
+            setupLawnTerrain(lvl);
+
+            // Move Camera immediately
+            camera.position.set(tractorState.x, 10, tractorState.z + 16);
+            camera.lookAt(tractorState.x, 0, tractorState.z);
+        }
+
+        function triggerLevelComplete(mowedPct) {
+            gameState = 'COMPLETE';
+            clearInterval(timerInterval);
+            sound.setMowerActive(false);
+            sound.playLevelComplete();
+
+            const modal = document.getElementById('modal-container');
+            const startM = document.getElementById('modal-start');
+            const completeM = document.getElementById('modal-complete');
+            const settingsM = document.getElementById('modal-settings');
+
+            startM.classList.add('hidden');
+            settingsM.classList.add('hidden');
+            completeM.classList.remove('hidden');
+            modal.classList.remove('hidden');
+
+            // Calculate Efficiency Stars & Score
+            const fuelBonus = Math.round(tractorState.fuel * 20);
+            const timePenalty = tractorState.timeElapsed * 5;
+            const score = Math.max(100, Math.round(mowedPct * 30 + fuelBonus - timePenalty));
+
+            document.getElementById('res-mown').textContent = mowedPct + '%';
+            document.getElementById('res-fuel').textContent = Math.round(tractorState.fuel) + '%';
+            
+            const mins = Math.floor(tractorState.timeElapsed / 60).toString().padStart(2, '0');
+            const secs = (tractorState.timeElapsed % 60).toString().padStart(2, '0');
+            document.getElementById('res-time').textContent = `${mins}:${secs}`;
+            document.getElementById('res-score').textContent = score.toLocaleString();
+
+            // Star calculation
+            let stars = 1;
+            if (tractorState.fuel > 30 && tractorState.timeElapsed < 90) stars = 3;
+            else if (tractorState.fuel > 15 && tractorState.timeElapsed < 130) stars = 2;
+
+            const starContainer = document.getElementById('star-rating');
+            starContainer.innerHTML = '';
+            for (let i = 0; i < 3; i++) {
+                const s = document.createElement('span');
+                s.className = i < stars ? 'text-amber-400' : 'text-slate-600';
+                s.textContent = '★';
+                starContainer.appendChild(s);
+            }
+        }
+
+        function triggerGameOver(reason) {
+            gameState = 'GAMEOVER';
+            clearInterval(timerInterval);
+            sound.setMowerActive(false);
+            
+            const completeM = document.getElementById('modal-complete');
+            document.getElementById('complete-subtitle').textContent = reason;
+            triggerLevelComplete(Math.round((tractorState.mowedCount / tractorState.totalLawnPixels) * 100));
+        }
+
+        function setupInputListeners() {
+            // Keyboard Handlers
+            window.addEventListener('keydown', (e) => {
+                sound.init(); // Initialize audio context on first interaction
+                switch (e.key) {
+                    case 'ArrowUp': case 'w': case 'W': inputs.up = true; break;
+                    case 'ArrowDown': case 's': case 'S': inputs.down = true; break;
+                    case 'ArrowLeft': case 'a': case 'A': inputs.left = true; break;
+                    case 'ArrowRight': case 'd': case 'D': inputs.right = true; break;
+                }
+            });
+
+            window.addEventListener('keyup', (e) => {
+                switch (e.key) {
+                    case 'ArrowUp': case 'w': case 'W': inputs.up = false; break;
+                    case 'ArrowDown': case 's': case 'S': inputs.down = false; break;
+                    case 'ArrowLeft': case 'a': case 'A': inputs.left = false; break;
+                    case 'ArrowRight': case 'd': case 'D': inputs.right = false; break;
+                }
+            });
+
+            // Touch Control Buttons setup
+            const bindBtn = (id, inputKey) => {
+                const btn = document.getElementById(id);
+                const start = (e) => {
+                    e.preventDefault();
+                    sound.init();
+                    inputs[inputKey] = true;
+                    btn.classList.add('active');
+                };
+                const end = (e) => {
+                    e.preventDefault();
+                    inputs[inputKey] = false;
+                    btn.classList.remove('active');
+                };
+
+                btn.addEventListener('touchstart', start);
+                btn.addEventListener('touchend', end);
+                btn.addEventListener('mousedown', start);
+                btn.addEventListener('mouseup', end);
+                btn.addEventListener('mouseleave', end);
+            };
+
+            bindBtn('btn-up', 'up');
+            bindBtn('btn-down', 'down');
+            bindBtn('btn-left', 'left');
+            bindBtn('btn-right', 'right');
+
+            // Camera Toggle Button
+            document.getElementById('btn-cam').addEventListener('click', () => {
+                sound.playPopSound();
+                cameraMode = cameraMode === 'CHASE' ? 'TOPDOWN' : 'CHASE';
+                document.getElementById('btn-toggle-cam-setting').textContent = cameraMode;
+            });
+
+            // UI Modal Actions
+            document.getElementById('btn-start-game').addEventListener('click', () => {
+                sound.init();
+                sound.playPopSound();
+                document.getElementById('modal-container').classList.add('hidden');
+                gameState = 'PLAYING';
+                startTimer();
+            });
+
+            document.getElementById('btn-retry').addEventListener('click', () => {
+                sound.playPopSound();
+                document.getElementById('modal-container').classList.add('hidden');
+                loadLevel(currentLevelIdx);
+                gameState = 'PLAYING';
+                startTimer();
+            });
+
+            document.getElementById('btn-next-level').addEventListener('click', () => {
+                sound.playPopSound();
+                currentLevelIdx = (currentLevelIdx + 1) % LEVELS.length;
+                loadLevel(currentLevelIdx);
+                document.getElementById('modal-container').classList.add('hidden');
+                gameState = 'PLAYING';
+                startTimer();
+            });
+
+            document.getElementById('btn-settings').addEventListener('click', () => {
+                sound.playPopSound();
+                gameState = 'PAUSED';
+                document.getElementById('modal-start').classList.add('hidden');
+                document.getElementById('modal-complete').classList.add('hidden');
+                document.getElementById('modal-settings').classList.remove('hidden');
+                document.getElementById('modal-container').classList.remove('hidden');
+            });
+
+            document.getElementById('btn-close-settings').addEventListener('click', () => {
+                sound.playPopSound();
+                document.getElementById('modal-container').classList.add('hidden');
+                gameState = 'PLAYING';
+            });
+
+            document.getElementById('btn-restart-current').addEventListener('click', () => {
+                sound.playPopSound();
+                document.getElementById('modal-container').classList.add('hidden');
+                loadLevel(currentLevelIdx);
+                gameState = 'PLAYING';
+                startTimer();
+            });
+
+            document.getElementById('btn-toggle-sound').addEventListener('click', (e) => {
+                sound.enabled = !sound.enabled;
+                e.target.textContent = sound.enabled ? 'ON' : 'OFF';
+                e.target.className = sound.enabled 
+                    ? 'px-4 py-1.5 bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 rounded-xl font-semibold text-xs'
+                    : 'px-4 py-1.5 bg-slate-700 text-slate-400 rounded-xl font-semibold text-xs';
+            });
+        }
+
+        function populateLevelList() {
+            const container = document.getElementById('level-list');
+            container.innerHTML = '';
+            LEVELS.forEach((lvl, idx) => {
+                const btn = document.createElement('button');
+                btn.className = `w-full p-3 rounded-xl border flex items-center justify-between text-left transition ${
+                    idx === currentLevelIdx 
+                    ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-300 font-bold' 
+                    : 'bg-slate-700/50 border-white/5 text-slate-300 hover:bg-slate-700'
+                }`;
+                btn.innerHTML = `
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs bg-slate-900/60 px-2 py-1 rounded-lg">Lvl ${lvl.id}</span>
+                        <span>${lvl.name}</span>
+                    </div>
+                    <span class="text-xs text-slate-400">⛽ ${lvl.fuel}%</span>
+                `;
+                btn.addEventListener('click', () => {
+                    sound.playPopSound();
+                    loadLevel(idx);
+                    populateLevelList();
+                });
+                container.appendChild(btn);
+            });
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            updateTractorPhysics();
+            updateParticles();
+            updateCamera();
+
+            renderer.render(scene, camera);
+        }
+
+        // Initialize Application
+        window.onload = () => {
+            initThreeJS();
+            setupInputListeners();
+            populateLevelList();
+            loadLevel(0);
+            animate();
+        };
+    </script>
+</body>
+</html>
