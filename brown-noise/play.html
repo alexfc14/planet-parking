@@ -63,6 +63,13 @@
             box-shadow: 0 0 15px rgba(245, 158, 11, 0.2);
         }
 
+        .visual-card.active {
+            background: rgba(59, 130, 246, 0.22);
+            border-color: rgba(59, 130, 246, 0.6);
+            color: #93c5fd;
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.2);
+        }
+
         .timer-btn.active {
             background: rgba(245, 158, 11, 0.25);
             border-color: rgba(245, 158, 11, 0.6);
@@ -109,7 +116,7 @@
     <div id="night-overlay" class="absolute inset-0 z-10 bg-black opacity-0 pointer-events-none"></div>
 
     <!-- Main Header Controls -->
-    <header class="relative z-20 p-4 flex items-center justify-between glass-panel border-b-0 rounded-b-2xl mx-3 mt-3">
+    <header class="relative z-20 p-4 flex items-center justify-between glass-panel border-b-0 rounded-b-2xl mx-3 mt-3 transition-opacity duration-500">
         <div class="flex items-center gap-3">
             <div class="w-10 h-10 rounded-full bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -139,7 +146,7 @@
     </header>
 
     <!-- Large Touch Zone -->
-    <main id="main-touch-zone" class="relative z-20 flex-1 flex flex-col items-center justify-center cursor-pointer p-4 text-center">
+    <main id="main-touch-zone" class="relative z-20 flex-1 flex flex-col items-center justify-center cursor-pointer p-4 text-center transition-opacity duration-500">
         <div class="relative flex items-center justify-center">
             <!-- Outer Glow Ring -->
             <div id="play-ripple" class="absolute w-56 h-56 rounded-full border border-amber-500/20 pulse-glow"></div>
@@ -163,7 +170,7 @@
     </main>
 
     <!-- Bottom Controls & Preset Selector -->
-    <footer class="relative z-20 p-4 glass-panel rounded-t-3xl border-t-0 mx-2 mb-2 flex flex-col gap-4">
+    <footer class="relative z-20 p-4 glass-panel rounded-t-3xl border-t-0 mx-2 mb-2 flex flex-col gap-4 transition-opacity duration-500">
         
         <!-- Preset Cards -->
         <div class="flex flex-col gap-1.5">
@@ -276,6 +283,8 @@
         let bassFilter = null;
         let masterGain = null;
         let compressor = null;
+        let analyserNode = null;
+        let audioDataArray = null;
         let brownNoiseBuffer = null;
 
         let isPlaying = false;
@@ -322,11 +331,18 @@
             compressor.attack.setValueAtTime(0.003, audioCtx.currentTime);
             compressor.release.setValueAtTime(0.1, audioCtx.currentTime);
 
+            // Real-time FFT Analyser for Visualizer Sync
+            analyserNode = audioCtx.createAnalyser();
+            analyserNode.fftSize = 64;
+            analyserNode.smoothingTimeConstant = 0.8;
+            audioDataArray = new Uint8Array(analyserNode.frequencyBinCount);
+
             subsonicFilter.connect(lowpassFilter);
             lowpassFilter.connect(bassFilter);
             bassFilter.connect(masterGain);
             masterGain.connect(compressor);
-            compressor.connect(audioCtx.destination);
+            compressor.connect(analyserNode);
+            analyserNode.connect(audioCtx.destination);
 
             setupMediaSession();
         }
@@ -636,67 +652,299 @@
             timerInterval = setInterval(updateTimer, 1000);
         }
 
-        let scene, camera, renderer, sphereMesh, particlesMesh;
-        let animationFrameId = null;
+        let scene, camera, renderer;
+        // Visual theme objects for 1:1 preset mapping
+        let superDeepParticles, superDeepPositions, superDeepBaseGrid; // Golden Particle Wave (Screenshot Inspired)
+        let wombSphereMesh, wombOriginalPositions; // Womb Pulsing Orb
+        let velvetWavesMesh, velvetWavesGeometry; // Velvet Waves Horizon
+        let rainGroup, rippleRings = [], rainDropsMesh; // Rain Ripples & Drops
+        let cosmicGroup, cosmicCoreMesh, cosmicDustMesh; // Enriched Cosmic Nebula
+
+        // Smoothed audio reactive parameters
+        let smoothedBass = 0;
+        let smoothedEnergy = 0;
 
         function initThreeVisualizer() {
             const container = document.getElementById('canvas-container');
             scene = new THREE.Scene();
 
             camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.z = 4;
+            camera.position.set(0, 1.2, 4.2);
+            camera.lookAt(0, 0, 0);
 
             renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "low-power" });
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
             container.appendChild(renderer.domElement);
 
-            // Ambient Sphere
-            const geometry = new THREE.IcosahedronGeometry(1.6, 3);
-            const material = new THREE.MeshBasicMaterial({
+            // 1. Theme: Super Deep - Golden Particle Wave Landscape (Inspired by screenshot)
+            const gridCols = 80;
+            const gridRows = 50;
+            const particleCount = gridCols * gridRows;
+            const waveGeo = new THREE.BufferGeometry();
+            const positions = new Float32Array(particleCount * 3);
+            superDeepBaseGrid = new Float32Array(particleCount * 3);
+
+            let pIdx = 0;
+            for (let r = 0; r < gridRows; r++) {
+                for (let c = 0; c < gridCols; c++) {
+                    const x = (c / (gridCols - 1) - 0.5) * 8;
+                    const z = (r / (gridRows - 1) - 0.5) * 5 - 0.5;
+                    const y = -0.6;
+
+                    positions[pIdx * 3] = x;
+                    positions[pIdx * 3 + 1] = y;
+                    positions[pIdx * 3 + 2] = z;
+
+                    superDeepBaseGrid[pIdx * 3] = x;
+                    superDeepBaseGrid[pIdx * 3 + 1] = y;
+                    superDeepBaseGrid[pIdx * 3 + 2] = z;
+                    pIdx++;
+                }
+            }
+            waveGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            superDeepPositions = waveGeo.attributes.position;
+
+            const particleMat = new THREE.PointsMaterial({
+                size: 0.045,
+                color: 0xf59e0b,
+                transparent: true,
+                opacity: 0.75,
+                blending: THREE.AdditiveBlending
+            });
+            superDeepParticles = new THREE.Points(waveGeo, particleMat);
+            scene.add(superDeepParticles);
+
+            // 2. Theme: Womb Pulse - Golden / Crimson Pulsing Core
+            const wombGeo = new THREE.IcosahedronGeometry(1.3, 4);
+            wombOriginalPositions = wombGeo.attributes.position.clone();
+            const wombMat = new THREE.MeshBasicMaterial({
                 color: 0xf59e0b,
                 wireframe: true,
                 transparent: true,
-                opacity: 0.15
+                opacity: 0.35
             });
-            sphereMesh = new THREE.Mesh(geometry, material);
-            scene.add(sphereMesh);
+            wombSphereMesh = new THREE.Mesh(wombGeo, wombMat);
+            scene.add(wombSphereMesh);
 
-            // Soft Floating Particles
-            const particleGeo = new THREE.BufferGeometry();
-            const count = 80;
-            const posArray = new Float32Array(count * 3);
-
-            for (let i = 0; i < count * 3; i++) {
-                posArray[i] = (Math.random() - 0.5) * 8;
-            }
-            particleGeo.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
-
-            const particleMat = new THREE.PointsMaterial({
-                size: 0.04,
-                color: 0xfbbf24,
+            // 3. Theme: Velvet Waves Horizon
+            velvetWavesGeometry = new THREE.PlaneGeometry(10, 6, 32, 20);
+            const velvetMat = new THREE.MeshBasicMaterial({
+                color: 0x818cf8,
+                wireframe: true,
                 transparent: true,
                 opacity: 0.3
             });
+            velvetWavesMesh = new THREE.Mesh(velvetWavesGeometry, velvetMat);
+            velvetWavesMesh.rotation.x = -Math.PI / 3;
+            velvetWavesMesh.position.y = -0.8;
+            scene.add(velvetWavesMesh);
 
-            particlesMesh = new THREE.Points(particleGeo, particleMat);
-            scene.add(particlesMesh);
+            // 4. Theme: Rain Ripples & Drops
+            rainGroup = new THREE.Group();
+            for (let i = 0; i < 5; i++) {
+                const ringGeo = new THREE.RingGeometry(0.3 * (i + 1), 0.32 * (i + 1), 32);
+                const ringMat = new THREE.MeshBasicMaterial({
+                    color: 0x38bdf8,
+                    side: THREE.DoubleSide,
+                    transparent: true,
+                    opacity: 0.25
+                });
+                const ring = new THREE.Mesh(ringGeo, ringMat);
+                ring.rotation.x = Math.PI / 2.5;
+                rainGroup.add(ring);
+                rippleRings.push(ring);
+            }
+            // Falling rain particles
+            const rainDropCount = 100;
+            const rainPos = new Float32Array(rainDropCount * 3);
+            for (let i = 0; i < rainDropCount; i++) {
+                rainPos[i * 3] = (Math.random() - 0.5) * 6;
+                rainPos[i * 3 + 1] = Math.random() * 4 - 2;
+                rainPos[i * 3 + 2] = (Math.random() - 0.5) * 4;
+            }
+            const rainDropGeo = new THREE.BufferGeometry();
+            rainDropGeo.setAttribute('position', new THREE.BufferAttribute(rainPos, 3));
+            rainDropsMesh = new THREE.Points(rainDropGeo, new THREE.PointsMaterial({
+                size: 0.03,
+                color: 0x7dd3fc,
+                transparent: true,
+                opacity: 0.5
+            }));
+            rainGroup.add(rainDropsMesh);
+            scene.add(rainGroup);
 
+            // 5. Theme: Enriched Cosmic Nebula (Celestial Core + Orbital Dust Rings + Star Field)
+            cosmicGroup = new THREE.Group();
+            
+            // Central Glowing Sphere / Core
+            const coreGeo = new THREE.IcosahedronGeometry(0.8, 3);
+            const coreMat = new THREE.MeshBasicMaterial({
+                color: 0xfbbf24,
+                wireframe: true,
+                transparent: true,
+                opacity: 0.45
+            });
+            cosmicCoreMesh = new THREE.Mesh(coreGeo, coreMat);
+            cosmicGroup.add(cosmicCoreMesh);
+
+            // Orbiting Swirling Galaxy Dust Rings
+            const dustCount = 450;
+            const dustPos = new Float32Array(dustCount * 3);
+            for (let i = 0; i < dustCount; i++) {
+                const radius = 1.2 + Math.random() * 2.5;
+                const theta = Math.random() * Math.PI * 2;
+                const phi = (Math.random() - 0.5) * 0.8;
+
+                dustPos[i * 3] = radius * Math.cos(theta);
+                dustPos[i * 3 + 1] = radius * Math.sin(phi);
+                dustPos[i * 3 + 2] = radius * Math.sin(theta);
+            }
+            const dustGeo = new THREE.BufferGeometry();
+            dustGeo.setAttribute('position', new THREE.BufferAttribute(dustPos, 3));
+            cosmicDustMesh = new THREE.Points(dustGeo, new THREE.PointsMaterial({
+                size: 0.04,
+                color: 0xf59e0b,
+                transparent: true,
+                opacity: 0.6,
+                blending: THREE.AdditiveBlending
+            }));
+            cosmicGroup.add(cosmicDustMesh);
+            scene.add(cosmicGroup);
+
+            updateVisualThemeVisibility();
             animateVisualizer();
+        }
+
+        function updateVisualThemeVisibility() {
+            if (!superDeepParticles) return;
+
+            // 1:1 Automatic Binding to Active Sound Preset
+            superDeepParticles.visible = (currentPreset === 'super_deep');
+            wombSphereMesh.visible = (currentPreset === 'womb');
+            velvetWavesMesh.visible = (currentPreset === 'velvet');
+            rainGroup.visible = (currentPreset === 'rain');
+            cosmicGroup.visible = (currentPreset === 'cosmic');
+
+            // Adjust camera position per preset for optimal view
+            if (currentPreset === 'super_deep') {
+                camera.position.set(0, 0.8, 3.8);
+            } else if (currentPreset === 'velvet') {
+                camera.position.set(0, 0.5, 4.0);
+            } else {
+                camera.position.set(0, 0, 4.2);
+            }
+            camera.lookAt(0, 0, 0);
         }
 
         function animateVisualizer() {
             animationFrameId = requestAnimationFrame(animateVisualizer);
 
-            // Rotate visualizer only if visible/playing to conserve battery
-            if (!document.hidden && isPlaying) {
-                if (sphereMesh) {
-                    sphereMesh.rotation.y += 0.002;
-                    sphereMesh.rotation.x += 0.001;
+            if (document.hidden) return;
+
+            // Sample live FFT audio energy if playing
+            let rawBass = 0;
+            let rawEnergy = 0;
+
+            if (analyserNode && isPlaying && audioDataArray) {
+                analyserNode.getByteFrequencyData(audioDataArray);
+                let sumLow = 0;
+                let sumTotal = 0;
+                const len = audioDataArray.length;
+
+                for (let i = 0; i < len; i++) {
+                    const val = audioDataArray[i];
+                    sumTotal += val;
+                    if (i < len / 4) sumLow += val; // Sub/Low bins
                 }
-                if (particlesMesh) {
-                    particlesMesh.rotation.y -= 0.0008;
+
+                rawBass = (sumLow / (len / 4)) / 255;
+                rawEnergy = (sumTotal / len) / 255;
+            }
+
+            // Smooth interpolation (lerp) for gentle nursery aesthetic
+            smoothedBass += (rawBass - smoothedBass) * 0.1;
+            smoothedEnergy += (rawEnergy - smoothedEnergy) * 0.1;
+
+            const time = performance.now() * 0.001;
+
+            // 1. Theme: Super Deep - Golden Particle Wave (Inspired by screenshot)
+            if (superDeepParticles && superDeepParticles.visible) {
+                const count = superDeepPositions.count;
+                for (let i = 0; i < count; i++) {
+                    const bx = superDeepBaseGrid[i * 3];
+                    const by = superDeepBaseGrid[i * 3 + 1];
+                    const bz = superDeepBaseGrid[i * 3 + 2];
+
+                    const waveZ = Math.sin(bx * 1.8 + time * 1.5) * Math.cos(bz * 1.8 + time * 1.2) * (0.35 + smoothedBass * 1.2);
+                    const waveY = by + Math.sin(bx * 2.5 + time * 2.0) * 0.12 * (1 + smoothedBass * 1.5);
+
+                    superDeepPositions.setXYZ(i, bx, waveY, bz + waveZ);
                 }
+                superDeepPositions.needsUpdate = true;
+                superDeepParticles.rotation.y = Math.sin(time * 0.1) * 0.1;
+            }
+
+            // 2. Theme: Womb Pulsing Core
+            if (wombSphereMesh && wombSphereMesh.visible) {
+                wombSphereMesh.rotation.y += 0.003 + (smoothedBass * 0.005);
+                const posAttr = wombSphereMesh.geometry.attributes.position;
+                const count = posAttr.count;
+                const targetScale = 1 + (smoothedBass * 0.45);
+                wombSphereMesh.scale.set(targetScale, targetScale, targetScale);
+
+                for (let i = 0; i < count; i++) {
+                    const u = wombOriginalPositions.getX(i);
+                    const v = wombOriginalPositions.getY(i);
+                    const w = wombOriginalPositions.getZ(i);
+
+                    const noise = Math.sin(u * 2 + time * 2) * Math.cos(v * 2 + time * 2) * 0.08 * (1 + smoothedBass * 2);
+                    posAttr.setXYZ(i, u + u * noise, v + v * noise, w + w * noise);
+                }
+                posAttr.needsUpdate = true;
+            }
+
+            // 3. Theme: Velvet Waves Horizon
+            if (velvetWavesMesh && velvetWavesMesh.visible) {
+                const wPos = velvetWavesGeometry.attributes.position;
+                for (let i = 0; i < wPos.count; i++) {
+                    const x = wPos.getX(i);
+                    const y = wPos.getY(i);
+                    const z = Math.sin(x * 1.5 + time * 1.5) * Math.cos(y * 1.5 + time * 1.5) * (0.2 + smoothedBass * 0.8);
+                    wPos.setZ(i, z);
+                }
+                wPos.needsUpdate = true;
+            }
+
+            // 4. Theme: Rain Ripples & Drops
+            if (rainGroup && rainGroup.visible) {
+                rippleRings.forEach((ring, idx) => {
+                    const ringScale = 1 + ((time * 0.8 + idx * 0.4) % 1.5) + (smoothedBass * 0.5);
+                    ring.scale.set(ringScale, ringScale, 1);
+                    ring.material.opacity = Math.max(0, 0.45 - (ringScale - 1) * 0.3);
+                });
+                
+                // Animate falling rain particles
+                if (rainDropsMesh) {
+                    const rPos = rainDropsMesh.geometry.attributes.position;
+                    for (let i = 0; i < rPos.count; i++) {
+                        let y = rPos.getY(i) - 0.02 - (smoothedEnergy * 0.03);
+                        if (y < -2) y = 2;
+                        rPos.setY(i, y);
+                    }
+                    rPos.needsUpdate = true;
+                }
+            }
+
+            // 5. Theme: Enriched Cosmic Nebula
+            if (cosmicGroup && cosmicGroup.visible) {
+                cosmicCoreMesh.rotation.y += 0.005;
+                cosmicCoreMesh.rotation.x += 0.003;
+                const cScale = 1 + (smoothedBass * 0.35);
+                cosmicCoreMesh.scale.set(cScale, cScale, cScale);
+
+                cosmicDustMesh.rotation.y -= 0.002 + (smoothedEnergy * 0.004);
+                cosmicDustMesh.rotation.z += 0.001;
             }
 
             renderer.render(scene, camera);
@@ -715,13 +963,15 @@
                 togglePlay();
             });
 
-            // Preset Selection Buttons
+            // Preset Selection Buttons (Auto-syncs audio preset & matching visualizer)
             document.querySelectorAll('.preset-card').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     e.stopPropagation();
                     document.querySelectorAll('.preset-card').forEach(b => b.classList.remove('active'));
                     btn.classList.add('active');
                     currentPreset = btn.dataset.preset;
+
+                    updateVisualThemeVisibility();
 
                     if (isPlaying) {
                         startAudio(); // Smoothly switch preset live
@@ -828,6 +1078,53 @@
                     renderer.setSize(window.innerWidth, window.innerHeight);
                 }
             });
+
+            // Auto-hide UI after 5 seconds of inactivity
+            let idleTimer = null;
+            let isUiHidden = false;
+
+            function showUI() {
+                const header = document.querySelector('header');
+                const main = document.getElementById('main-touch-zone');
+                const footer = document.querySelector('footer');
+                
+                [header, main, footer].forEach(el => {
+                    if (el) el.classList.remove('opacity-0', 'pointer-events-none');
+                });
+                isUiHidden = false;
+                resetIdleTimer();
+            }
+
+            function hideUI() {
+                const modal = document.getElementById('config-modal');
+                if (modal && !modal.classList.contains('hidden')) return;
+
+                const header = document.querySelector('header');
+                const main = document.getElementById('main-touch-zone');
+                const footer = document.querySelector('footer');
+                
+                [header, main, footer].forEach(el => {
+                    if (el) el.classList.add('opacity-0', 'pointer-events-none');
+                });
+                isUiHidden = true;
+            }
+
+            function resetIdleTimer() {
+                if (idleTimer) clearTimeout(idleTimer);
+                idleTimer = setTimeout(hideUI, 5000);
+            }
+
+            ['pointerdown', 'mousemove', 'keydown', 'touchstart'].forEach(eventType => {
+                window.addEventListener(eventType, () => {
+                    if (isUiHidden) {
+                        showUI();
+                    } else {
+                        resetIdleTimer();
+                    }
+                }, { passive: true });
+            });
+
+            resetIdleTimer();
         });
     </script>
 </body>
