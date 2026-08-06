@@ -28,7 +28,6 @@
             color: #e2e8f0;
         }
 
-        /* Custom Scrollbar for preset selection */
         .no-scrollbar::-webkit-scrollbar {
             display: none;
         }
@@ -37,9 +36,8 @@
             scrollbar-width: none;
         }
 
-        /* Glassmorphism elements */
         .glass-panel {
-            background: rgba(18, 20, 32, 0.65);
+            background: rgba(18, 20, 32, 0.75);
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
             border: 1px solid rgba(255, 255, 255, 0.08);
@@ -55,19 +53,25 @@
 
         .glass-button:active {
             transform: scale(0.96);
-            background: rgba(255, 255, 255, 0.12);
+            background: rgba(255, 255, 255, 0.14);
         }
 
         .preset-card.active {
-            background: rgba(245, 158, 11, 0.18);
-            border-color: rgba(245, 158, 11, 0.5);
+            background: rgba(245, 158, 11, 0.22);
+            border-color: rgba(245, 158, 11, 0.6);
+            color: #fbbf24;
+            box-shadow: 0 0 15px rgba(245, 158, 11, 0.2);
+        }
+
+        .timer-btn.active {
+            background: rgba(245, 158, 11, 0.25);
+            border-color: rgba(245, 158, 11, 0.6);
             color: #fbbf24;
         }
 
-        /* Custom Slider Styling */
         input[type=range] {
             -webkit-appearance: none;
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.12);
             border-radius: 9999px;
             height: 8px;
         }
@@ -81,17 +85,15 @@
             box-shadow: 0 0 12px rgba(245, 158, 11, 0.5);
         }
 
-        /* Ambient Glow Pulse */
         @keyframes gentlePulse {
-            0%, 100% { transform: scale(1); opacity: 0.8; }
-            50% { transform: scale(1.04); opacity: 1; }
+            0%, 100% { transform: scale(1); opacity: 0.6; }
+            50% { transform: scale(1.05); opacity: 0.95; }
         }
 
         .pulse-glow {
-            animation: gentlePulse 6s infinite ease-in-out;
+            animation: gentlePulse 5s infinite ease-in-out;
         }
 
-        /* Night Mode Dimmer Overlay */
         #night-overlay {
             transition: opacity 0.5s ease;
             pointer-events: none;
@@ -106,8 +108,8 @@
     <!-- Screen Dimmer Overlay for Dark Nursery -->
     <div id="night-overlay" class="absolute inset-0 z-10 bg-black opacity-0 pointer-events-none"></div>
 
-    <!-- Main Interactive Header -->
-    <header class="relative z-20 p-5 flex items-center justify-between glass-panel border-b-0 rounded-b-2xl mx-3 mt-3">
+    <!-- Main Header Controls -->
+    <header class="relative z-20 p-4 flex items-center justify-between glass-panel border-b-0 rounded-b-2xl mx-3 mt-3">
         <div class="flex items-center gap-3">
             <div class="w-10 h-10 rounded-full bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -115,20 +117,20 @@
                 </svg>
             </div>
             <div>
-                <h1 class="font-bold text-lg text-slate-100 tracking-wide leading-tight">Brown Noise</h1>
+                <h1 class="font-bold text-base sm:text-lg text-slate-100 tracking-wide leading-tight">Baby Brown Noise</h1>
                 <p class="text-xs text-slate-400 font-medium" id="status-text">Ready • Tap anywhere to start</p>
             </div>
         </div>
 
         <div class="flex items-center gap-2">
             <!-- Screen Dimmer Toggle -->
-            <button id="dimmer-btn" class="glass-button p-2.5 rounded-xl text-slate-300 hover:text-white" title="Dim Screen">
+            <button id="dimmer-btn" class="glass-button p-2.5 rounded-xl text-slate-300 hover:text-white active:scale-95" title="Dim Screen">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
                 </svg>
             </button>
-            <!-- Controls / Settings Button -->
-            <button id="config-btn" class="glass-button p-2.5 rounded-xl text-slate-300 hover:text-white" title="Sound Settings">
+            <!-- Settings Modal Button -->
+            <button id="config-btn" class="glass-button p-2.5 rounded-xl text-slate-300 hover:text-white active:scale-95" title="Sound Settings">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/>
                 </svg>
@@ -136,60 +138,60 @@
         </div>
     </header>
 
-    <!-- Large Interactive Center Play Zone -->
+    <!-- Large Touch Zone -->
     <main id="main-touch-zone" class="relative z-20 flex-1 flex flex-col items-center justify-center cursor-pointer p-4 text-center">
         <div class="relative flex items-center justify-center">
-            <!-- Outer Ripple Effect Ring -->
+            <!-- Outer Glow Ring -->
             <div id="play-ripple" class="absolute w-56 h-56 rounded-full border border-amber-500/20 pulse-glow"></div>
             
-            <!-- Central Huge Play/Pause Circle Button -->
-            <button id="big-play-btn" class="w-40 h-40 rounded-full glass-panel border-2 border-amber-500/40 flex flex-col items-center justify-center gap-2 shadow-2xl transition-all duration-300 hover:scale-105 active:scale-95 bg-gradient-to-b from-amber-500/10 to-transparent">
+            <!-- Central Play/Pause Button -->
+            <button id="big-play-btn" class="w-40 h-40 rounded-full glass-panel border-2 border-amber-500/40 flex flex-col items-center justify-center gap-2 shadow-2xl transition-all duration-300 hover:scale-105 active:scale-95 bg-gradient-to-b from-amber-500/15 to-transparent">
                 <svg id="play-icon" class="w-14 h-14 text-amber-400 translate-x-1" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M8 5v14l11-7z"/>
                 </svg>
                 <svg id="pause-icon" class="w-14 h-14 text-amber-400 hidden" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
                 </svg>
-                <span id="play-btn-label" class="text-xs font-semibold uppercase tracking-wider text-amber-300/80">Play Noise</span>
+                <span id="play-btn-label" class="text-xs font-bold uppercase tracking-wider text-amber-300">Play</span>
             </button>
         </div>
 
         <!-- Timer Countdown Display -->
-        <div id="timer-display" class="mt-8 px-4 py-1.5 rounded-full glass-button text-xs text-amber-300/90 font-medium tracking-wide hidden">
+        <div id="timer-display" class="mt-8 px-4 py-1.5 rounded-full glass-button text-xs text-amber-300 font-semibold tracking-wide hidden">
             Timer: <span id="timer-countdown">Infinite</span>
         </div>
     </main>
 
-    <!-- Bottom Controls & Sound Selector -->
-    <footer class="relative z-20 p-5 glass-panel rounded-t-3xl border-t-0 mx-2 mb-2 flex flex-col gap-4">
+    <!-- Bottom Controls & Preset Selector -->
+    <footer class="relative z-20 p-4 glass-panel rounded-t-3xl border-t-0 mx-2 mb-2 flex flex-col gap-4">
         
-        <!-- Preset Track Selection (Large Touch Pills) -->
-        <div class="flex flex-col gap-2">
-            <span class="text-xs font-semibold text-slate-400 tracking-wider uppercase px-1">Sound Texture</span>
+        <!-- Preset Cards -->
+        <div class="flex flex-col gap-1.5">
+            <span class="text-[10px] font-bold text-slate-400 tracking-wider uppercase px-1">Sound Texture</span>
             <div class="flex gap-2 overflow-x-auto no-scrollbar py-1">
-                <button data-preset="super_deep" class="preset-card active glass-button px-4 py-3 rounded-2xl flex-shrink-0 flex items-center gap-2 text-sm font-medium">
+                <button data-preset="super_deep" class="preset-card active glass-button px-4 py-3 rounded-2xl flex-shrink-0 flex items-center gap-2 text-xs font-semibold">
                     <span>🌙</span> Super Deep
                 </button>
-                <button data-preset="womb" class="preset-card glass-button px-4 py-3 rounded-2xl flex-shrink-0 flex items-center gap-2 text-sm font-medium">
+                <button data-preset="womb" class="preset-card glass-button px-4 py-3 rounded-2xl flex-shrink-0 flex items-center gap-2 text-xs font-semibold">
                     <span>❤️</span> Womb Pulse
                 </button>
-                <button data-preset="velvet" class="preset-card glass-button px-4 py-3 rounded-2xl flex-shrink-0 flex items-center gap-2 text-sm font-medium">
+                <button data-preset="velvet" class="preset-card glass-button px-4 py-3 rounded-2xl flex-shrink-0 flex items-center gap-2 text-xs font-semibold">
                     <span>☁️</span> Velvet Soft
                 </button>
-                <button data-preset="rain" class="preset-card glass-button px-4 py-3 rounded-2xl flex-shrink-0 flex items-center gap-2 text-sm font-medium">
-                    <span>🌧️</span> Soft Rain Brown
+                <button data-preset="rain" class="preset-card glass-button px-4 py-3 rounded-2xl flex-shrink-0 flex items-center gap-2 text-xs font-semibold">
+                    <span>🌧️</span> Soft Rain
                 </button>
-                <button data-preset="cosmic" class="preset-card glass-button px-4 py-3 rounded-2xl flex-shrink-0 flex items-center gap-2 text-sm font-medium">
+                <button data-preset="cosmic" class="preset-card glass-button px-4 py-3 rounded-2xl flex-shrink-0 flex items-center gap-2 text-xs font-semibold">
                     <span>🌌</span> Cosmic Rumble
                 </button>
             </div>
         </div>
 
         <!-- Sleep Timer Buttons -->
-        <div class="flex flex-col gap-2">
-            <span class="text-xs font-semibold text-slate-400 tracking-wider uppercase px-1">Sleep Timer</span>
+        <div class="flex flex-col gap-1.5">
+            <span class="text-[10px] font-bold text-slate-400 tracking-wider uppercase px-1">Sleep Timer</span>
             <div class="grid grid-cols-5 gap-2">
-                <button data-timer="off" class="timer-btn glass-button py-2.5 rounded-xl text-xs font-semibold text-amber-400 border-amber-500/40">∞</button>
+                <button data-timer="off" class="timer-btn active glass-button py-2.5 rounded-xl text-xs font-bold text-amber-400 border-amber-500/40">∞</button>
                 <button data-timer="15" class="timer-btn glass-button py-2.5 rounded-xl text-xs font-semibold text-slate-300">15m</button>
                 <button data-timer="30" class="timer-btn glass-button py-2.5 rounded-xl text-xs font-semibold text-slate-300">30m</button>
                 <button data-timer="60" class="timer-btn glass-button py-2.5 rounded-xl text-xs font-semibold text-slate-300">1h</button>
@@ -198,11 +200,11 @@
         </div>
     </footer>
 
-    <!-- Config Modal -->
-    <div id="config-modal" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-md hidden flex items-end sm:items-center justify-center p-4">
-        <div class="glass-panel w-full max-w-md rounded-3xl p-6 flex flex-col gap-6 border border-white/10">
-            <div class="flex items-center justify-between border-b border-white/10 pb-4">
-                <h3 class="text-lg font-bold text-slate-100">Acoustic Settings</h3>
+    <!-- Config Settings Modal -->
+    <div id="config-modal" class="fixed inset-0 z-50 bg-black/75 backdrop-blur-md hidden flex items-end sm:items-center justify-center p-4">
+        <div class="glass-panel w-full max-w-md rounded-3xl p-6 flex flex-col gap-5 border border-white/10">
+            <div class="flex items-center justify-between border-b border-white/10 pb-3">
+                <h3 class="text-base font-bold text-slate-100">Acoustic Settings</h3>
                 <button id="close-config-btn" class="text-slate-400 hover:text-white p-1">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
@@ -210,44 +212,49 @@
                 </button>
             </div>
 
-            <!-- Tone / Warmth Slider -->
-            <div class="flex flex-col gap-2">
-                <div class="flex justify-between text-sm font-medium">
-                    <span class="text-slate-300">Warmth (Filter Cutoff)</span>
-                    <span id="warmth-val" class="text-amber-400">180 Hz</span>
+            <!-- Warmth / Lowpass Cutoff Slider -->
+            <div class="flex flex-col gap-1.5">
+                <div class="flex justify-between text-xs font-medium">
+                    <span class="text-slate-300">Warmth (Cutoff)</span>
+                    <span id="warmth-val" class="text-amber-400 font-semibold">280 Hz</span>
                 </div>
-                <input id="warmth-slider" type="range" min="80" max="400" value="180" class="w-full">
+                <input id="warmth-slider" type="range" min="80" max="450" value="280" class="w-full">
             </div>
 
-            <!-- Pitch / Texture Softness -->
-            <div class="flex flex-col gap-2">
-                <div class="flex justify-between text-sm font-medium">
-                    <span class="text-slate-300">Sub-Bass Boost</span>
-                    <span id="bass-val" class="text-amber-400">+4 dB</span>
+            <!-- Sub-Bass Boost Slider -->
+            <div class="flex flex-col gap-1.5">
+                <div class="flex justify-between text-xs font-medium">
+                    <span class="text-slate-300">Sub-Bass Shelf</span>
+                    <span id="bass-val" class="text-amber-400 font-semibold">+2 dB</span>
                 </div>
-                <input id="bass-slider" type="range" min="0" max="10" value="4" class="w-full">
+                <input id="bass-slider" type="range" min="0" max="10" value="2" class="w-full">
             </div>
 
-            <!-- Master Volume -->
-            <div class="flex flex-col gap-2">
-                <div class="flex justify-between text-sm font-medium">
-                    <span class="text-slate-300">Volume</span>
-                    <span id="volume-val" class="text-amber-400">80%</span>
+            <!-- Master Volume Slider (Up to 300%) -->
+            <div class="flex flex-col gap-1.5">
+                <div class="flex justify-between text-xs font-medium">
+                    <span class="text-slate-300">Volume Level</span>
+                    <span id="volume-val" class="text-amber-400 font-semibold">140%</span>
                 </div>
-                <input id="volume-slider" type="range" min="0" max="100" value="80" class="w-full">
+                <input id="volume-slider" type="range" min="0" max="300" value="140" class="w-full">
             </div>
 
-            <button id="apply-config-btn" class="mt-2 w-full py-3 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold rounded-2xl transition-all">
-                Done
-            </button>
+            <div class="flex gap-2 mt-2">
+                <button id="reset-config-btn" class="w-1/3 py-3 bg-white/10 hover:bg-white/20 text-slate-300 font-semibold rounded-2xl transition-all text-xs">
+                    Reset
+                </button>
+                <button id="apply-config-btn" class="w-2/3 py-3 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold rounded-2xl transition-all text-sm">
+                    Save & Close
+                </button>
+            </div>
         </div>
     </div>
 
-    <!-- Hidden HTML5 Audio Element to ensure lock screen media session persistence on mobile devices -->
+    <!-- Hidden audio element for lock screen media session background keepalive -->
     <audio id="background-audio-keepalive" loop class="hidden"></audio>
 
     <script>
-        // Audio Session Setup for iPad/iOS Safari background playback
+        // Configure native audio session for background playback on iOS / iPadOS
         if ('audioSession' in navigator) {
             try {
                 navigator.audioSession.type = "playback";
@@ -256,32 +263,45 @@
             }
         }
 
-        // Web Audio Context & State
+        // Web Audio Context & Nodes
         let audioCtx = null;
         let noiseSource = null;
+        let lfoNode = null;
+        let lfoGainNode = null;
+        let presetFilter1 = null;
+        let presetFilter2 = null;
+        let presetModGain = null;
+        let subsonicFilter = null;
         let lowpassFilter = null;
         let bassFilter = null;
         let masterGain = null;
+        let compressor = null;
+        let brownNoiseBuffer = null;
+
         let isPlaying = false;
+        let isDimmed = false;
         let currentPreset = 'super_deep';
-        let timerTimeout = null;
+        let timerMinutes = 'off';
         let timerInterval = null;
         let timerEndTime = null;
 
-        // Audio Settings Values
-        let currentWarmth = 180; // Hz
-        let currentBass = 4; // dB
-        let currentVolume = 0.8;
+        // Sound Settings Defaults - Optimized for high volume without speaker scratches
+        let currentWarmth = 280; // Hz
+        let currentBass = 2; // dB
+        let currentVolume = 1.4; // 140%
 
-        // Initialize Web Audio Engine
         function initAudioEngine() {
             if (audioCtx) return;
 
             const AudioCtxClass = window.AudioContext || window.webkitAudioContext;
             audioCtx = new AudioCtxClass();
 
-            // Create Audio Nodes Pipeline
-            // Source (AudioBuffer) -> Lowpass Filter -> LowShelf Bass Boost -> Master Gain -> Destination
+            // Subsonic Filter (Highpass 38 Hz): Removes invisible sub-bass energy that over-excursions tiny speakers & causes DAC scratches
+            subsonicFilter = audioCtx.createBiquadFilter();
+            subsonicFilter.type = 'highpass';
+            subsonicFilter.frequency.setValueAtTime(38, audioCtx.currentTime);
+
+            // Native Master Chain
             lowpassFilter = audioCtx.createBiquadFilter();
             lowpassFilter.type = 'lowpass';
             lowpassFilter.frequency.setValueAtTime(currentWarmth, audioCtx.currentTime);
@@ -294,61 +314,92 @@
             masterGain = audioCtx.createGain();
             masterGain.gain.setValueAtTime(currentVolume, audioCtx.currentTime);
 
+            // Precision dynamic limiter prevents digital/analog clipping at high volume
+            compressor = audioCtx.createDynamicsCompressor();
+            compressor.threshold.setValueAtTime(-1.5, audioCtx.currentTime);
+            compressor.knee.setValueAtTime(6, audioCtx.currentTime);
+            compressor.ratio.setValueAtTime(12, audioCtx.currentTime);
+            compressor.attack.setValueAtTime(0.003, audioCtx.currentTime);
+            compressor.release.setValueAtTime(0.1, audioCtx.currentTime);
+
+            subsonicFilter.connect(lowpassFilter);
             lowpassFilter.connect(bassFilter);
             bassFilter.connect(masterGain);
-            masterGain.connect(audioCtx.destination);
+            masterGain.connect(compressor);
+            compressor.connect(audioCtx.destination);
 
-            // Register Web Media Session API for lockscreen playback controls
             setupMediaSession();
         }
 
-        // Generate high-precision procedural audio buffers (10 seconds seamless loop)
-        function generateNoiseBuffer(preset) {
-            if (!audioCtx) return null;
-
-            const duration = 10; // 10s seamlessly looped buffer
+        function getBrownNoiseBuffer() {
+            if (brownNoiseBuffer) return brownNoiseBuffer;
+            
             const sampleRate = audioCtx.sampleRate;
+            const duration = 45; // 45 seconds continuous stereo Brownian noise
             const bufferSize = sampleRate * duration;
-            const buffer = audioCtx.createBuffer(2, bufferSize, sampleRate);
+            brownNoiseBuffer = audioCtx.createBuffer(2, bufferSize, sampleRate);
+
+            const crossfadeDuration = 3; // 3 second equal-power crossfade at boundary
+            const fadeSamples = Math.floor(sampleRate * crossfadeDuration);
 
             for (let channel = 0; channel < 2; channel++) {
-                const data = buffer.getChannelData(channel);
-                let lastOut = 0.0;
+                const data = brownNoiseBuffer.getChannelData(channel);
+                let lastOut = 0;
+                let maxPeak = 0;
 
+                // Step 1: True Brownian random walk integration (1/f^2 spectral density)
                 for (let i = 0; i < bufferSize; i++) {
                     const white = Math.random() * 2 - 1;
+                    lastOut = (lastOut + (0.02 * white)) / 1.02;
+                    data[i] = lastOut;
+                    if (Math.abs(lastOut) > maxPeak) maxPeak = Math.abs(lastOut);
+                }
 
-                    if (preset === 'super_deep') {
-                        // True Brownian integrated noise
-                        lastOut = (lastOut + (0.02 * white)) / 1.02;
-                        data[i] = lastOut * 3.5;
-                    } 
-                    else if (preset === 'womb') {
-                        // Brown noise + rhythmic maternal pulse LFO (~50 BPM)
-                        lastOut = (lastOut + (0.018 * white)) / 1.018;
-                        const t = i / sampleRate;
-                        const pulse = 1 + 0.18 * Math.sin(2 * Math.PI * t * (50 / 60)) + 0.1 * Math.sin(4 * Math.PI * t * (50 / 60));
-                        data[i] = lastOut * 3.2 * pulse;
-                    } 
-                    else if (preset === 'velvet') {
-                        // Smoother velvet brown noise with softer roll-off
-                        lastOut = (lastOut + (0.025 * white)) / 1.025;
-                        data[i] = lastOut * 2.8;
-                    } 
-                    else if (preset === 'rain') {
-                        // Brown noise base + gentle lowpass filtered rain droplets
-                        lastOut = (lastOut + (0.02 * white)) / 1.02;
-                        const rainDrop = Math.random() > 0.9985 ? (Math.random() * 0.12) : 0;
-                        data[i] = (lastOut * 2.9) + rainDrop;
-                    } 
-                    else if (preset === 'cosmic') {
-                        // Extra ultra-low frequency rumble
-                        lastOut = (lastOut + (0.012 * white)) / 1.012;
-                        data[i] = lastOut * 4.2;
-                    }
+                // Clean peak normalization to 0.45 guarantees un-saturated headroom
+                const targetPeak = 0.45;
+                const normFactor = maxPeak > 0 ? (targetPeak / maxPeak) : 1;
+                for (let i = 0; i < bufferSize; i++) {
+                    data[i] *= normFactor;
+                }
+
+                // Step 2: Seamless crossfade at loop boundary to eliminate periodic clicks
+                for (let i = 0; i < fadeSamples; i++) {
+                    const progress = i / fadeSamples;
+                    const fadeOut = Math.cos(progress * Math.PI * 0.5);
+                    const fadeIn = Math.sin(progress * Math.PI * 0.5);
+
+                    const endIdx = bufferSize - fadeSamples + i;
+                    data[endIdx] = (data[endIdx] * fadeOut) + (data[i] * fadeIn);
                 }
             }
-            return buffer;
+            return brownNoiseBuffer;
+        }
+
+        function stopAudioNodes() {
+            if (noiseSource) {
+                try { noiseSource.stop(); noiseSource.disconnect(); } catch(e){}
+                noiseSource = null;
+            }
+            if (lfoNode) {
+                try { lfoNode.stop(); lfoNode.disconnect(); } catch(e){}
+                lfoNode = null;
+            }
+            if (lfoGainNode) {
+                try { lfoGainNode.disconnect(); } catch(e){}
+                lfoGainNode = null;
+            }
+            if (presetFilter1) {
+                try { presetFilter1.disconnect(); } catch(e){}
+                presetFilter1 = null;
+            }
+            if (presetFilter2) {
+                try { presetFilter2.disconnect(); } catch(e){}
+                presetFilter2 = null;
+            }
+            if (presetModGain) {
+                try { presetModGain.disconnect(); } catch(e){}
+                presetModGain = null;
+            }
         }
 
         function startAudio() {
@@ -358,210 +409,313 @@
                 audioCtx.resume();
             }
 
-            if (noiseSource) {
-                try { noiseSource.stop(); } catch(e){}
+            stopAudioNodes();
+
+            // 1. Create 45-second continuous looping Brownian noise source
+            noiseSource = audioCtx.createBufferSource();
+            noiseSource.buffer = getBrownNoiseBuffer();
+            noiseSource.loop = true;
+
+            // 2. Cascade biquad filters for presets
+            presetFilter1 = audioCtx.createBiquadFilter();
+            presetFilter2 = audioCtx.createBiquadFilter();
+            presetModGain = audioCtx.createGain();
+
+            if (currentPreset === 'super_deep') {
+                presetFilter1.type = 'lowpass';
+                presetFilter1.frequency.setValueAtTime(140, audioCtx.currentTime);
+                presetFilter2.type = 'lowpass';
+                presetFilter2.frequency.setValueAtTime(280, audioCtx.currentTime);
+                presetModGain.gain.setValueAtTime(1.15, audioCtx.currentTime);
+
+                noiseSource.connect(presetFilter1);
+                presetFilter1.connect(presetFilter2);
+                presetFilter2.connect(presetModGain);
+            } 
+            else if (currentPreset === 'womb') {
+                presetFilter1.type = 'lowpass';
+                presetFilter1.frequency.setValueAtTime(110, audioCtx.currentTime);
+                presetFilter2.type = 'lowpass';
+                presetFilter2.frequency.setValueAtTime(220, audioCtx.currentTime);
+                presetModGain.gain.setValueAtTime(1.15, audioCtx.currentTime);
+
+                // Heartbeat pulse LFO (~68 BPM = 1.13 Hz) strictly for Womb Pulse
+                lfoNode = audioCtx.createOscillator();
+                lfoNode.type = 'sine';
+                lfoNode.frequency.setValueAtTime(68 / 60, audioCtx.currentTime);
+
+                lfoGainNode = audioCtx.createGain();
+                lfoGainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
+
+                lfoNode.connect(lfoGainNode);
+                lfoGainNode.connect(presetModGain.gain);
+                lfoNode.start();
+
+                noiseSource.connect(presetFilter1);
+                presetFilter1.connect(presetFilter2);
+                presetFilter2.connect(presetModGain);
+            } 
+            else if (currentPreset === 'velvet') {
+                presetFilter1.type = 'lowpass';
+                presetFilter1.frequency.setValueAtTime(220, audioCtx.currentTime);
+                presetFilter2.type = 'lowpass';
+                presetFilter2.frequency.setValueAtTime(450, audioCtx.currentTime);
+                presetModGain.gain.setValueAtTime(1.1, audioCtx.currentTime);
+
+                noiseSource.connect(presetFilter1);
+                presetFilter1.connect(presetFilter2);
+                presetFilter2.connect(presetModGain);
+            } 
+            else if (currentPreset === 'rain') {
+                presetFilter1.type = 'lowpass';
+                presetFilter1.frequency.setValueAtTime(380, audioCtx.currentTime);
+                presetFilter2.type = 'highpass';
+                presetFilter2.frequency.setValueAtTime(60, audioCtx.currentTime);
+                presetModGain.gain.setValueAtTime(1.05, audioCtx.currentTime);
+
+                noiseSource.connect(presetFilter1);
+                presetFilter1.connect(presetFilter2);
+                presetFilter2.connect(presetModGain);
+            } 
+            else if (currentPreset === 'cosmic') {
+                presetFilter1.type = 'lowpass';
+                presetFilter1.frequency.setValueAtTime(90, audioCtx.currentTime);
+                presetFilter2.type = 'lowpass';
+                presetFilter2.frequency.setValueAtTime(180, audioCtx.currentTime);
+                presetModGain.gain.setValueAtTime(1.15, audioCtx.currentTime);
+
+                // Ocean wave swell LFO (0.04 Hz)
+                lfoNode = audioCtx.createOscillator();
+                lfoNode.type = 'sine';
+                lfoNode.frequency.setValueAtTime(0.04, audioCtx.currentTime);
+
+                lfoGainNode = audioCtx.createGain();
+                lfoGainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
+
+                lfoNode.connect(lfoGainNode);
+                lfoGainNode.connect(presetModGain.gain);
+                lfoNode.start();
+
+                noiseSource.connect(presetFilter1);
+                presetFilter1.connect(presetFilter2);
+                presetFilter2.connect(presetModGain);
             }
 
-            const buffer = generateNoiseBuffer(currentPreset);
-            noiseSource = audioCtx.createBufferSource();
-            noiseSource.buffer = buffer;
-            noiseSource.loop = true;
-            noiseSource.connect(lowpassFilter);
+            // Connect preset into master filter chain via subsonic protection filter
+            presetModGain.connect(subsonicFilter);
 
             noiseSource.start(0);
             isPlaying = true;
 
-            // Trigger silent HTML5 Audio keepalive for mobile lockscreen background play
             playKeepAliveAudio();
-
             updateUIState();
+
             if ('mediaSession' in navigator) {
                 navigator.mediaSession.playbackState = 'playing';
             }
         }
 
-        function pauseAudio() {
-            if (noiseSource) {
-                try { noiseSource.stop(); } catch(e){}
-                noiseSource = null;
-            }
+        function stopAudio() {
+            stopAudioNodes();
             isPlaying = false;
             updateUIState();
+
+            pauseKeepAliveAudio();
 
             if ('mediaSession' in navigator) {
                 navigator.mediaSession.playbackState = 'paused';
             }
         }
 
-        function toggleAudio() {
+        function togglePlay() {
             if (isPlaying) {
-                pauseAudio();
+                stopAudio();
             } else {
                 startAudio();
             }
         }
 
-        // Silent keepalive audio loop generation to prevent mobile browsers from suspending Web Audio in background
         function playKeepAliveAudio() {
             const keepAliveEl = document.getElementById('background-audio-keepalive');
-            if (!keepAliveEl.src) {
-                // Short silent WAV data URI
-                keepAliveEl.src = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=';
+            if (keepAliveEl) {
+                // Base64 silent WAV audio track to keep audio thread alive on lock screen
+                keepAliveEl.src = "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=";
+                keepAliveEl.play().catch(() => {});
             }
-            keepAliveEl.play().catch(() => {});
         }
 
-        // Setup Media Session API
+        function pauseKeepAliveAudio() {
+            const keepAliveEl = document.getElementById('background-audio-keepalive');
+            if (keepAliveEl) {
+                keepAliveEl.pause();
+            }
+        }
+
         function setupMediaSession() {
             if ('mediaSession' in navigator) {
                 navigator.mediaSession.metadata = new MediaMetadata({
-                    title: getPresetName(currentPreset),
-                    artist: 'Baby Sleep Companion',
-                    album: 'Continuous Brown Noise',
-                    artwork: [
-                        { src: 'https://placehold.co/512x512/090a10/f59e0b?text=Brown+Noise', sizes: '512x512', type: 'image/png' }
-                    ]
+                    title: 'Super Deep Brown Noise',
+                    artist: 'Baby Soother',
+                    album: 'Continuous Soothing Sound'
                 });
 
-                navigator.mediaSession.setActionHandler('play', startAudio);
-                navigator.mediaSession.setActionHandler('pause', pauseAudio);
+                navigator.mediaSession.setActionHandler('play', () => startAudio());
+                navigator.mediaSession.setActionHandler('pause', () => stopAudio());
+                navigator.mediaSession.setActionHandler('stop', () => stopAudio());
             }
         }
-
-        function getPresetName(preset) {
-            switch(preset) {
-                case 'super_deep': return 'Super Deep Brown Noise';
-                case 'womb': return 'Womb Pulse Noise';
-                case 'velvet': return 'Velvet Soft Noise';
-                case 'rain': return 'Soft Rain Brown Noise';
-                case 'cosmic': return 'Cosmic Deep Rumble';
-                default: return 'Brown Noise';
-            }
-        }
-
-        let scene, camera, renderer, ambientSphere, particles;
-
-        function initVisualizer() {
-            const container = document.getElementById('canvas-container');
-            scene = new THREE.Scene();
-            scene.fog = new THREE.FogExp2(0x090a10, 0.02);
-
-            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.z = 25;
-
-            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-            container.appendChild(renderer.domElement);
-
-            // Create Inner Ambient Glowing Mesh
-            const sphereGeo = new THREE.IcosahedronGeometry(6, 4);
-            const sphereMat = new THREE.MeshBasicMaterial({
-                color: 0xf59e0b,
-                wireframe: true,
-                transparent: true,
-                opacity: 0.25
-            });
-            ambientSphere = new THREE.Mesh(sphereGeo, sphereMat);
-            scene.add(ambientSphere);
-
-            // Create Floating Organic Dust Particles
-            const particlesGeo = new THREE.BufferGeometry();
-            const particleCount = 200;
-            const posArray = new Float32Array(particleCount * 3);
-
-            for (let i = 0; i < particleCount * 3; i++) {
-                posArray[i] = (Math.random() - 0.5) * 60;
-            }
-
-            particlesGeo.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
-            const particlesMat = new THREE.PointsMaterial({
-                size: 0.15,
-                color: 0xfbbf24,
-                transparent: true,
-                opacity: 0.4
-            });
-
-            particles = new THREE.Points(particlesGeo, particlesMat);
-            scene.add(particles);
-
-            // Animate Loop
-            function animate() {
-                requestAnimationFrame(animate);
-
-                const time = Date.now() * 0.0008;
-
-                if (ambientSphere) {
-                    ambientSphere.rotation.x = time * 0.2;
-                    ambientSphere.rotation.y = time * 0.3;
-
-                    // Breathe scale based on audio state
-                    const targetScale = isPlaying ? (1 + 0.08 * Math.sin(time * 2)) : 1;
-                    ambientSphere.scale.lerp(new THREE.Vector3(targetScale, targetScale, targetScale), 0.05);
-                }
-
-                if (particles) {
-                    particles.rotation.y = time * 0.05;
-                }
-
-                renderer.render(scene, camera);
-            }
-
-            animate();
-
-            // Window Resize Handling
-            window.addEventListener('resize', () => {
-                camera.aspect = window.innerWidth / window.innerHeight;
-                camera.updateProjectionMatrix();
-                renderer.setSize(window.innerWidth, window.innerHeight);
-            });
-        }
-
-        // UI Elements
-        const playBtn = document.getElementById('big-play-btn');
-        const playIcon = document.getElementById('play-icon');
-        const pauseIcon = document.getElementById('pause-icon');
-        const playBtnLabel = document.getElementById('play-btn-label');
-        const statusText = document.getElementById('status-text');
-        const playRipple = document.getElementById('play-ripple');
-        const mainTouchZone = document.getElementById('main-touch-zone');
-        const configBtn = document.getElementById('config-btn');
-        const configModal = document.getElementById('config-modal');
-        const closeConfigBtn = document.getElementById('close-config-btn');
-        const applyConfigBtn = document.getElementById('apply-config-btn');
-        const dimmerBtn = document.getElementById('dimmer-btn');
-        const nightOverlay = document.getElementById('night-overlay');
 
         function updateUIState() {
+            const playIcon = document.getElementById('play-icon');
+            const pauseIcon = document.getElementById('pause-icon');
+            const playBtnLabel = document.getElementById('play-btn-label');
+            const statusText = document.getElementById('status-text');
+            const ripple = document.getElementById('play-ripple');
+
             if (isPlaying) {
                 playIcon.classList.add('hidden');
                 pauseIcon.classList.remove('hidden');
-                playBtnLabel.textContent = "Pause Noise";
-                statusText.textContent = "Playing • " + getPresetName(currentPreset);
-                playRipple.classList.add('pulse-glow');
+                playBtnLabel.textContent = 'Pause';
+                statusText.textContent = 'Playing • Pure Soothing Noise';
+                ripple.classList.remove('opacity-0');
             } else {
                 playIcon.classList.remove('hidden');
                 pauseIcon.classList.add('hidden');
-                playBtnLabel.textContent = "Play Noise";
-                statusText.textContent = "Paused • Tap to play";
-                playRipple.classList.remove('pulse-glow');
+                playBtnLabel.textContent = 'Play';
+                statusText.textContent = 'Ready • Tap anywhere to start';
+                ripple.classList.add('opacity-0');
             }
         }
 
-        // Setup Event Listeners
-        function setupEventListeners() {
-            // Giant Play target
-            playBtn.addEventListener('click', (e) => {
+        function setSleepTimer(minutes) {
+            timerMinutes = minutes;
+            if (timerInterval) clearInterval(timerInterval);
+
+            const displayContainer = document.getElementById('timer-display');
+            const countdownEl = document.getElementById('timer-countdown');
+
+            // Update button active state
+            document.querySelectorAll('.timer-btn').forEach(btn => {
+                if (btn.dataset.timer === String(minutes)) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+
+            if (minutes === 'off') {
+                displayContainer.classList.add('hidden');
+                return;
+            }
+
+            displayContainer.classList.remove('hidden');
+            timerEndTime = Date.now() + (parseInt(minutes) * 60 * 1000);
+
+            function updateTimer() {
+                const remainingSecs = Math.max(0, Math.floor((timerEndTime - Date.now()) / 1000));
+                
+                if (remainingSecs <= 0) {
+                    clearInterval(timerInterval);
+                    stopAudio();
+                    setSleepTimer('off');
+                    return;
+                }
+
+                const hrs = Math.floor(remainingSecs / 3600);
+                const mins = Math.floor((remainingSecs % 3600) / 60);
+                const secs = remainingSecs % 60;
+
+                if (hrs > 0) {
+                    countdownEl.textContent = `${hrs}h ${mins}m`;
+                } else {
+                    countdownEl.textContent = `${mins}m ${secs}s`;
+                }
+            }
+
+            updateTimer();
+            timerInterval = setInterval(updateTimer, 1000);
+        }
+
+        let scene, camera, renderer, sphereMesh, particlesMesh;
+        let animationFrameId = null;
+
+        function initThreeVisualizer() {
+            const container = document.getElementById('canvas-container');
+            scene = new THREE.Scene();
+
+            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.z = 4;
+
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "low-power" });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+            container.appendChild(renderer.domElement);
+
+            // Ambient Sphere
+            const geometry = new THREE.IcosahedronGeometry(1.6, 3);
+            const material = new THREE.MeshBasicMaterial({
+                color: 0xf59e0b,
+                wireframe: true,
+                transparent: true,
+                opacity: 0.15
+            });
+            sphereMesh = new THREE.Mesh(geometry, material);
+            scene.add(sphereMesh);
+
+            // Soft Floating Particles
+            const particleGeo = new THREE.BufferGeometry();
+            const count = 80;
+            const posArray = new Float32Array(count * 3);
+
+            for (let i = 0; i < count * 3; i++) {
+                posArray[i] = (Math.random() - 0.5) * 8;
+            }
+            particleGeo.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+
+            const particleMat = new THREE.PointsMaterial({
+                size: 0.04,
+                color: 0xfbbf24,
+                transparent: true,
+                opacity: 0.3
+            });
+
+            particlesMesh = new THREE.Points(particleGeo, particleMat);
+            scene.add(particlesMesh);
+
+            animateVisualizer();
+        }
+
+        function animateVisualizer() {
+            animationFrameId = requestAnimationFrame(animateVisualizer);
+
+            // Rotate visualizer only if visible/playing to conserve battery
+            if (!document.hidden && isPlaying) {
+                if (sphereMesh) {
+                    sphereMesh.rotation.y += 0.002;
+                    sphereMesh.rotation.x += 0.001;
+                }
+                if (particlesMesh) {
+                    particlesMesh.rotation.y -= 0.0008;
+                }
+            }
+
+            renderer.render(scene, camera);
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            initThreeVisualizer();
+
+            // Big Play Button & Screen Tap
+            document.getElementById('big-play-btn').addEventListener('click', (e) => {
                 e.stopPropagation();
-                toggleAudio();
+                togglePlay();
             });
 
-            // Tap anywhere on center zone to toggle
-            mainTouchZone.addEventListener('click', () => {
-                toggleAudio();
+            document.getElementById('main-touch-zone').addEventListener('click', () => {
+                togglePlay();
             });
 
-            // Preset Button Clicks
+            // Preset Selection Buttons
             document.querySelectorAll('.preset-card').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     e.stopPropagation();
@@ -570,63 +724,80 @@
                     currentPreset = btn.dataset.preset;
 
                     if (isPlaying) {
-                        startAudio(); // Restart with new preset sound
-                    }
-                    if ('mediaSession' in navigator) {
-                        navigator.mediaSession.metadata.title = getPresetName(currentPreset);
+                        startAudio(); // Smoothly switch preset live
                     }
                 });
             });
 
-            // Timer Button Clicks
+            // Sleep Timer Buttons
             document.querySelectorAll('.timer-btn').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     e.stopPropagation();
-                    document.querySelectorAll('.timer-btn').forEach(b => {
-                        b.classList.remove('border-amber-500/40', 'text-amber-400');
-                        b.classList.add('text-slate-300');
-                    });
-                    btn.classList.add('border-amber-500/40', 'text-amber-400');
-                    btn.classList.remove('text-slate-300');
-
-                    const timerVal = btn.dataset.timer;
-                    setSleepTimer(timerVal);
+                    setSleepTimer(btn.dataset.timer);
                 });
             });
 
-            // Dimmer Toggle
-            let isDimmed = false;
-            dimmerBtn.addEventListener('click', (e) => {
+            // Night Mode Screen Dimmer Toggle
+            document.getElementById('dimmer-btn').addEventListener('click', (e) => {
                 e.stopPropagation();
                 isDimmed = !isDimmed;
-                nightOverlay.style.opacity = isDimmed ? '0.85' : '0';
-            });
-
-            // Tap dimmed screen to un-dim
-            nightOverlay.addEventListener('click', () => {
+                const overlay = document.getElementById('night-overlay');
                 if (isDimmed) {
-                    isDimmed = false;
-                    nightOverlay.style.opacity = '0';
+                    overlay.style.opacity = '0.85';
+                } else {
+                    overlay.style.opacity = '0';
                 }
             });
 
-            // Config Modal
-            configBtn.addEventListener('click', (e) => {
+            // Acoustic Config Modal Controls
+            const modal = document.getElementById('config-modal');
+            
+            document.getElementById('config-btn').addEventListener('click', (e) => {
                 e.stopPropagation();
-                configModal.classList.remove('hidden');
+                modal.classList.remove('hidden');
             });
 
-            closeConfigBtn.addEventListener('click', () => configModal.classList.add('hidden'));
-            applyConfigBtn.addEventListener('click', () => configModal.classList.add('hidden'));
+            document.getElementById('close-config-btn').addEventListener('click', () => {
+                modal.classList.add('hidden');
+            });
 
-            // Audio Sliders
+            document.getElementById('apply-config-btn').addEventListener('click', () => {
+                modal.classList.add('hidden');
+            });
+
+            // Reset Acoustic Settings to Default
+            document.getElementById('reset-config-btn').addEventListener('click', () => {
+                currentWarmth = 280;
+                currentBass = 2;
+                currentVolume = 1.4;
+
+                warmthSlider.value = 280;
+                bassSlider.value = 2;
+                volumeSlider.value = 140;
+
+                document.getElementById('warmth-val').textContent = '280 Hz';
+                document.getElementById('bass-val').textContent = '+2 dB';
+                document.getElementById('volume-val').textContent = '140%';
+
+                if (lowpassFilter && audioCtx) {
+                    lowpassFilter.frequency.setValueAtTime(280, audioCtx.currentTime);
+                }
+                if (bassFilter && audioCtx) {
+                    bassFilter.gain.setValueAtTime(2, audioCtx.currentTime);
+                }
+                if (masterGain && audioCtx) {
+                    masterGain.gain.setValueAtTime(1.4, audioCtx.currentTime);
+                }
+            });
+
+            // Sliders
             const warmthSlider = document.getElementById('warmth-slider');
             const bassSlider = document.getElementById('bass-slider');
             const volumeSlider = document.getElementById('volume-slider');
 
             warmthSlider.addEventListener('input', (e) => {
                 currentWarmth = parseFloat(e.target.value);
-                document.getElementById('warmth-val').textContent = currentWarmth + ' Hz';
+                document.getElementById('warmth-val').textContent = `${currentWarmth} Hz`;
                 if (lowpassFilter && audioCtx) {
                     lowpassFilter.frequency.setValueAtTime(currentWarmth, audioCtx.currentTime);
                 }
@@ -634,61 +805,30 @@
 
             bassSlider.addEventListener('input', (e) => {
                 currentBass = parseFloat(e.target.value);
-                document.getElementById('bass-val').textContent = '+' + currentBass + ' dB';
+                document.getElementById('bass-val').textContent = `+${currentBass} dB`;
                 if (bassFilter && audioCtx) {
                     bassFilter.gain.setValueAtTime(currentBass, audioCtx.currentTime);
                 }
             });
 
             volumeSlider.addEventListener('input', (e) => {
-                currentVolume = parseFloat(e.target.value) / 100;
-                document.getElementById('volume-val').textContent = e.target.value + '%';
+                const val = parseFloat(e.target.value);
+                currentVolume = val / 100;
+                document.getElementById('volume-val').textContent = `${val}%`;
                 if (masterGain && audioCtx) {
                     masterGain.gain.setValueAtTime(currentVolume, audioCtx.currentTime);
                 }
             });
-        }
 
-        // Sleep Timer Logic
-        function setSleepTimer(minutes) {
-            if (timerTimeout) clearTimeout(timerTimeout);
-            if (timerInterval) clearInterval(timerInterval);
-
-            const timerDisplay = document.getElementById('timer-display');
-            const timerCountdown = document.getElementById('timer-countdown');
-
-            if (minutes === 'off') {
-                timerDisplay.classList.add('hidden');
-                return;
-            }
-
-            const durationMs = parseInt(minutes, 10) * 60 * 1000;
-            timerEndTime = Date.now() + durationMs;
-            timerDisplay.classList.remove('hidden');
-
-            function updateTimerUI() {
-                const remainingMs = Math.max(0, timerEndTime - Date.now());
-                if (remainingMs <= 0) {
-                    pauseAudio();
-                    timerDisplay.classList.add('hidden');
-                    clearInterval(timerInterval);
-                    return;
+            // Window Resize handling
+            window.addEventListener('resize', () => {
+                if (camera && renderer) {
+                    camera.aspect = window.innerWidth / window.innerHeight;
+                    camera.updateProjectionMatrix();
+                    renderer.setSize(window.innerWidth, window.innerHeight);
                 }
-                const totalSec = Math.ceil(remainingMs / 1000);
-                const mins = Math.floor(totalSec / 60);
-                const secs = totalSec % 60;
-                timerCountdown.textContent = `${mins}m ${secs < 10 ? '0' : ''}${secs}s`;
-            }
-
-            updateTimerUI();
-            timerInterval = setInterval(updateTimerUI, 1000);
-        }
-
-        // On Window Load
-        window.onload = function() {
-            initVisualizer();
-            setupEventListeners();
-        };
+            });
+        });
     </script>
 </body>
 </html>
