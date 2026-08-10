@@ -15,6 +15,7 @@ Live links to play:
 * [Blocks 🟥](https://alexfc14.github.io/vibe-games/blocks/play.html)
 * [Lawn mower 🚜](https://alexfc14.github.io/vibe-games/lawn-mower/play.html)
 * [Brown Noise 💤🔊](https://alexfc14.github.io/vibe-games/brown-noise/play.html)
+* [Manhattan - Route Planner 🏗️🚲](https://alexfc14.github.io/vibe-games/manhattan/play.html)
 
 ----
 # License
