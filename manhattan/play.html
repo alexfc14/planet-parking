@@ -1,0 +1,1311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>TSP City - Salesman Route Planner</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+            overflow: hidden;
+            background-color: #0f172a;
+        }
+        canvas {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+            outline: none;
+        }
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.88);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 20px 30px -10px rgba(0, 0, 0, 0.6);
+        }
+        .btn-action {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .btn-action:hover {
+            transform: translateY(-2px);
+            filter: brightness(1.15);
+        }
+        .btn-action:active {
+            transform: translateY(1px);
+        }
+    </style>
+</head>
+<body class="text-slate-100 flex flex-col h-screen overflow-hidden">
+
+    <div id="canvas-container" class="absolute inset-0 w-full h-full z-0"></div>
+
+    <header class="relative z-10 p-2 md:p-3 flex justify-between items-center pointer-events-none">
+        <!-- Title & Level Info -->
+        <div class="glass-panel rounded-2xl px-3 py-1.5 flex items-center gap-2.5 pointer-events-auto">
+            <div class="bg-indigo-600 w-8 h-8 rounded-xl flex items-center justify-center text-white shadow-lg font-bold text-sm">
+                <i class="fa-solid fa-route"></i>
+            </div>
+            <div>
+                <div class="text-[10px] font-bold text-indigo-400 uppercase tracking-wider" id="hud-difficulty">Level 1 - Easy</div>
+                <div class="text-sm font-extrabold text-white leading-tight" id="hud-level-title">Downtown Loop</div>
+            </div>
+        </div>
+
+        <!-- Live Metrics Box -->
+        <div class="glass-panel rounded-2xl px-3.5 py-1.5 flex items-center gap-4 sm:gap-6 pointer-events-auto">
+            <div class="text-center">
+                <span class="block text-[9px] uppercase tracking-widest text-slate-400 font-semibold">Total Distance</span>
+                <span class="text-base sm:text-lg font-extrabold text-emerald-400 font-mono" id="hud-distance">0 blk</span>
+            </div>
+            <div class="h-6 w-px bg-slate-700"></div>
+            <div class="text-center">
+                <span class="block text-[9px] uppercase tracking-widest text-slate-400 font-semibold">Visited</span>
+                <span class="text-base sm:text-lg font-extrabold text-amber-400 font-mono" id="hud-visited">0/0</span>
+            </div>
+            <div class="h-6 w-px bg-slate-700"></div>
+            <div class="text-center hidden sm:block">
+                <span class="block text-[9px] uppercase tracking-widest text-slate-400 font-semibold">Theoretical Min</span>
+                <span class="text-base sm:text-lg font-extrabold text-indigo-300 font-mono" id="hud-optimal">? blk</span>
+            </div>
+        </div>
+
+        <!-- Action Control Buttons -->
+        <div class="glass-panel rounded-2xl p-1 flex items-center gap-1 pointer-events-auto">
+            <button id="btn-undo" class="btn-action w-8 h-8 md:w-9 md:h-9 rounded-xl bg-slate-800/80 hover:bg-slate-700 flex items-center justify-center text-slate-200 text-xs md:text-sm" title="Undo Last Stop">
+                <i class="fa-solid fa-rotate-left"></i>
+            </button>
+            <button id="btn-restart" class="btn-action w-8 h-8 md:w-9 md:h-9 rounded-xl bg-slate-800/80 hover:bg-slate-700 flex items-center justify-center text-slate-200 text-xs md:text-sm" title="Restart Level">
+                <i class="fa-solid fa-arrows-rotate"></i>
+            </button>
+            <button id="btn-sound" class="btn-action w-8 h-8 md:w-9 md:h-9 rounded-xl bg-slate-800/80 hover:bg-slate-700 flex items-center justify-center text-slate-200 text-xs md:text-sm" title="Toggle Sound">
+                <i class="fa-solid fa-volume-high" id="sound-icon"></i>
+            </button>
+            <button id="btn-pause" class="btn-action w-8 h-8 md:w-9 md:h-9 rounded-xl bg-slate-800/80 hover:bg-slate-700 flex items-center justify-center text-slate-200 text-xs md:text-sm" title="Pause Game">
+                <i class="fa-solid fa-pause"></i>
+            </button>
+            <button id="btn-settings" class="btn-action w-8 h-8 md:w-9 md:h-9 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white flex items-center justify-center shadow-lg text-xs md:text-sm" title="Settings">
+                <i class="fa-solid fa-gear"></i>
+            </button>
+        </div>
+    </header>
+
+    <div class="relative z-10 text-center pointer-events-none mt-1">
+        <span id="game-hint" class="glass-panel inline-block px-3 py-1 rounded-full text-[11px] font-semibold text-indigo-200 border border-indigo-500/30 shadow-md hidden">
+        </span>
+    </div>
+
+    <!-- Modal Settings -->
+    <div id="modal-settings" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-md hidden">
+        <div class="glass-panel rounded-3xl p-6 w-11/12 max-w-md border border-slate-700/50 shadow-2xl">
+            <div class="flex justify-between items-center mb-5">
+                <h2 class="text-xl font-bold flex items-center gap-2">
+                    <i class="fa-solid fa-sliders text-indigo-400"></i> Settings
+                </h2>
+                <button id="btn-close-settings" class="text-slate-400 hover:text-white p-2 text-lg">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            
+            <div class="space-y-4">
+                <div class="flex justify-between items-center p-3 bg-slate-800/50 rounded-xl">
+                    <span class="font-medium text-sm">Select Level</span>
+                    <div class="flex items-center gap-2">
+                        <button id="btn-settings-prev-lvl" class="w-8 h-8 rounded-lg bg-slate-700 hover:bg-slate-600 text-white font-bold flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed">
+                            <i class="fa-solid fa-chevron-left text-xs"></i>
+                        </button>
+                        <span id="settings-lvl-display" class="text-xs font-bold font-mono text-indigo-300 w-36 text-center truncate">Lvl 1 - Downtown</span>
+                        <button id="btn-settings-next-lvl" class="w-8 h-8 rounded-lg bg-slate-700 hover:bg-slate-600 text-white font-bold flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed">
+                            <i class="fa-solid fa-chevron-right text-xs"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="flex justify-between items-center p-3 bg-slate-800/50 rounded-xl">
+                    <span class="font-medium text-sm">Background Music</span>
+                    <input type="checkbox" id="setting-music" class="w-5 h-5 accent-indigo-500 rounded cursor-pointer" checked>
+                </div>
+                <div class="flex justify-between items-center p-3 bg-slate-800/50 rounded-xl">
+                    <span class="font-medium text-sm">Sound Effects</span>
+                    <input type="checkbox" id="setting-sfx" class="w-5 h-5 accent-indigo-500 rounded cursor-pointer" checked>
+                </div>
+                <div class="flex justify-between items-center p-3 bg-slate-800/50 rounded-xl">
+                    <span class="font-medium text-sm">Show Solution</span>
+                    <input type="checkbox" id="setting-ideal-line" class="w-5 h-5 accent-indigo-500 rounded cursor-pointer">
+                </div>
+            </div>
+
+            <button id="btn-save-settings" class="w-full mt-6 py-3 bg-indigo-600 hover:bg-indigo-500 font-bold rounded-xl text-white shadow-lg transition">
+                Apply & Close
+            </button>
+        </div>
+    </div>
+
+    <!-- Modal Pause -->
+    <div id="modal-pause" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-md hidden">
+        <div class="glass-panel rounded-3xl p-8 w-11/12 max-w-sm text-center border border-slate-700/50 shadow-2xl">
+            <div class="w-16 h-16 bg-indigo-500/20 text-indigo-400 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-4 border border-indigo-500/30">
+                <i class="fa-solid fa-pause"></i>
+            </div>
+            <h2 class="text-2xl font-black mb-1">Game Paused</h2>
+            <p class="text-slate-400 text-xs mb-6">Take a breather or review the city layout</p>
+
+            <div class="space-y-3">
+                <button id="btn-resume" class="w-full py-3 bg-indigo-600 hover:bg-indigo-500 font-bold rounded-xl text-white shadow-lg transition">
+                    Resume Game
+                </button>
+                <button id="btn-pause-restart" class="w-full py-3 bg-slate-800 hover:bg-slate-700 font-semibold rounded-xl text-slate-200 transition">
+                    Restart Level
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Pass Turn -->
+    <div id="modal-pass-turn" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-md hidden">
+        <div class="glass-panel rounded-3xl p-8 w-11/12 max-w-md text-center border border-emerald-500/30 shadow-2xl">
+            <div class="w-20 h-20 bg-emerald-500/20 text-emerald-400 rounded-3xl flex items-center justify-center text-4xl mx-auto mb-4 border border-emerald-500/40">
+                <i class="fa-solid fa-user-group"></i>
+            </div>
+            <h2 class="text-2xl font-black mb-2 text-white">Pass Device to Player 2!</h2>
+            <p class="text-slate-300 text-sm mb-6">
+                Player 1 finished! Pass the device to your friend. They will attempt the <span class="text-emerald-400 font-bold">exact same city map</span>.
+            </p>
+            <button id="btn-start-friend-turn" class="w-full py-3.5 bg-emerald-600 hover:bg-emerald-500 font-extrabold rounded-xl text-white shadow-xl transition">
+                I'm Ready - Start Player 2
+            </button>
+        </div>
+    </div>
+
+    <!-- Modal Complete -->
+    <div id="modal-complete" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-md hidden p-4">
+        <div class="glass-panel rounded-3xl p-6 sm:p-8 w-full max-w-lg border border-indigo-500/30 shadow-2xl overflow-y-auto max-h-[90vh]">
+            <div class="text-center mb-4">
+                <div id="complete-stars" class="flex justify-center gap-2 text-3xl mb-2 text-amber-400">
+                    <i class="fa-solid fa-star"></i>
+                    <i class="fa-solid fa-star"></i>
+                    <i class="fa-solid fa-star"></i>
+                </div>
+                <h2 class="text-2xl font-black text-white" id="complete-title">Level Completed!</h2>
+                <p class="text-xs text-slate-400" id="complete-subtitle">All spots visited & returned to depot</p>
+            </div>
+
+            <!-- Single Player Scoreboard Cards -->
+            <div id="complete-single-stats" class="grid grid-cols-2 gap-3 mb-5">
+                <div class="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-3 text-center">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Your Distance</span>
+                    <span class="text-xl font-black text-emerald-400 font-mono" id="stat-player-dist">0 blk</span>
+                </div>
+                <div class="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-3 text-center">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Optimal TSP</span>
+                    <span class="text-xl font-black text-indigo-400 font-mono" id="stat-optimal-dist">0 blk</span>
+                </div>
+                <div class="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-3 text-center">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Efficiency</span>
+                    <span class="text-xl font-black text-amber-300 font-mono" id="stat-efficiency">100%</span>
+                </div>
+                <div class="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-3 text-center">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Time Spent</span>
+                    <span class="text-xl font-black text-cyan-300 font-mono" id="stat-time">00:00</span>
+                </div>
+            </div>
+
+            <!-- Pass to Friend Head-to-Head Comparison Box -->
+            <div id="complete-versus-stats" class="hidden mb-5 bg-slate-900/80 border border-indigo-500/40 rounded-2xl p-4">
+                <div class="text-xs font-bold text-indigo-400 text-center uppercase tracking-widest mb-3">
+                    <i class="fa-solid fa-trophy mr-1"></i> Pass To Friend - Scoreboard
+                </div>
+                <div class="grid grid-cols-2 gap-3 text-center">
+                    <div class="p-2 bg-slate-800/80 rounded-xl border border-slate-700" id="box-p1">
+                        <span class="text-[10px] text-slate-400 block font-bold">PLAYER 1</span>
+                        <span class="text-lg font-black text-emerald-400" id="p1-dist">--</span>
+                        <span class="text-[10px] text-slate-400 block" id="p1-time">--</span>
+                    </div>
+                    <div class="p-2 bg-slate-800/80 rounded-xl border border-slate-700" id="box-p2">
+                        <span class="text-[10px] text-slate-400 block font-bold">PLAYER 2</span>
+                        <span class="text-lg font-black text-cyan-400" id="p2-dist">--</span>
+                        <span class="text-[10px] text-slate-400 block" id="p2-time">--</span>
+                    </div>
+                </div>
+                <div class="mt-3 text-center text-sm font-extrabold text-amber-300" id="versus-winner-text">
+                    Player 1 Wins!
+                </div>
+            </div>
+
+            <!-- Primary Action Buttons (Dynamic Next Level / Play Same & Scramble) -->
+            <div class="grid grid-cols-2 gap-2.5 mb-3">
+                <button id="btn-next-level" class="py-3 bg-indigo-600 hover:bg-indigo-500 font-extrabold rounded-xl text-white shadow-lg transition flex items-center justify-center gap-2">
+                    Next Level <i class="fa-solid fa-arrow-right"></i>
+                </button>
+                <button id="btn-play-again" class="py-3 bg-slate-800 hover:bg-slate-700 font-bold rounded-xl text-slate-200 transition flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-arrow-rotate-right"></i> Play Again
+                </button>
+            </div>
+
+            <!-- Secondary Options -->
+            <div class="grid grid-cols-2 gap-2.5">
+                <button id="btn-pass-friend" class="py-2.5 bg-emerald-600/20 border border-emerald-500/40 hover:bg-emerald-600/30 font-bold rounded-xl text-emerald-300 text-xs transition flex items-center justify-center gap-1.5">
+                    <i class="fa-solid fa-user-group"></i> Pass to a Friend
+                </button>
+                <button id="btn-speed-recap" class="py-2.5 bg-amber-600/20 border border-amber-500/40 hover:bg-amber-600/30 font-bold rounded-xl text-amber-300 text-xs transition flex items-center justify-center gap-1.5">
+                    <i class="fa-solid fa-bolt"></i> Speed Recap
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Speed Recap Control HUD Overlay -->
+    <div id="recap-hud" class="fixed top-20 left-1/2 -translate-x-1/2 z-40 glass-panel px-6 py-3 rounded-full flex items-center gap-4 hidden border border-amber-500/50 shadow-2xl">
+        <span class="text-amber-400 font-bold text-xs uppercase tracking-wider flex items-center gap-2">
+            <i class="fa-solid fa-circle-play animate-pulse"></i> Speed Recap Playing
+        </span>
+        <button id="btn-recap-download" class="px-3 py-1 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black rounded-lg text-xs shadow transition">
+            <i class="fa-solid fa-download"></i> Save Video
+        </button>
+        <button id="btn-recap-exit" class="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold rounded-lg text-xs transition">
+            Exit Recap
+        </button>
+    </div>
+
+    <script>
+        if ('audioSession' in navigator) {
+            try { navigator.audioSession.type = "playback"; } catch (e) {}
+        }
+
+        class AudioEngine {
+            constructor() {
+                this.ctx = null;
+                this.musicOn = true;
+                this.sfxOn = true;
+                this.musicTimer = null;
+                this.step = 0;
+            }
+
+            init() {
+                if (this.ctx) return;
+                const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                if (AudioCtx) {
+                    this.ctx = new AudioCtx();
+                }
+            }
+
+            ensureContext() {
+                if (!this.ctx) this.init();
+                if (this.ctx && this.ctx.state === 'suspended') {
+                    this.ctx.resume();
+                }
+            }
+
+            playTone(freq, type = 'sine', duration = 0.15, gainVal = 0.15) {
+                if (!this.sfxOn) return;
+                this.ensureContext();
+                if (!this.ctx) return;
+
+                try {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = type;
+                    osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+                    gain.gain.setValueAtTime(gainVal, this.ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + duration);
+
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start();
+                    osc.stop(this.ctx.currentTime + duration);
+                } catch(e) {}
+            }
+
+            playNodeSelect() {
+                this.playTone(523.25, 'triangle', 0.12, 0.22);
+                setTimeout(() => this.playTone(659.25, 'sine', 0.15, 0.18), 60);
+            }
+
+            playUndo() {
+                this.playTone(440, 'sine', 0.1, 0.18);
+                setTimeout(() => this.playTone(349.23, 'sine', 0.12, 0.15), 50);
+            }
+
+            playCello(freq, duration = 3.4) {
+                if (!this.musicOn) return;
+                this.ensureContext();
+                if (!this.ctx) return;
+
+                try {
+                    const osc = this.ctx.createOscillator();
+                    const osc2 = this.ctx.createOscillator();
+                    const filter = this.ctx.createBiquadFilter();
+                    const gain = this.ctx.createGain();
+
+                    osc.type = 'sawtooth';
+                    osc2.type = 'triangle';
+                    osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+                    osc2.frequency.setValueAtTime(freq + 0.3, this.ctx.currentTime);
+
+                    filter.type = 'lowpass';
+                    filter.frequency.setValueAtTime(320, this.ctx.currentTime);
+                    filter.frequency.exponentialRampToValueAtTime(160, this.ctx.currentTime + duration);
+
+                    const now = this.ctx.currentTime;
+                    gain.gain.setValueAtTime(0.001, now);
+                    gain.gain.linearRampToValueAtTime(0.09, now + 0.5);
+                    gain.gain.setValueAtTime(0.09, now + duration - 0.6);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+
+                    osc.connect(filter);
+                    osc2.connect(filter);
+                    filter.connect(gain);
+                    gain.connect(this.ctx.destination);
+
+                    osc.start(now);
+                    osc2.start(now);
+                    osc.stop(now + duration);
+                    osc2.stop(now + duration);
+                } catch(e) {}
+            }
+
+            playComplete() {
+                const notes = [523.25, 659.25, 783.99, 1046.50];
+                notes.forEach((f, idx) => {
+                    setTimeout(() => this.playTone(f, 'triangle', 0.25, 0.25), idx * 90);
+                });
+            }
+
+            startMusic() {
+                if (!this.musicOn) return;
+                this.ensureContext();
+                if (this.musicTimer) return;
+
+                const chordRoots = [130.81, 110.00, 87.31, 98.00];
+                const celloRoots = [65.41, 55.00, 43.65, 49.00];
+                const chordPads = [
+                    [261.63, 329.63, 392.00, 493.88],
+                    [220.00, 261.63, 329.63, 392.00],
+                    [174.61, 220.00, 261.63, 329.63],
+                    [196.00, 246.94, 293.66, 349.23]
+                ];
+                const melodyPattern = [0, 2, 1, 3, 2, 1, 3, 0, 1, 2, 3, 1, 2, 0, 1, 2];
+
+                this.musicTimer = setInterval(() => {
+                    if (!this.musicOn || !this.ctx) return;
+                    const bar = Math.floor(this.step / 16) % 4;
+                    const subStep = this.step % 16;
+
+                    if (subStep === 0) {
+                        this.playCello(celloRoots[bar], 3.4);
+                    }
+
+                    if (subStep === 0 || subStep === 8) {
+                        const rootFreq = chordRoots[bar];
+                        this.playTone(rootFreq, 'triangle', 0.6, 0.14);
+                    }
+
+                    if (subStep % 4 === 0) {
+                        const padNotes = chordPads[bar];
+                        const note = padNotes[(subStep / 4) % padNotes.length];
+                        this.playTone(note, 'sine', 0.4, 0.08);
+                    }
+
+                    if (subStep % 2 === 0) {
+                        const padNotes = chordPads[bar];
+                        const melNote = padNotes[melodyPattern[subStep] % padNotes.length] * 2;
+                        this.playTone(melNote, 'sine', 0.18, 0.06);
+                    }
+
+                    this.step++;
+                }, 220);
+            }
+
+            stopMusic() {
+                if (this.musicTimer) {
+                    clearInterval(this.musicTimer);
+                    this.musicTimer = null;
+                }
+            }
+        }
+
+        const audio = new AudioEngine();
+
+        const LEVEL_TITLES = [
+            "Downtown Loop", "Midtown Express", "Uptown Circuit", "Financial District",
+            "Harbor Quarter", "Metropolis Ring", "Tech Boulevard", "Grand Avenue",
+            "Capital Grid", "Megacity Odyssey"
+        ];
+
+        // 100 procedural levels (grid radius capped at 9 starting Level 10; nodes scale 1 per level up to 16 max)
+        const LEVELS = Array.from({ length: 100 }, (_, i) => {
+            const gridRadius = Math.min(9, 5 + Math.floor(i / 2));
+            const nodesCount = Math.min(16, 6 + i);
+            
+            let difficulty = "Easy";
+            if (i >= 80) difficulty = "Grandmaster";
+            else if (i >= 60) difficulty = "Master";
+            else if (i >= 40) difficulty = "Expert";
+            else if (i >= 25) difficulty = "Very Hard";
+            else if (i >= 10) difficulty = "Hard";
+            else if (i >= 4) difficulty = "Medium";
+
+            const title = i < LEVEL_TITLES.length ? LEVEL_TITLES[i] : `District Sector ${i + 1}`;
+
+            return { id: i, title, nodesCount, gridRadius, difficulty };
+        });
+
+        const state = {
+            currentLevelIdx: 0,
+            maxUnlockedLevel: 0,
+            nodes: [],
+            visitedSequence: [],
+            startTime: 0,
+            elapsedTimeSec: 0,
+            timerInterval: null,
+            isCompleted: false,
+            isPaused: false,
+            lastLevelWasPerfect: false,
+            optimalTSP: { distance: 0, path: [] },
+            
+            isVersusMode: false,
+            player1Stats: null,
+            player2Stats: null,
+            
+            settings: {
+                music: true,
+                sfx: true,
+                idealLine: false
+            },
+
+            recapHistory: []
+        };
+
+        let selectedSettingsLevel = 0;
+        let recapAnimationId = null;
+        let idealSolutionTimer = null;
+
+        function saveGameState() {
+            const data = {
+                maxUnlockedLevel: state.maxUnlockedLevel,
+                settings: state.settings
+            };
+            const json = JSON.stringify(data);
+            try {
+                localStorage.setItem('tsp_city_game_state', json);
+            } catch(e) {}
+            document.cookie = `tsp_city_game_state=${encodeURIComponent(json)};max-age=31536000;path=/`;
+        }
+
+        function loadGameState() {
+            let json = null;
+            try {
+                json = localStorage.getItem('tsp_city_game_state');
+            } catch(e) {}
+
+            if (!json) {
+                const match = document.cookie.match(/tsp_city_game_state=([^;]+)/);
+                if (match) json = decodeURIComponent(match[1]);
+            }
+
+            if (json) {
+                try {
+                    const data = JSON.parse(json);
+                    state.maxUnlockedLevel = data.maxUnlockedLevel || 0;
+                    if (data.settings) state.settings = { ...state.settings, ...data.settings };
+                } catch(e) {}
+            }
+        }
+
+        function getManhattanDist(a, b) {
+            return Math.abs(a.x - b.x) + Math.abs(a.z - b.z);
+        }
+
+        function solveTSP(nodes) {
+            const n = nodes.length;
+            if (n === 0) return { distance: 0, path: [] };
+            if (n === 1) return { distance: 0, path: [0, 0] };
+
+            const memo = new Map();
+
+            function tsp(mask, pos) {
+                if (mask === (1 << n) - 1) {
+                    return { dist: getManhattanDist(nodes[pos], nodes[0]), parent: 0 };
+                }
+
+                const key = `${mask},${pos}`;
+                if (memo.has(key)) return memo.get(key);
+
+                let minDist = Infinity;
+                let bestParent = -1;
+
+                for (let nxt = 0; nxt < n; nxt++) {
+                    if ((mask & (1 << nxt)) === 0) {
+                        const newDist = getManhattanDist(nodes[pos], nodes[nxt]) + tsp(mask | (1 << nxt), nxt).dist;
+                        if (newDist < minDist) {
+                            minDist = newDist;
+                            bestParent = nxt;
+                        }
+                    }
+                }
+
+                const res = { dist: minDist, parent: bestParent };
+                memo.set(key, res);
+                return res;
+            }
+
+            const optResult = tsp(1, 0);
+            
+            const path = [0];
+            let currMask = 1;
+            let currPos = 0;
+
+            while (currMask !== (1 << n) - 1) {
+                const nextPos = memo.get(`${currMask},${currPos}`).parent;
+                path.push(nextPos);
+                currMask |= (1 << nextPos);
+                currPos = nextPos;
+            }
+            path.push(0);
+
+            return { distance: optResult.dist, path };
+        }
+
+        let scene, camera, renderer;
+        let nodeMeshes = [];
+        let pathLineGroup, idealLineGroup;
+        let raycaster, mouse;
+
+        function initThree() {
+            const container = document.getElementById('canvas-container');
+            
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x0f172a);
+
+            camera = new THREE.OrthographicCamera(-10, 10, 10, -10, 0.1, 1000);
+            camera.position.set(0, 50, 0);
+            camera.lookAt(0, 0, 0);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: "high-performance" });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.shadowMap.enabled = false;
+            container.appendChild(renderer.domElement);
+
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.85);
+            scene.add(ambientLight);
+
+            const dirLight = new THREE.DirectionalLight(0xffffff, 0.5);
+            dirLight.position.set(10, 30, 20);
+            scene.add(dirLight);
+
+            pathLineGroup = new THREE.Group();
+            idealLineGroup = new THREE.Group();
+            scene.add(pathLineGroup);
+            scene.add(idealLineGroup);
+
+            raycaster = new THREE.Raycaster();
+            mouse = new THREE.Vector2();
+
+            window.addEventListener('resize', onWindowResize);
+            window.addEventListener('pointerdown', onPointerDown);
+        }
+
+        function updateCameraFrustum(gridRadius) {
+            const aspect = window.innerWidth / window.innerHeight;
+            const size = gridRadius + 3.5;
+            const topOffset = 1.6;
+
+            camera.left = -size * aspect;
+            camera.right = size * aspect;
+            camera.top = size + topOffset;
+            camera.bottom = -size + topOffset;
+
+            camera.updateProjectionMatrix();
+        }
+
+        function createCityEnvironment(gridRadius) {
+            const oldCity = scene.getObjectByName("cityGroup");
+            if (oldCity) scene.remove(oldCity);
+
+            const cityGroup = new THREE.Group();
+            cityGroup.name = "cityGroup";
+
+            const fullSize = (gridRadius + 2) * 2 + 3;
+
+            const groundGeo = new THREE.PlaneGeometry(fullSize, fullSize);
+            const groundMat = new THREE.MeshBasicMaterial({ color: 0x1e293b });
+            const ground = new THREE.Mesh(groundGeo, groundMat);
+            ground.rotation.x = -Math.PI / 2;
+            ground.position.y = -0.1;
+            cityGroup.add(ground);
+
+            const buildingGeo = new THREE.BoxGeometry(0.7, 0.1, 0.7);
+            const parkGeo = new THREE.BoxGeometry(0.75, 0.05, 0.75);
+
+            for (let x = -gridRadius - 1; x <= gridRadius + 1; x++) {
+                for (let z = -gridRadius - 1; z <= gridRadius + 1; z++) {
+                    const isOccupiedBySpot = state.nodes.some(n => Math.abs(n.x - x) < 0.8 && Math.abs(n.z - z) < 0.8);
+
+                    if (!isOccupiedBySpot) {
+                        const hash = Math.abs(Math.sin(x * 12.9898 + z * 78.233) * 43758.5453) % 1;
+
+                        if (hash < 0.18) {
+                            const parkMat = new THREE.MeshBasicMaterial({ color: 0x065f46 });
+                            const park = new THREE.Mesh(parkGeo, parkMat);
+                            park.position.set(x, 0.01, z);
+                            cityGroup.add(park);
+                        } else if (hash < 0.85) {
+                            const bldgMat = new THREE.MeshBasicMaterial({ color: 0x334155 });
+                            const bldg = new THREE.Mesh(buildingGeo, bldgMat);
+                            bldg.position.set(x, 0.05, z);
+                            cityGroup.add(bldg);
+                        }
+                    }
+                }
+            }
+
+            scene.add(cityGroup);
+            updateCameraFrustum(gridRadius);
+        }
+
+        function generateLevelNodes(levelConfig) {
+            const nodes = [];
+            nodes.push({ id: 0, x: 0, z: 0, isDepot: true });
+
+            const limit = Math.max(1, levelConfig.gridRadius - 2);
+            const usedCoords = new Set(["0,0"]);
+
+            while (nodes.length < levelConfig.nodesCount) {
+                const rx = Math.floor(Math.random() * (limit * 2 + 1)) - limit;
+                const rz = Math.floor(Math.random() * (limit * 2 + 1)) - limit;
+                const key = `${rx},${rz}`;
+
+                if (!usedCoords.has(key)) {
+                    usedCoords.add(key);
+                    nodes.push({
+                        id: nodes.length,
+                        x: rx,
+                        z: rz,
+                        isDepot: false
+                    });
+                }
+            }
+            return nodes;
+        }
+
+        function createNodeMeshes(nodes) {
+            nodeMeshes.forEach(m => {
+                scene.remove(m.group);
+            });
+            nodeMeshes = [];
+
+            nodes.forEach((node, idx) => {
+                const group = new THREE.Group();
+                group.position.set(node.x, 0.2, node.z);
+
+                const ringGeo = new THREE.RingGeometry(0.32, 0.45, 32);
+                ringGeo.rotateX(-Math.PI / 2);
+                const ringMat = new THREE.MeshBasicMaterial({
+                    color: node.isDepot ? 0xf59e0b : 0x0284c7,
+                    side: THREE.DoubleSide
+                });
+                const ring = new THREE.Mesh(ringGeo, ringMat);
+                group.add(ring);
+
+                const centerGeo = new THREE.CircleGeometry(0.28, 32);
+                centerGeo.rotateX(-Math.PI / 2);
+                const centerMat = new THREE.MeshBasicMaterial({
+                    color: node.isDepot ? 0xd97706 : 0x0369a1,
+                    side: THREE.DoubleSide
+                });
+                const centerMesh = new THREE.Mesh(centerGeo, centerMat);
+                group.add(centerMesh);
+
+                const hitGeo = new THREE.CircleGeometry(0.7, 16);
+                hitGeo.rotateX(-Math.PI / 2);
+                const hitMat = new THREE.MeshBasicMaterial({ visible: false });
+                const hitMesh = new THREE.Mesh(hitGeo, hitMat);
+                hitMesh.userData = { nodeIndex: idx };
+                group.add(hitMesh);
+
+                scene.add(group);
+                nodeMeshes.push({ group, centerMesh, hitMesh, ring, index: idx });
+            });
+        }
+
+        function updatePathLines() {
+            while (pathLineGroup.children.length > 0) {
+                pathLineGroup.remove(pathLineGroup.children[0]);
+            }
+
+            if (state.visitedSequence.length < 2) return;
+
+            const lineThickness = 0.18;
+            const mat = new THREE.MeshBasicMaterial({ color: 0x10b981, side: THREE.DoubleSide });
+
+            const addSegment = (x1, z1, x2, z2) => {
+                if (x1 === x2 && z1 === z2) return;
+
+                const capGeo = new THREE.CircleGeometry(lineThickness / 2, 16);
+                capGeo.rotateX(-Math.PI / 2);
+                const capMesh1 = new THREE.Mesh(capGeo, mat);
+                capMesh1.position.set(x1, 0.25, z1);
+                pathLineGroup.add(capMesh1);
+
+                const capMesh2 = new THREE.Mesh(capGeo, mat);
+                capMesh2.position.set(x2, 0.25, z2);
+                pathLineGroup.add(capMesh2);
+
+                const dx = x2 - x1;
+                const dz = z2 - z1;
+                const len = Math.hypot(dx, dz);
+
+                const planeGeo = new THREE.PlaneGeometry(lineThickness, len);
+                planeGeo.rotateX(-Math.PI / 2);
+
+                const mesh = new THREE.Mesh(planeGeo, mat);
+                mesh.position.set((x1 + x2) / 2, 0.25, (z1 + z2) / 2);
+                mesh.rotation.y = Math.atan2(dx, dz);
+                pathLineGroup.add(mesh);
+            };
+
+            for (let i = 0; i < state.visitedSequence.length - 1; i++) {
+                const a = state.nodes[state.visitedSequence[i]];
+                const b = state.nodes[state.visitedSequence[i + 1]];
+
+                if (a.x !== b.x) {
+                    addSegment(a.x, a.z, b.x, a.z);
+                }
+                if (a.z !== b.z) {
+                    addSegment(b.x, a.z, b.x, b.z);
+                }
+            }
+        }
+
+        function updateIdealPathPreview() {
+            while (idealLineGroup.children.length > 0) {
+                idealLineGroup.remove(idealLineGroup.children[0]);
+            }
+
+            if (idealSolutionTimer) {
+                clearTimeout(idealSolutionTimer);
+                idealSolutionTimer = null;
+            }
+
+            if (!state.settings.idealLine || !state.optimalTSP.path || state.optimalTSP.path.length === 0) return;
+
+            const points = [];
+            const path = state.optimalTSP.path;
+            for (let i = 0; i < path.length - 1; i++) {
+                const a = state.nodes[path[i]];
+                const b = state.nodes[path[i + 1]];
+
+                points.push(new THREE.Vector3(a.x, 0.22, a.z));
+                points.push(new THREE.Vector3(b.x, 0.22, a.z));
+                points.push(new THREE.Vector3(b.x, 0.22, b.z));
+            }
+
+            const geometry = new THREE.BufferGeometry().setFromPoints(points);
+            const material = new THREE.LineDashedMaterial({
+                color: 0x818cf8,
+                dashSize: 0.3,
+                gapSize: 0.2,
+                linewidth: 2,
+                transparent: true,
+                opacity: 1.0
+            });
+            const line = new THREE.Line(geometry, material);
+            line.computeLineDistances();
+            idealLineGroup.add(line);
+
+            // Flash solution for 1 sec then fade out
+            idealSolutionTimer = setTimeout(() => {
+                let opacity = 1.0;
+                const fadeInterval = setInterval(() => {
+                    opacity -= 0.1;
+                    if (opacity <= 0) {
+                        clearInterval(fadeInterval);
+                        while (idealLineGroup.children.length > 0) {
+                            idealLineGroup.remove(idealLineGroup.children[0]);
+                        }
+                    } else if (material) {
+                        material.opacity = opacity;
+                    }
+                }, 40);
+            }, 1000);
+        }
+
+        function calculateVisitedDistance(sequence) {
+            let total = 0;
+            for (let i = 0; i < sequence.length - 1; i++) {
+                const a = state.nodes[sequence[i]];
+                const b = state.nodes[sequence[i + 1]];
+                total += getManhattanDist(a, b);
+            }
+            return total;
+        }
+
+        function loadLevel(levelIdx, preserveNodes = false) {
+            if (levelIdx < 0 || levelIdx >= LEVELS.length) return;
+            state.currentLevelIdx = levelIdx;
+            const levelConfig = LEVELS[levelIdx];
+
+            if (!preserveNodes || state.nodes.length === 0) {
+                state.nodes = generateLevelNodes(levelConfig);
+            }
+
+            state.visitedSequence = [0];
+            state.isCompleted = false;
+            state.isPaused = false;
+            state.startTime = Date.now();
+            state.elapsedTimeSec = 0;
+            state.recapHistory = [{ sequence: [0], timestamp: 0 }];
+
+            if (state.timerInterval) clearInterval(state.timerInterval);
+            state.timerInterval = setInterval(() => {
+                if (!state.isCompleted && !state.isPaused) {
+                    state.elapsedTimeSec = Math.floor((Date.now() - state.startTime) / 1000);
+                }
+            }, 1000);
+
+            state.optimalTSP = solveTSP(state.nodes);
+
+            createCityEnvironment(levelConfig.gridRadius);
+            createNodeMeshes(state.nodes);
+            updatePathLines();
+            updateHUD();
+            updateIdealPathPreview();
+        }
+
+        function visitNode(nodeIdx) {
+            if (state.isCompleted || state.isPaused) return;
+
+            const current = state.visitedSequence[state.visitedSequence.length - 1];
+            if (current === nodeIdx) return;
+
+            const unvisitedCount = state.nodes.length - new Set(state.visitedSequence).size;
+
+            if (nodeIdx === 0) {
+                if (unvisitedCount > 0) {
+                    showHint("Visit all spots before returning to Depot!");
+                    audio.playTone(200, 'sawtooth', 0.15, 0.1);
+                    return;
+                }
+            } else {
+                if (state.visitedSequence.includes(nodeIdx)) {
+                    showHint("Spot already visited!");
+                    return;
+                }
+            }
+
+            state.visitedSequence.push(nodeIdx);
+            state.recapHistory.push({
+                sequence: [...state.visitedSequence],
+                timestamp: Date.now() - state.startTime
+            });
+
+            audio.playNodeSelect();
+            updatePathLines();
+            updateHUD();
+
+            if (nodeIdx === 0 && unvisitedCount === 0) {
+                onLevelCompleted();
+            }
+        }
+
+        function undoLastVisit() {
+            if (state.visitedSequence.length <= 1 || state.isCompleted) return;
+            state.visitedSequence.pop();
+            state.recapHistory.push({
+                sequence: [...state.visitedSequence],
+                timestamp: Date.now() - state.startTime
+            });
+
+            audio.playUndo();
+            updatePathLines();
+            updateHUD();
+        }
+
+        function onLevelCompleted() {
+            state.isCompleted = true;
+            clearInterval(state.timerInterval);
+            audio.playComplete();
+
+            const userDist = calculateVisitedDistance(state.visitedSequence);
+            const optDist = state.optimalTSP.distance;
+            const efficiency = Math.min(100, Math.round((optDist / userDist) * 100));
+
+            const isPerfect = (userDist <= optDist + 0.001) || (efficiency >= 100);
+            state.lastLevelWasPerfect = isPerfect;
+
+            if (isPerfect && state.currentLevelIdx + 1 > state.maxUnlockedLevel && state.currentLevelIdx + 1 < LEVELS.length) {
+                state.maxUnlockedLevel = state.currentLevelIdx + 1;
+                saveGameState();
+            }
+
+            let stars = 1;
+            if (isPerfect) stars = 3;
+            else if (efficiency >= 88) stars = 2;
+
+            if (state.isVersusMode && state.player1Stats) {
+                state.player2Stats = {
+                    distance: userDist,
+                    timeSec: state.elapsedTimeSec,
+                    efficiency
+                };
+                showVersusScoreboard();
+            } else {
+                showSinglePlayerScoreboard(userDist, optDist, efficiency, stars, isPerfect);
+            }
+        }
+
+        function updateHUD() {
+            const levelConfig = LEVELS[state.currentLevelIdx];
+            document.getElementById('hud-difficulty').innerText = `Level ${levelConfig.id + 1} - ${levelConfig.difficulty}`;
+            document.getElementById('hud-level-title').innerText = levelConfig.title;
+
+            const dist = calculateVisitedDistance(state.visitedSequence);
+            document.getElementById('hud-distance').innerText = `${dist.toFixed(0)} blk`;
+
+            const uniqueVisited = new Set(state.visitedSequence).size;
+            document.getElementById('hud-visited').innerText = `${uniqueVisited}/${state.nodes.length}`;
+            document.getElementById('hud-optimal').innerText = `${state.optimalTSP.distance.toFixed(0)} blk`;
+
+            nodeMeshes.forEach(m => {
+                const isVisited = state.visitedSequence.includes(m.index);
+                const isCurrent = state.visitedSequence[state.visitedSequence.length - 1] === m.index;
+
+                if (isCurrent) {
+                    m.centerMesh.material.color.setHex(0xf59e0b);
+                } else if (isVisited) {
+                    m.centerMesh.material.color.setHex(0x10b981);
+                } else {
+                    m.centerMesh.material.color.setHex(m.index === 0 ? 0xd97706 : 0x0284c7);
+                }
+            });
+        }
+
+        function showSinglePlayerScoreboard(userDist, optDist, efficiency, stars, isPerfect) {
+            document.getElementById('complete-single-stats').classList.remove('hidden');
+            document.getElementById('complete-versus-stats').classList.add('hidden');
+
+            document.getElementById('complete-title').innerText = `Level ${state.currentLevelIdx + 1} Completed!`;
+
+            const subtitle = document.getElementById('complete-subtitle');
+            const btnLeft = document.getElementById('btn-next-level');
+            const btnRight = document.getElementById('btn-play-again');
+
+            if (isPerfect) {
+                subtitle.innerText = "🏆 Perfect Route Found! Next level unlocked!";
+                subtitle.className = "text-xs font-bold text-emerald-400";
+
+                btnLeft.innerHTML = `Next Level <i class="fa-solid fa-arrow-right"></i>`;
+                btnRight.innerHTML = `<i class="fa-solid fa-arrow-rotate-right"></i> Play Again`;
+            } else {
+                subtitle.innerText = "⚠️ Reach 100% Efficiency to unlock the next level!";
+                subtitle.className = "text-xs font-bold text-amber-400";
+
+                btnLeft.innerHTML = `<i class="fa-solid fa-rotate-left"></i> Play Same`;
+                btnRight.innerHTML = `<i class="fa-solid fa-shuffle"></i> Scramble Spots`;
+            }
+
+            const starContainer = document.getElementById('complete-stars');
+            starContainer.innerHTML = '';
+            for (let i = 0; i < 3; i++) {
+                const star = document.createElement('i');
+                star.className = `fa-solid fa-star ${i < stars ? 'text-amber-400' : 'text-slate-700'}`;
+                starContainer.appendChild(star);
+            }
+
+            document.getElementById('stat-player-dist').innerText = `${userDist.toFixed(0)} blk`;
+            document.getElementById('stat-optimal-dist').innerText = `${optDist.toFixed(0)} blk`;
+            document.getElementById('stat-efficiency').innerText = `${efficiency}%`;
+
+            const m = Math.floor(state.elapsedTimeSec / 60).toString().padStart(2, '0');
+            const s = (state.elapsedTimeSec % 60).toString().padStart(2, '0');
+            document.getElementById('stat-time').innerText = `${m}:${s}`;
+
+            document.getElementById('modal-complete').classList.remove('hidden');
+        }
+
+        function showVersusScoreboard() {
+            document.getElementById('complete-single-stats').classList.add('hidden');
+            document.getElementById('complete-versus-stats').classList.remove('hidden');
+
+            document.getElementById('complete-title').innerText = `Level ${state.currentLevelIdx + 1} Head-to-Head!`;
+
+            const p1 = state.player1Stats;
+            const p2 = state.player2Stats;
+
+            document.getElementById('p1-dist').innerText = `${p1.distance.toFixed(0)} blk`;
+            document.getElementById('p1-time').innerText = `${Math.floor(p1.timeSec / 60)}m ${p1.timeSec % 60}s`;
+
+            document.getElementById('p2-dist').innerText = `${p2.distance.toFixed(0)} blk`;
+            document.getElementById('p2-time').innerText = `${Math.floor(p2.timeSec / 60)}m ${p2.timeSec % 60}s`;
+
+            const winnerText = document.getElementById('versus-winner-text');
+            if (p1.distance < p2.distance) {
+                winnerText.innerText = "🏆 Player 1 Wins (Shorter Route)!";
+            } else if (p2.distance < p1.distance) {
+                winnerText.innerText = "🏆 Player 2 Wins (Shorter Route)!";
+            } else {
+                winnerText.innerText = p1.timeSec <= p2.timeSec ? "🏆 Player 1 Wins (Faster)!" : "🏆 Player 2 Wins (Faster)!";
+            }
+
+            document.getElementById('modal-complete').classList.remove('hidden');
+        }
+
+        function showHint(text) {
+            const hint = document.getElementById('game-hint');
+            if (!hint) return;
+            hint.innerText = text;
+            hint.classList.remove('hidden');
+            hint.classList.add('scale-105', 'border-amber-400');
+            if (hint.timeoutId) clearTimeout(hint.timeoutId);
+            hint.timeoutId = setTimeout(() => {
+                hint.classList.remove('scale-105', 'border-amber-400');
+                hint.classList.add('hidden');
+            }, 1500);
+        }
+
+        function startSpeedRecap() {
+            document.getElementById('modal-complete').classList.add('hidden');
+            document.getElementById('recap-hud').classList.remove('hidden');
+
+            state.isPaused = false;
+            let step = 0;
+
+            const runRecapStep = () => {
+                if (step >= state.recapHistory.length) {
+                    showHint("Recap Finished!");
+                    return;
+                }
+
+                const currentStepData = state.recapHistory[step];
+                state.visitedSequence = [...currentStepData.sequence];
+                state.elapsedTimeSec = Math.floor(currentStepData.timestamp / 1000);
+
+                updatePathLines();
+                updateHUD();
+                audio.playTone(400 + step * 30, 'triangle', 0.08, 0.08);
+
+                step++;
+                recapAnimationId = setTimeout(runRecapStep, 300);
+            };
+
+            runRecapStep();
+        }
+
+        function exitSpeedRecap() {
+            if (recapAnimationId) clearTimeout(recapAnimationId);
+            document.getElementById('recap-hud').classList.add('hidden');
+            document.getElementById('modal-complete').classList.remove('hidden');
+            state.isPaused = false;
+        }
+
+        function downloadRecapWebM() {
+            const stream = renderer.domElement.captureStream(30);
+            let recorder;
+            try {
+                recorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
+            } catch(e) {
+                showHint("Video recording not supported on this device.");
+                return;
+            }
+
+            const chunks = [];
+            recorder.ondataavailable = e => chunks.push(e.data);
+            recorder.onstop = () => {
+                const blob = new Blob(chunks, { type: 'video/webm' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `tsp-city-recap-level${state.currentLevelIdx + 1}.webm`;
+                a.click();
+            };
+
+            recorder.start();
+            showHint("Recording Video...");
+
+            startSpeedRecap();
+            setTimeout(() => {
+                recorder.stop();
+            }, state.recapHistory.length * 300 + 500);
+        }
+
+        function onPointerDown(event) {
+            audio.ensureContext();
+            if (audio.musicOn && !audio.musicTimer) {
+                audio.startMusic();
+            }
+
+            if (state.isCompleted || state.isPaused) return;
+
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+            raycaster.setFromCamera(mouse, camera);
+
+            const hitObjects = nodeMeshes.map(m => m.hitMesh);
+            const intersects = raycaster.intersectObjects(hitObjects, false);
+
+            if (intersects.length > 0) {
+                const hitNodeIdx = intersects[0].object.userData.nodeIndex;
+                visitNode(hitNodeIdx);
+            }
+        }
+
+        function onWindowResize() {
+            const levelConfig = LEVELS[state.currentLevelIdx];
+            updateCameraFrustum(levelConfig.gridRadius);
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            renderer.render(scene, camera);
+        }
+
+        function updateSettingsLevelDisplay() {
+            const lvl = LEVELS[selectedSettingsLevel];
+            const isUnlocked = selectedSettingsLevel <= state.maxUnlockedLevel;
+            document.getElementById('settings-lvl-display').innerText = `Lvl ${lvl.id + 1}: ${lvl.title}${isUnlocked ? '' : ' 🔒'}`;
+            
+            document.getElementById('btn-settings-prev-lvl').disabled = (selectedSettingsLevel <= 0);
+            document.getElementById('btn-settings-next-lvl').disabled = (selectedSettingsLevel >= state.maxUnlockedLevel);
+        }
+
+        window.onload = function() {
+            loadGameState();
+            initThree();
+            loadLevel(0);
+            animate();
+
+            window.addEventListener('pointerdown', () => {
+                audio.ensureContext();
+                if (audio.musicOn && !audio.musicTimer) audio.startMusic();
+            }, { once: false });
+
+            document.getElementById('btn-undo').onclick = undoLastVisit;
+            document.getElementById('btn-restart').onclick = () => loadLevel(state.currentLevelIdx, true);
+            
+            document.getElementById('btn-sound').onclick = () => {
+                audio.sfxOn = !audio.sfxOn;
+                audio.musicOn = !audio.musicOn;
+                document.getElementById('sound-icon').className = audio.sfxOn ? "fa-solid fa-volume-high" : "fa-solid fa-volume-xmark";
+                if (audio.musicOn) audio.startMusic(); else audio.stopMusic();
+            };
+
+            document.getElementById('btn-pause').onclick = () => {
+                state.isPaused = true;
+                document.getElementById('modal-pause').classList.remove('hidden');
+            };
+
+            document.getElementById('btn-resume').onclick = () => {
+                state.isPaused = false;
+                document.getElementById('modal-pause').classList.add('hidden');
+            };
+
+            document.getElementById('btn-pause-restart').onclick = () => {
+                state.isPaused = false;
+                document.getElementById('modal-pause').classList.add('hidden');
+                loadLevel(state.currentLevelIdx, true);
+            };
+
+            document.getElementById('btn-settings').onclick = () => {
+                selectedSettingsLevel = state.currentLevelIdx;
+                updateSettingsLevelDisplay();
+                document.getElementById('modal-settings').classList.remove('hidden');
+            };
+            document.getElementById('btn-close-settings').onclick = () => {
+                document.getElementById('modal-settings').classList.add('hidden');
+            };
+
+            document.getElementById('btn-settings-prev-lvl').onclick = () => {
+                if (selectedSettingsLevel > 0) {
+                    selectedSettingsLevel--;
+                    updateSettingsLevelDisplay();
+                }
+            };
+            document.getElementById('btn-settings-next-lvl').onclick = () => {
+                if (selectedSettingsLevel < state.maxUnlockedLevel) {
+                    selectedSettingsLevel++;
+                    updateSettingsLevelDisplay();
+                }
+            };
+
+            document.getElementById('btn-save-settings').onclick = () => {
+                state.settings.music = document.getElementById('setting-music').checked;
+                state.settings.sfx = document.getElementById('setting-sfx').checked;
+                state.settings.idealLine = document.getElementById('setting-ideal-line').checked;
+
+                audio.musicOn = state.settings.music;
+                audio.sfxOn = state.settings.sfx;
+                if (audio.musicOn) audio.startMusic(); else audio.stopMusic();
+
+                updateIdealPathPreview();
+                saveGameState();
+                document.getElementById('modal-settings').classList.add('hidden');
+
+                if (selectedSettingsLevel !== state.currentLevelIdx) {
+                    loadLevel(selectedSettingsLevel, false);
+                }
+            };
+
+            document.getElementById('btn-next-level').onclick = () => {
+                state.isVersusMode = false;
+                state.player1Stats = null;
+                document.getElementById('modal-complete').classList.add('hidden');
+                if (state.lastLevelWasPerfect) {
+                    const nextLvl = state.currentLevelIdx + 1;
+                    if (nextLvl <= state.maxUnlockedLevel && nextLvl < LEVELS.length) {
+                        loadLevel(nextLvl, false);
+                    } else {
+                        loadLevel(state.currentLevelIdx, false);
+                    }
+                } else {
+                    loadLevel(state.currentLevelIdx, true);
+                }
+            };
+
+            document.getElementById('btn-play-again').onclick = () => {
+                state.isVersusMode = false;
+                state.player1Stats = null;
+                document.getElementById('modal-complete').classList.add('hidden');
+                if (state.lastLevelWasPerfect) {
+                    loadLevel(state.currentLevelIdx, false);
+                } else {
+                    loadLevel(state.currentLevelIdx, false);
+                }
+            };
+
+            document.getElementById('btn-pass-friend').onclick = () => {
+                const userDist = calculateVisitedDistance(state.visitedSequence);
+                const optDist = state.optimalTSP.distance;
+                const efficiency = Math.min(100, Math.round((optDist / userDist) * 100));
+
+                state.player1Stats = {
+                    distance: userDist,
+                    timeSec: state.elapsedTimeSec,
+                    efficiency
+                };
+
+                state.isVersusMode = true;
+                document.getElementById('modal-complete').classList.add('hidden');
+                document.getElementById('modal-pass-turn').classList.remove('hidden');
+            };
+
+            document.getElementById('btn-start-friend-turn').onclick = () => {
+                document.getElementById('modal-pass-turn').classList.add('hidden');
+                loadLevel(state.currentLevelIdx, true);
+            };
+
+            document.getElementById('btn-speed-recap').onclick = startSpeedRecap;
+            document.getElementById('btn-recap-exit').onclick = exitSpeedRecap;
+            document.getElementById('btn-recap-download').onclick = downloadRecapWebM;
+        };
+    </script>
+</body>
+</html>
