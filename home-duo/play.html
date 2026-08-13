@@ -310,6 +310,17 @@
       font-weight: 600;
       font-size: 0.95rem;
     }
+    .select-input {
+      background: #334155;
+      color: #f8fafc;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 8px;
+      padding: 5px 10px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      outline: none;
+      cursor: pointer;
+    }
     .toggle-checkbox {
       width: 40px;
       height: 22px;
@@ -391,6 +402,30 @@
     <div class="card">
       <h2>Settings</h2>
       <div>
+        <div class="setting-row">
+          <label>Opponent Mode</label>
+          <select id="set-mode" class="select-input">
+            <option value="ai">VS AI</option>
+            <option value="human">Pass & Play</option>
+          </select>
+        </div>
+        <div class="setting-row" id="row-difficulty">
+          <label>AI Difficulty</label>
+          <select id="set-difficulty" class="select-input">
+            <option value="easy">Easy</option>
+            <option value="medium">Medium</option>
+            <option value="hard">Hard</option>
+            <option value="master">Master</option>
+          </select>
+        </div>
+        <div class="setting-row">
+          <label>Who Starts</label>
+          <select id="set-starter" class="select-input">
+            <option value="green">Green</option>
+            <option value="blue">Blue</option>
+            <option value="random">Random</option>
+          </select>
+        </div>
         <div class="setting-row">
           <label>Sound Effects</label>
           <input type="checkbox" id="set-sfx" class="toggle-checkbox" checked>
@@ -488,8 +523,179 @@
       }
     };
 
-    let appSettings = Storage.get('home_duo_settings', { sfx: true, music: true });
+    let appSettings = Storage.get('home_duo_settings', { sfx: true, music: true, opponent: 'ai', aiDifficulty: 'medium', starter: 'green' });
     let gameData = Storage.get('home_duo_data', { streak: 0 });
+    let aiTimeout = null;
+
+    /* AI Engine */
+    const AI = {
+      getBestMove: function(board, aiTeam, difficulty) {
+        const allMoves = [];
+        for (let r = 0; r < GRID_SIZE; r++) {
+          for (let c = 0; c < GRID_SIZE; c++) {
+            const piece = board[r][c];
+            if (piece && piece.team === aiTeam) {
+              const moves = calculateValidMoves(r, c, board);
+              moves.forEach(m => allMoves.push({ from: { r, c }, to: m }));
+            }
+          }
+        }
+
+        if (allMoves.length === 0) return null;
+
+        if (difficulty === 'easy' && Math.random() < 0.75) {
+          return allMoves[Math.floor(Math.random() * allMoves.length)];
+        }
+
+        const depthMap = { 'easy': 1, 'medium': 3, 'hard': 5, 'master': 7 };
+        const maxDepth = depthMap[difficulty] || 3;
+
+        let bestMove = null;
+        let bestScore = -Infinity;
+
+        allMoves.sort(() => Math.random() - 0.5);
+
+        for (let move of allMoves) {
+          const nextBoard = AI.cloneBoard(board);
+          nextBoard[move.to.r][move.to.c] = nextBoard[move.from.r][move.from.c];
+          nextBoard[move.from.r][move.from.c] = null;
+
+          if (AI.checkBoardWin(nextBoard) === aiTeam) {
+            return move;
+          }
+
+          const score = AI.minimax(nextBoard, maxDepth - 1, -Infinity, Infinity, false, aiTeam);
+          if (score > bestScore) {
+            bestScore = score;
+            bestMove = move;
+          }
+        }
+
+        return bestMove || allMoves[0];
+      },
+
+      minimax: function(board, depth, alpha, beta, isMaximizing, aiTeam) {
+        const winner = AI.checkBoardWin(board);
+        const oppTeam = aiTeam === TEAM_BLUE ? TEAM_GREEN : TEAM_BLUE;
+
+        if (winner === aiTeam) return 10000 + depth;
+        if (winner === oppTeam) return -10000 - depth;
+        if (depth === 0) return AI.evaluateBoard(board, aiTeam);
+
+        const currentTeam = isMaximizing ? aiTeam : oppTeam;
+        const moves = [];
+
+        for (let r = 0; r < GRID_SIZE; r++) {
+          for (let c = 0; c < GRID_SIZE; c++) {
+            const p = board[r][c];
+            if (p && p.team === currentTeam) {
+              const valid = calculateValidMoves(r, c, board);
+              valid.forEach(m => moves.push({ from: { r, c }, to: m }));
+            }
+          }
+        }
+
+        if (moves.length === 0) return 0;
+
+        if (isMaximizing) {
+          let maxEval = -Infinity;
+          for (let m of moves) {
+            const nextB = AI.cloneBoard(board);
+            nextB[m.to.r][m.to.c] = nextB[m.from.r][m.from.c];
+            nextB[m.from.r][m.from.c] = null;
+
+            const evalScore = AI.minimax(nextB, depth - 1, alpha, beta, false, aiTeam);
+            maxEval = Math.max(maxEval, evalScore);
+            alpha = Math.max(alpha, evalScore);
+            if (beta <= alpha) break;
+          }
+          return maxEval;
+        } else {
+          let minEval = Infinity;
+          for (let m of moves) {
+            const nextB = AI.cloneBoard(board);
+            nextB[m.to.r][m.to.c] = nextB[m.from.r][m.from.c];
+            nextB[m.from.r][m.from.c] = null;
+
+            const evalScore = AI.minimax(nextB, depth - 1, alpha, beta, true, aiTeam);
+            minEval = Math.min(minEval, evalScore);
+            beta = Math.min(beta, evalScore);
+            if (beta <= alpha) break;
+          }
+          return minEval;
+        }
+      },
+
+      evaluateBoard: function(board, aiTeam) {
+        const oppTeam = aiTeam === TEAM_BLUE ? TEAM_GREEN : TEAM_BLUE;
+        const aiTarget = aiTeam === TEAM_BLUE ? BLUE_GOAL : GREEN_GOAL;
+        const oppTarget = oppTeam === TEAM_BLUE ? BLUE_GOAL : GREEN_GOAL;
+
+        let score = 0;
+
+        for (let r = 0; r < GRID_SIZE; r++) {
+          for (let c = 0; c < GRID_SIZE; c++) {
+            const p = board[r][c];
+            if (!p) continue;
+
+            const target = p.team === aiTeam ? aiTarget : oppTarget;
+            const dr = Math.abs(r - target.r);
+            const dc = Math.abs(c - target.c);
+
+            let slides = 0;
+            if (dr > 0) slides++;
+            if (dc > 0) slides++;
+
+            // Unblocked path check
+            if (r === target.r) {
+              const minC = Math.min(c, target.c), maxC = Math.max(c, target.c);
+              let blocked = false;
+              for (let col = minC + 1; col < maxC; col++) {
+                if (board[r][col]) { blocked = true; break; }
+              }
+              if (!blocked) slides = 1;
+            } else if (c === target.c) {
+              const minR = Math.min(r, target.r), maxR = Math.max(r, target.r);
+              let blocked = false;
+              for (let row = minR + 1; row < maxR; row++) {
+                if (board[row][c]) { blocked = true; break; }
+              }
+              if (!blocked) slides = 1;
+            }
+
+            const val = (10 - slides * 3) - (dr + dc) * 0.5;
+            if (p.team === aiTeam) {
+              score += val;
+            } else {
+              score -= val * 1.25; // Prioritize defensive blocking
+            }
+          }
+        }
+        return score;
+      },
+
+      cloneBoard: function(board) {
+        const newB = Array(GRID_SIZE).fill(null).map(() => Array(GRID_SIZE).fill(null));
+        for (let r = 0; r < GRID_SIZE; r++) {
+          for (let c = 0; c < GRID_SIZE; c++) {
+            if (board[r][c]) {
+              newB[r][c] = { team: board[r][c].team, id: board[r][c].id };
+            }
+          }
+        }
+        return newB;
+      },
+
+      checkBoardWin: function(board) {
+        const pGreen = board[GREEN_GOAL.r][GREEN_GOAL.c];
+        if (pGreen && pGreen.team === TEAM_GREEN) return TEAM_GREEN;
+
+        const pBlue = board[BLUE_GOAL.r][BLUE_GOAL.c];
+        if (pBlue && pBlue.team === TEAM_BLUE) return TEAM_BLUE;
+
+        return null;
+      }
+    };
 
     class SoundEngine {
       constructor() {
@@ -924,6 +1130,7 @@
 
     function onPointerDown(event) {
       if (gameState.isGameOver || gameState.isPaused) return;
+      if (appSettings.opponent === 'ai' && gameState.turn === TEAM_BLUE) return; // Block human clicks during AI turn
 
       audioEngine.init();
 
@@ -1014,11 +1221,18 @@
 
     function undoMove() {
       if (gameState.moveHistory.length === 0 || gameState.isGameOver) return;
+      if (aiTimeout) clearTimeout(aiTimeout);
 
-      const lastState = gameState.moveHistory.pop();
-      gameState.board = lastState.board;
-      gameState.turn = lastState.turn;
-      gameState.moveCount = lastState.moveCount;
+      // In AI mode, undo twice to step back to player's previous turn
+      const steps = (appSettings.opponent === 'ai' && gameState.moveHistory.length >= 2) ? 2 : 1;
+
+      for (let i = 0; i < steps; i++) {
+        if (gameState.moveHistory.length === 0) break;
+        const lastState = gameState.moveHistory.pop();
+        gameState.board = lastState.board;
+        gameState.turn = lastState.turn;
+        gameState.moveCount = lastState.moveCount;
+      }
 
       document.getElementById('move-count').innerText = `${gameState.moveCount} moves`;
       gameState.selectedPiece = null;
@@ -1050,6 +1264,22 @@
         dot.className = "dot green";
       } else {
         dot.className = "dot blue";
+      }
+
+      triggerAIMoveIfNeeded();
+    }
+
+    function triggerAIMoveIfNeeded() {
+      if (gameState.isGameOver || gameState.isPaused) return;
+      if (appSettings.opponent === 'ai' && gameState.turn === TEAM_BLUE) {
+        if (aiTimeout) clearTimeout(aiTimeout);
+        aiTimeout = setTimeout(() => {
+          if (gameState.isGameOver || gameState.isPaused || gameState.turn !== TEAM_BLUE) return;
+          const bestMove = AI.getBestMove(gameState.board, TEAM_BLUE, appSettings.aiDifficulty);
+          if (bestMove) {
+            executeMove(bestMove.from, bestMove.to);
+          }
+        }, 500);
       }
     }
 
@@ -1110,8 +1340,17 @@
     }
 
     function resetGame() {
+      if (aiTimeout) clearTimeout(aiTimeout);
       gameState.board = initBoardState();
-      gameState.turn = TEAM_GREEN;
+
+      let startingTeam = TEAM_GREEN;
+      if (appSettings.starter === 'blue') {
+        startingTeam = TEAM_BLUE;
+      } else if (appSettings.starter === 'random') {
+        startingTeam = Math.random() < 0.5 ? TEAM_GREEN : TEAM_BLUE;
+      }
+
+      gameState.turn = startingTeam;
       gameState.selectedPiece = null;
       gameState.validMoves = [];
       gameState.moveHistory = [];
@@ -1192,14 +1431,53 @@
     });
 
     // Settings
+    let settingsSetupOnOpen = {};
+
     document.getElementById('btn-settings').addEventListener('click', () => {
       gameState.isPaused = true;
+      if (aiTimeout) clearTimeout(aiTimeout);
+
+      settingsSetupOnOpen = {
+        opponent: appSettings.opponent,
+        starter: appSettings.starter
+      };
+
+      document.getElementById('set-mode').value = appSettings.opponent || 'ai';
+      document.getElementById('set-difficulty').value = appSettings.aiDifficulty || 'medium';
+      document.getElementById('set-starter').value = appSettings.starter || 'green';
+      document.getElementById('row-difficulty').style.display = (appSettings.opponent === 'human') ? 'none' : 'flex';
+
       document.getElementById('modal-settings').classList.add('active');
+    });
+
+    document.getElementById('set-mode').addEventListener('change', (e) => {
+      appSettings.opponent = e.target.value;
+      document.getElementById('row-difficulty').style.display = (appSettings.opponent === 'human') ? 'none' : 'flex';
+      Storage.set('home_duo_settings', appSettings);
+    });
+
+    document.getElementById('set-difficulty').addEventListener('change', (e) => {
+      appSettings.aiDifficulty = e.target.value;
+      Storage.set('home_duo_settings', appSettings);
+    });
+
+    document.getElementById('set-starter').addEventListener('change', (e) => {
+      appSettings.starter = e.target.value;
+      Storage.set('home_duo_settings', appSettings);
     });
 
     document.getElementById('btn-close-settings').addEventListener('click', () => {
       document.getElementById('modal-settings').classList.remove('active');
-      gameState.isPaused = false;
+
+      const setupChanged = (appSettings.opponent !== settingsSetupOnOpen.opponent) || 
+                           (appSettings.starter !== settingsSetupOnOpen.starter);
+
+      if (setupChanged) {
+        resetGame();
+      } else {
+        gameState.isPaused = false;
+        triggerAIMoveIfNeeded();
+      }
     });
 
     const sfxToggle = document.getElementById('set-sfx');
