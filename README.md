@@ -10,7 +10,7 @@ Live links to play:
 * [Pong Runner 🏀🪙](https://alexfc14.github.io/vibe-games/pong-runner/play.html)
 * [Disk Sort 🔵](https://alexfc14.github.io/vibe-games/disk-sort/play.html) | [Donut Version 🍩](https://alexfc14.github.io/vibe-games/disk-sort/donuts.html)
 * [Nautilus 🐚🎵](https://alexfc14.github.io/vibe-games/nautilus/play.html)
-* [Fruit Tangle 🍇](https://alexfc14.github.io/vibe-games/fruit-tangle/play.html) | [Pet Tangle 🐾](https://alexfc14.github.io/vibe-games/fruit-tangle/pet_tangle.html.html)
+* [Fruit Tangle 🍇](https://alexfc14.github.io/vibe-games/fruit-tangle/play.html) | [Pet Tangle 🐾](https://alexfc14.github.io/vibe-games/fruit-tangle/pet_tangle.html)
 * [Ring Sudoku 💍](https://alexfc14.github.io/vibe-games/rings/play.html) | [Flowers 🌸](https://alexfc14.github.io/vibe-games/rings/petals.html)
 * [Blocks 🟥](https://alexfc14.github.io/vibe-games/blocks/play.html)
 * [Lawn mower 🚜](https://alexfc14.github.io/vibe-games/lawn-mower/play.html)
