@@ -47,7 +47,7 @@
       pointer-events: auto;
     }
 
-    /* Top Stats Panel (Padded Left) */
+    /* Top Stats Panel */
     .top-panel {
       display: flex;
       align-items: center;
@@ -266,6 +266,22 @@
       transform: translateY(-2px);
       box-shadow: 0 6px 16px rgba(37, 99, 235, 0.4);
     }
+    .accent-btn {
+      background: linear-gradient(135deg, #059669, #10b981);
+      color: white;
+      border: none;
+      padding: 12px;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    }
+    .accent-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
+    }
     .danger-btn {
       background: linear-gradient(135deg, #dc2626, #b91c1c);
       color: white;
@@ -414,6 +430,7 @@
           <select id="set-difficulty" class="select-input">
             <option value="easy">Easy</option>
             <option value="medium">Medium</option>
+            <option value="medium-hard">Medium-Hard</option>
             <option value="hard">Hard</option>
             <option value="master">Master</option>
           </select>
@@ -421,9 +438,16 @@
         <div class="setting-row">
           <label>Who Starts</label>
           <select id="set-starter" class="select-input">
+            <option value="random">Random</option>
             <option value="green">Green</option>
             <option value="blue">Blue</option>
-            <option value="random">Random</option>
+          </select>
+        </div>
+        <div class="setting-row">
+          <label>Starting Setup</label>
+          <select id="set-layout" class="select-input">
+            <option value="corners">Corners</option>
+            <option value="center">Center</option>
           </select>
         </div>
         <div class="setting-row">
@@ -462,7 +486,7 @@
     </div>
   </div>
 
-  <!-- Victory Modal -->
+  <!-- Victory / Game Over Modal -->
   <div class="modal-overlay" id="modal-victory">
     <div class="card">
       <h2 id="victory-title">GREEN WINS!</h2>
@@ -487,8 +511,9 @@
         </div>
       </div>
 
-      <div class="btn-group">
-        <button class="primary-btn" id="btn-play-again">Play Again</button>
+      <div class="btn-group" id="victory-btn-group">
+        <button class="accent-btn" id="btn-diff-action">Increase Difficulty</button>
+        <button class="primary-btn" id="btn-play-again">Play Another</button>
       </div>
     </div>
   </div>
@@ -523,11 +548,28 @@
       }
     };
 
-    let appSettings = Storage.get('home_duo_settings', { sfx: true, music: true, opponent: 'ai', aiDifficulty: 'medium', starter: 'green' });
+    // Default mode is VS AI, Medium difficulty, and Who Starts is Random
+    let appSettings = Storage.get('home_duo_settings', { 
+      sfx: true, 
+      music: true, 
+      opponent: 'ai', 
+      aiDifficulty: 'medium', 
+      starter: 'random',
+      boardLayout: 'corners'
+    });
+    
     let gameData = Storage.get('home_duo_data', { streak: 0 });
     let aiTimeout = null;
 
-    /* AI Engine */
+    const DIFFICULTIES = ['easy', 'medium', 'medium-hard', 'hard', 'master'];
+    const DIFF_NAMES = {
+      'easy': 'Easy',
+      'medium': 'Medium',
+      'medium-hard': 'Medium-Hard',
+      'hard': 'Hard',
+      'master': 'Master'
+    };
+
     const AI = {
       getBestMove: function(board, aiTeam, difficulty) {
         const allMoves = [];
@@ -543,12 +585,18 @@
 
         if (allMoves.length === 0) return null;
 
-        if (difficulty === 'easy' && Math.random() < 0.75) {
+        if (difficulty === 'easy' && Math.random() < 0.70) {
           return allMoves[Math.floor(Math.random() * allMoves.length)];
         }
 
-        const depthMap = { 'easy': 1, 'medium': 3, 'hard': 5, 'master': 7 };
-        const maxDepth = depthMap[difficulty] || 3;
+        const depthMap = { 
+          'easy': 1, 
+          'medium': 2, 
+          'medium-hard': 3, 
+          'hard': 4, 
+          'master': 5 
+        };
+        const maxDepth = depthMap[difficulty] || 2;
 
         let bestMove = null;
         let bestScore = -Infinity;
@@ -832,13 +880,10 @@
     const TEAM_GREEN = 'green';
     const TEAM_BLUE = 'blue';
 
-    // Target Goals on 4x4 Grid
-    // Green's target to capture: Blue's home at top-right (Row 0, Col 3)
     const GREEN_GOAL = { r: 0, c: 3 }; 
-    // Blue's target to capture: Green's home at bottom-left (Row 3, Col 0)
     const BLUE_GOAL = { r: 3, c: 0 };  
 
-    const TURN_TIME_LIMIT = 60; // 60 seconds thinking limit per turn
+    const TURN_TIME_LIMIT = 60; 
 
     let gameState = {
       board: [],
@@ -858,29 +903,33 @@
     function initBoardState() {
       const board = Array(GRID_SIZE).fill(null).map(() => Array(GRID_SIZE).fill(null));
 
-      // Inner quasi-corner positions touching target homes
-      board[2][0] = { team: TEAM_GREEN, id: 'g1' };
-      board[3][1] = { team: TEAM_GREEN, id: 'g2' };
-      board[0][2] = { team: TEAM_BLUE, id: 'b1' };
-      board[1][3] = { team: TEAM_BLUE, id: 'b2' };
+      if (appSettings.boardLayout === 'center') {
+        board[1][1] = { team: TEAM_GREEN, id: 'g1' };
+        board[2][1] = { team: TEAM_GREEN, id: 'g2' };
+        board[1][2] = { team: TEAM_BLUE, id: 'b1' };
+        board[2][2] = { team: TEAM_BLUE, id: 'b2' };
+      } else {
+        board[2][0] = { team: TEAM_GREEN, id: 'g1' };
+        board[3][1] = { team: TEAM_GREEN, id: 'g2' };
+        board[0][2] = { team: TEAM_BLUE, id: 'b1' };
+        board[1][3] = { team: TEAM_BLUE, id: 'b2' };
+      }
 
       return board;
     }
 
-    // Rook-style linear sliding movement
     function calculateValidMoves(r, c, board) {
       const piece = board[r][c];
       if (!piece) return [];
 
       const moves = [];
       const directions = [
-        { dr: -1, dc: 0 }, // Up
-        { dr: 1, dc: 0 },  // Down
-        { dr: 0, dc: -1 }, // Left
-        { dr: 0, dc: 1 }   // Right
+        { dr: -1, dc: 0 },
+        { dr: 1, dc: 0 }, 
+        { dr: 0, dc: -1 },
+        { dr: 0, dc: 1 }  
       ];
 
-      // Pieces cannot sit on or occupy their own home circle
       const ownHome = piece.team === TEAM_GREEN ? BLUE_GOAL : GREEN_GOAL;
 
       directions.forEach(dir => {
@@ -889,14 +938,12 @@
 
         while (currR >= 0 && currR < GRID_SIZE && currC >= 0 && currC < GRID_SIZE) {
           if (!board[currR][currC]) {
-            // Empty tile: valid move unless it's the piece's own home circle
             if (currR !== ownHome.r || currC !== ownHome.c) {
               moves.push({ r: currR, c: currC });
             }
             currR += dir.dr;
             currC += dir.dc;
           } else {
-            // Blocked by another piece
             break;
           }
         }
@@ -920,7 +967,7 @@
       scene.background = new THREE.Color(0x0f172a);
 
       const aspect = window.innerWidth / window.innerHeight;
-      const viewSize = 7.0; // Comfortably frames 4x4 board with top & bottom margins
+      const viewSize = 7.0;
       
       if (aspect >= 1) {
         camera = new THREE.OrthographicCamera(
@@ -936,7 +983,6 @@
         );
       }
       
-      // Gently balance camera target between top status bar and bottom buttons
       camera.position.set(0, 20, 0.2);
       camera.lookAt(0, 0, 0.2);
 
@@ -972,7 +1018,6 @@
       boardGroup = new THREE.Group();
       scene.add(boardGroup);
 
-      // Board Base
       const baseGeo = new THREE.BoxGeometry(5.7, 0.2, 5.7);
       const baseMat = new THREE.MeshStandardMaterial({
         color: 0x1e293b,
@@ -984,14 +1029,12 @@
       baseMesh.receiveShadow = true;
       boardGroup.add(baseMesh);
 
-      // Raycast Plane
       const planeGeo = new THREE.PlaneGeometry(20, 20);
       const planeMat = new THREE.MeshBasicMaterial({ visible: false });
       clickPlane = new THREE.Mesh(planeGeo, planeMat);
       clickPlane.rotation.x = -Math.PI / 2;
       scene.add(clickPlane);
 
-      // Grid Tiles
       const tileSize = 1.15;
       for (let r = 0; r < GRID_SIZE; r++) {
         for (let c = 0; c < GRID_SIZE; c++) {
@@ -1012,11 +1055,7 @@
         }
       }
 
-      // Home Target Rings
-      // GREEN_GOAL (0, 3) is Blue's Home -> render in Blue color (0x3b82f6)
       createTargetRing(GREEN_GOAL.r, GREEN_GOAL.c, 0x3b82f6);
-      
-      // BLUE_GOAL (3, 0) is Green's Home -> render in Green color (0x10b981)
       createTargetRing(BLUE_GOAL.r, BLUE_GOAL.c, 0x10b981);
     }
 
@@ -1130,7 +1169,7 @@
 
     function onPointerDown(event) {
       if (gameState.isGameOver || gameState.isPaused) return;
-      if (appSettings.opponent === 'ai' && gameState.turn === TEAM_BLUE) return; // Block human clicks during AI turn
+      if (appSettings.opponent === 'ai' && gameState.turn === TEAM_BLUE) return; 
 
       audioEngine.init();
 
@@ -1155,9 +1194,7 @@
     function handleCellClick(r, c) {
       const piece = gameState.board[r][c];
 
-      // Select active team's piece
       if (piece && piece.team === gameState.turn) {
-        // De-select if clicking the currently selected piece
         if (gameState.selectedPiece && gameState.selectedPiece.r === r && gameState.selectedPiece.c === c) {
           gameState.selectedPiece = null;
           gameState.validMoves = [];
@@ -1172,7 +1209,6 @@
         return;
       }
 
-      // Execute move if clicking valid destination
       if (gameState.selectedPiece) {
         const move = gameState.validMoves.find(m => m.r === r && m.c === c);
         if (move) {
@@ -1211,7 +1247,6 @@
         return;
       }
 
-      // Switch turn & reset countdown
       gameState.turn = gameState.turn === TEAM_GREEN ? TEAM_BLUE : TEAM_GREEN;
       resetTurnCountdown();
       updateTurnUI();
@@ -1223,7 +1258,6 @@
       if (gameState.moveHistory.length === 0 || gameState.isGameOver) return;
       if (aiTimeout) clearTimeout(aiTimeout);
 
-      // In AI mode, undo twice to step back to player's previous turn
       const steps = (appSettings.opponent === 'ai' && gameState.moveHistory.length >= 2) ? 2 : 1;
 
       for (let i = 0; i < steps; i++) {
@@ -1246,11 +1280,9 @@
     }
 
     function checkWinCondition() {
-      // Green reaches Green Goal (Row 0, Col 3)
       const pAtGreenGoal = gameState.board[GREEN_GOAL.r][GREEN_GOAL.c];
       if (pAtGreenGoal && pAtGreenGoal.team === TEAM_GREEN) return TEAM_GREEN;
 
-      // Blue reaches Blue Goal (Row 3, Col 0)
       const pAtBlueGoal = gameState.board[BLUE_GOAL.r][BLUE_GOAL.c];
       if (pAtBlueGoal && pAtBlueGoal.team === TEAM_BLUE) return TEAM_BLUE;
 
@@ -1310,7 +1342,6 @@
       clearInterval(gameState.timerInterval);
       clearInterval(gameState.turnCountdownInterval);
 
-      // Match game timer
       gameState.timerInterval = setInterval(() => {
         if (!gameState.isPaused && !gameState.isGameOver) {
           gameState.timeElapsed++;
@@ -1320,7 +1351,6 @@
         }
       }, 1000);
 
-      // Turn 60s countdown timer
       gameState.turnCountdownInterval = setInterval(() => {
         if (!gameState.isPaused && !gameState.isGameOver) {
           gameState.turnTimeLeft--;
@@ -1393,12 +1423,47 @@
       document.getElementById('stat-winner').style.color = winner === TEAM_GREEN ? "#10b981" : "#3b82f6";
       document.getElementById('stat-streak').innerText = `${gameData.streak}`;
 
+      // Handle AI difficulty upgrade / downgrade prompts based on win or loss
+      const diffActionBtn = document.getElementById('btn-diff-action');
+      const curIdx = DIFFICULTIES.indexOf(appSettings.aiDifficulty);
+
+      if (appSettings.opponent === 'ai') {
+        const isPlayerWin = (winner === TEAM_GREEN);
+
+        if (isPlayerWin && curIdx < DIFFICULTIES.length - 1) {
+          const nextDiff = DIFFICULTIES[curIdx + 1];
+          diffActionBtn.style.display = 'block';
+          diffActionBtn.className = 'accent-btn';
+          diffActionBtn.innerText = `Increase Difficulty (${DIFF_NAMES[nextDiff]})`;
+          diffActionBtn.onclick = () => {
+            appSettings.aiDifficulty = nextDiff;
+            Storage.set('home_duo_settings', appSettings);
+            document.getElementById('modal-victory').classList.remove('active');
+            resetGame();
+          };
+        } else if (!isPlayerWin && curIdx > 0) {
+          const prevDiff = DIFFICULTIES[curIdx - 1];
+          diffActionBtn.style.display = 'block';
+          diffActionBtn.className = 'danger-btn';
+          diffActionBtn.innerText = `Decrease Difficulty (${DIFF_NAMES[prevDiff]})`;
+          diffActionBtn.onclick = () => {
+            appSettings.aiDifficulty = prevDiff;
+            Storage.set('home_duo_settings', appSettings);
+            document.getElementById('modal-victory').classList.remove('active');
+            resetGame();
+          };
+        } else {
+          diffActionBtn.style.display = 'none';
+        }
+      } else {
+        diffActionBtn.style.display = 'none';
+      }
+
       document.getElementById('modal-victory').classList.add('active');
     }
 
     document.getElementById('btn-undo').addEventListener('click', undoMove);
     
-    // Restart confirmation logic
     document.getElementById('btn-restart').addEventListener('click', () => {
       gameState.isPaused = true;
       document.getElementById('modal-confirm-restart').classList.add('active');
@@ -1414,7 +1479,6 @@
       gameState.isPaused = false;
     });
 
-    // Pause modal
     document.getElementById('btn-pause').addEventListener('click', () => {
       gameState.isPaused = true;
       document.getElementById('modal-pause').classList.add('active');
@@ -1430,7 +1494,6 @@
       document.getElementById('modal-confirm-restart').classList.add('active');
     });
 
-    // Settings
     let settingsSetupOnOpen = {};
 
     document.getElementById('btn-settings').addEventListener('click', () => {
@@ -1439,12 +1502,14 @@
 
       settingsSetupOnOpen = {
         opponent: appSettings.opponent,
-        starter: appSettings.starter
+        starter: appSettings.starter,
+        boardLayout: appSettings.boardLayout
       };
 
       document.getElementById('set-mode').value = appSettings.opponent || 'ai';
       document.getElementById('set-difficulty').value = appSettings.aiDifficulty || 'medium';
-      document.getElementById('set-starter').value = appSettings.starter || 'green';
+      document.getElementById('set-starter').value = appSettings.starter || 'random';
+      document.getElementById('set-layout').value = appSettings.boardLayout || 'corners';
       document.getElementById('row-difficulty').style.display = (appSettings.opponent === 'human') ? 'none' : 'flex';
 
       document.getElementById('modal-settings').classList.add('active');
@@ -1466,11 +1531,17 @@
       Storage.set('home_duo_settings', appSettings);
     });
 
+    document.getElementById('set-layout').addEventListener('change', (e) => {
+      appSettings.boardLayout = e.target.value;
+      Storage.set('home_duo_settings', appSettings);
+    });
+
     document.getElementById('btn-close-settings').addEventListener('click', () => {
       document.getElementById('modal-settings').classList.remove('active');
 
       const setupChanged = (appSettings.opponent !== settingsSetupOnOpen.opponent) || 
-                           (appSettings.starter !== settingsSetupOnOpen.starter);
+                           (appSettings.starter !== settingsSetupOnOpen.starter) ||
+                           (appSettings.boardLayout !== settingsSetupOnOpen.boardLayout);
 
       if (setupChanged) {
         resetGame();
@@ -1508,7 +1579,6 @@
       audioEngine.updateSettings();
     });
 
-    // Victory
     document.getElementById('btn-play-again').addEventListener('click', () => {
       document.getElementById('modal-victory').classList.remove('active');
       resetGame();
@@ -1542,7 +1612,7 @@
       if (!topPanel || !camera) return;
       const viewHeightInUnits = camera.top - camera.bottom;
       const pixelsPerUnit = window.innerHeight / viewHeightInUnits;
-      const boardHalfWidthUnits = 2.85; // Half of board base width (5.7 units)
+      const boardHalfWidthUnits = 2.85; 
       const boardLeftPx = Math.max(12, (window.innerWidth / 2) - (boardHalfWidthUnits * pixelsPerUnit));
       topPanel.style.marginLeft = `${boardLeftPx}px`;
     }
