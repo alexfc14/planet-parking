@@ -1,0 +1,1800 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Pet Tangle - 2D Puzzle</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Fraunces & Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,800;9..144,900&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Three.js (v128) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <!-- GSAP for smooth animations -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      height: 100dvh;
+      overflow: hidden;
+      touch-action: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      user-select: none;
+      -webkit-user-select: none;
+      background-color: #F5FEF5;
+      color: #1F2124;
+    }
+    .font-rover-headline {
+      font-family: 'Fraunces', serif;
+    }
+    #canvas-container {
+      touch-action: none;
+    }
+    canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+      outline: none;
+      touch-action: none;
+    }
+    /* Subtle Pet Doodle SVG Pattern Background */
+    .rover-doodle-bg {
+      background-image: url("data:image/svg+xml,%3Csvg width='120' height='120' viewBox='0 0 120 120' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%3C%2300BD70%3E' fill-opacity='0.07'%3E%3Cpath d='M20 20c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm6 2c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm-12 0c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm6 4c2.2 0 4-1.8 4-4 0-1.5-1.5-3.5-4-5.5-2.5 2-4 4-4 5.5 0 2.2 1.8 4 4 4z'/%3E%3Cpath d='M80 80c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm6 2c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm-12 0c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm6 4c2.2 0 4-1.8 4-4 0-1.5-1.5-3.5-4-5.5-2.5 2-4 4-4 5.5 0 2.2 1.8 4 4 4z'/%3E%3Ccircle cx='90' cy='30' r='3'/%3E%3Ccircle cx='30' cy='90' r='3'/%3E%3Crect x='70' y='15' width='12' height='5' rx='2' transform='rotate(25 70 15)'/%3E%3C/g%3E%3C/svg%3E");
+    }
+  </style>
+</head>
+<body class="relative w-full h-full flex flex-col justify-between p-3 sm:p-4 text-[#1F2124] overflow-hidden select-none rover-doodle-bg">
+
+  <!-- Top Header Bar -->
+  <div class="w-full max-w-md mx-auto z-10 flex flex-col gap-1 shrink-0">
+    <div class="flex items-center justify-between w-full">
+      
+      <!-- Top Left: Paw Logo & Title -->
+      <div class="flex items-center gap-2">
+        <span class="text-xl sm:text-2xl shrink-0 leading-none select-none translate-y-[2px]">🐾</span>
+
+        <div class="flex flex-col justify-center">
+          <h1 class="text-xl sm:text-2xl font-extrabold font-rover-headline tracking-tight text-[#007940] leading-none">
+            Pet <span class="font-normal text-[#1F2124]">Tangle</span>
+          </h1>
+        </div>
+      </div>
+
+      <!-- Top Right: Moves Counter (Left) & Time Display (Right) Side-by-Side -->
+      <div class="flex items-center gap-3">
+        <span class="text-sm sm:text-base font-extrabold text-[#007940] leading-none">
+          <span id="stat-moves">0</span> moves
+        </span>
+        <span id="stat-time" class="text-sm sm:text-base font-extrabold text-[#1F2124] tracking-tight leading-none">
+          00:00
+        </span>
+
+        <!-- Hidden hooks for state maintenance -->
+        <span id="stat-level" class="hidden">1</span>
+        <span id="score-tangle" class="hidden">0</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- WebGL Game Canvas Container -->
+  <div id="canvas-container" class="w-full flex-grow relative z-0 min-h-0 my-1 overflow-hidden"></div>
+
+  <!-- Floating Skip Recap Button (Visible during automatic Speed Recap) -->
+  <button id="btn-skip-recap" class="hidden absolute top-14 left-1/2 -translate-x-1/2 z-30 bg-white/95 backdrop-blur-md border border-[#D7DCE0] text-[#1F2124] hover:bg-[#F4F5F6] font-extrabold text-xs px-5 py-2.5 rounded-full shadow-lg transition-all active:scale-95 flex items-center gap-2 pointer-events-auto">
+    <span>Skip Recap</span>
+    <span class="text-sm">⏩</span>
+  </button>
+
+  <!-- Gesture Swipe Hint -->
+  <div id="gesture-hint" class="absolute bottom-16 sm:bottom-20 left-1/2 -translate-x-1/2 z-10 pointer-events-none text-center bg-white/90 backdrop-blur-md px-4 py-1.5 rounded-full border border-[#D7DCE0] shadow-md transition-all duration-500">
+    <p class="text-[11px] font-bold text-[#1F2124] flex items-center gap-1.5">
+      <span>☝️ Swipe ↔️ ↕️ to group pets in columns</span>
+    </p>
+  </div>
+
+  <!-- Bottom Interactive Toolbar - Icon Only Buttons (Undo, Pause, Scramble, Audio, Settings) -->
+  <div class="w-full max-w-sm mx-auto z-10 flex justify-center items-center gap-2.5 sm:gap-3 shrink-0 mb-2 select-none">
+    <!-- Undo Icon Button -->
+    <button id="btn-undo" title="Undo" class="w-11 h-11 sm:w-12 sm:h-12 bg-white border border-[#D7DCE0] hover:bg-[#F4F5F6] text-[#1F2124] rounded-full transition-all flex items-center justify-center active:scale-95 shadow-sm opacity-40 pointer-events-none">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 sm:h-6 sm:w-6 text-sky-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+      </svg>
+    </button>
+
+    <!-- Pause Icon Button -->
+    <button id="btn-pause" title="Pause" class="w-11 h-11 sm:w-12 sm:h-12 bg-white border border-[#D7DCE0] hover:bg-[#F4F5F6] text-[#1F2124] rounded-full transition-all flex items-center justify-center active:scale-95 shadow-sm">
+      <svg id="svg-pause" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 sm:h-6 sm:w-6 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25v13.5m-7.5-13.5v13.5" />
+      </svg>
+      <span id="txt-pause" class="hidden">Pause</span>
+    </button>
+
+    <!-- Restart / Scramble Icon Button -->
+    <button id="btn-scramble" title="Scramble" class="w-11 h-11 sm:w-12 sm:h-12 bg-[#007940] hover:bg-[#064E39] text-white rounded-full transition-all flex items-center justify-center active:scale-95 shadow-md">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 sm:h-6 sm:w-6 text-emerald-100" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+      </svg>
+    </button>
+
+    <!-- Audio Toggle Button -->
+    <button id="btn-audio" title="Toggle Sound" class="w-11 h-11 sm:w-12 sm:h-12 bg-white border border-[#D7DCE0] hover:bg-[#F4F5F6] transition-all active:scale-95 flex items-center justify-center shadow-sm rounded-full">
+      <svg id="icon-audio-on" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 sm:h-6 sm:w-6 text-[#007940]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+      </svg>
+      <svg id="icon-audio-off" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 sm:h-6 sm:w-6 text-slate-400 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+        <path stroke-linecap="round" stroke-linejoin="round" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
+      </svg>
+    </button>
+
+    <!-- Settings Gear Button -->
+    <button id="btn-config" title="Settings" class="w-11 h-11 sm:w-12 sm:h-12 bg-white border border-[#D7DCE0] hover:bg-[#F4F5F6] transition-all active:scale-95 flex items-center justify-center shadow-sm rounded-full">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 sm:h-6 sm:w-6 text-[#007940]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="3" />
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+      </svg>
+    </button>
+  </div>
+
+  <!-- Settings Modal Overlay -->
+  <div id="modal-config" class="hidden absolute inset-0 z-50 flex items-center justify-center bg-[#1F2124]/60 backdrop-blur-sm p-4">
+    <div class="w-full max-w-sm bg-white rounded-3xl p-6 shadow-2xl relative border border-[#D7DCE0]">
+      <button id="modal-config-close" class="absolute top-4 right-4 text-[#404347] hover:text-[#1F2124] transition-all">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+
+      <h2 class="text-xl font-bold font-rover-headline text-[#007940] mb-6 flex items-center gap-2">
+        <span>⚙️</span> Game Settings
+      </h2>
+
+      <!-- Grid Size Option -->
+      <div class="mb-6">
+        <label class="block text-xs font-bold text-[#404347] uppercase tracking-widest mb-3">Grid Size</label>
+        <div class="grid grid-cols-4 gap-2">
+          <button data-size="3" class="btn-size py-3 text-xs bg-[#007940] text-white rounded-2xl font-bold transition-all shadow-sm">3x3</button>
+          <button data-size="4" class="btn-size py-3 text-xs bg-[#F4F5F6] border border-[#D7DCE0] rounded-2xl font-bold text-[#1F2124] hover:bg-[#C2F5DD] transition-all">4x4</button>
+          <button data-size="5" class="btn-size py-3 text-xs bg-[#F4F5F6] border border-[#D7DCE0] rounded-2xl font-bold text-[#1F2124] hover:bg-[#C2F5DD] transition-all">5x5</button>
+          <button data-size="6" class="btn-size py-3 text-xs bg-[#F4F5F6] border border-[#D7DCE0] rounded-2xl font-bold text-[#1F2124] hover:bg-[#C2F5DD] transition-all">6x6</button>
+        </div>
+      </div>
+
+      <!-- Instructions -->
+      <div class="mb-6 p-4 rounded-2xl bg-[#F5FEF5] border border-[#C2F5DD] text-xs text-[#1F2124] flex flex-col gap-2">
+        <span class="font-bold text-[#007940] flex items-center gap-1">
+          🐾 How to play:
+        </span>
+        <ul class="list-disc pl-4 space-y-1 text-[11px] text-[#404347]">
+          <li>Drag any pet horizontally to slide its row.</li>
+          <li>Drag any pet vertically to slide its column.</li>
+          <li>Match identical pets into their own columns!</li>
+        </ul>
+      </div>
+
+      <!-- Apply Button -->
+      <button id="modal-config-apply" class="w-full py-4 bg-[#007940] hover:bg-[#064E39] active:scale-95 text-white font-bold text-base rounded-full shadow-lg shadow-[#007940]/20 transition-all uppercase tracking-wider">
+        Start Game
+      </button>
+    </div>
+  </div>
+
+  <!-- Pause Overlay Modal -->
+  <div id="modal-pause" class="hidden absolute inset-0 z-50 flex flex-col items-center justify-center bg-[#1F2124]/70 backdrop-blur-sm p-4">
+    <div class="w-full max-w-sm bg-white rounded-3xl p-8 shadow-2xl relative text-center flex flex-col items-center border border-[#D7DCE0]">
+      <div class="w-16 h-16 bg-amber-500/10 border border-amber-500/30 rounded-full flex items-center justify-center mb-6">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25v13.5m-7.5-13.5v13.5" />
+        </svg>
+      </div>
+      <h2 class="text-2xl font-bold font-rover-headline text-[#1F2124] uppercase tracking-widest mb-2">GAME PAUSED</h2>
+      <p class="text-xs text-[#404347] mb-6 font-semibold">Take a break! Your pets will wait right here.</p>
+      <button id="btn-resume" class="w-full py-4 bg-[#007940] hover:bg-[#064E39] active:scale-95 text-white font-bold text-base rounded-full shadow-lg shadow-[#007940]/20 transition-all uppercase tracking-wider">
+        Resume Game
+      </button>
+    </div>
+  </div>
+
+  <!-- Solved / Victory Overlay Panel -->
+  <div id="modal-victory" class="hidden absolute inset-0 z-50 flex flex-col items-center justify-center bg-[#1F2124]/75 backdrop-blur-md p-4">
+    <div class="w-full max-w-sm bg-white rounded-3xl p-6 shadow-2xl relative text-center flex flex-col items-center max-h-[92vh] overflow-y-auto border border-[#D7DCE0]">
+      <div class="w-14 h-14 bg-[#C2F5DD] border border-[#00BD70] rounded-full flex items-center justify-center mb-3.5 animate-bounce shrink-0 text-2xl">
+        🐶
+      </div>
+
+      <h2 class="text-2xl font-bold font-rover-headline text-[#007940] uppercase tracking-wider mb-1">
+        SOLVED!
+      </h2>
+      <p id="victory-subtitle" class="hidden text-xs text-[#404347] mb-4 font-semibold uppercase tracking-wider"></p>
+
+      <!-- Standard Stats Display -->
+      <div id="victory-normal-stats" class="grid grid-cols-3 gap-2 w-full my-4 shrink-0 select-none">
+        <div class="bg-[#F4F5F6] border border-[#D7DCE0] p-2.5 rounded-2xl">
+          <span class="block text-[#404347] text-[10px] uppercase tracking-widest font-semibold mb-1 text-center">Difficulty</span>
+          <span id="vic-tangle" class="text-lg font-black text-rose-600 block text-center">12</span>
+        </div>
+        <div class="bg-[#F4F5F6] border border-[#D7DCE0] p-2.5 rounded-2xl">
+          <span class="block text-[#404347] text-[10px] uppercase tracking-widest font-semibold mb-1 text-center">Moves</span>
+          <span id="vic-moves" class="text-lg font-black text-[#007940] block text-center">24</span>
+        </div>
+        <div class="bg-[#F4F5F6] border border-[#D7DCE0] p-2.5 rounded-2xl">
+          <span class="block text-[#404347] text-[10px] uppercase tracking-widest font-semibold mb-1 text-center">Time</span>
+          <span id="vic-time" class="text-lg font-black text-sky-700 block text-center">01:42</span>
+        </div>
+      </div>
+
+      <!-- Comparison Scoreboard Display (Pass to Friend Mode) -->
+      <div id="victory-comparison-scoreboard" class="hidden flex flex-col gap-3 w-full mb-4 select-none shrink-0">
+        <div class="bg-[#F5FEF5] p-3 rounded-2xl border border-[#C2F5DD]">
+          <span class="text-xs font-bold text-[#007940] uppercase tracking-widest block mb-2">🏆 Comparison Scoreboard</span>
+          <div class="grid grid-cols-2 gap-2 text-left">
+            <div class="bg-white p-2.5 rounded-xl border border-[#D7DCE0]">
+              <span class="text-[9px] text-[#404347] uppercase tracking-wider font-semibold">You (P1)</span>
+              <div class="mt-0.5 font-black text-[#1F2124] text-sm"><span id="p1-moves">0</span> moves</div>
+              <div class="font-bold text-sky-700 text-[11px]"><span id="p1-time">00:00</span></div>
+            </div>
+            <div class="bg-[#C2F5DD]/40 p-2.5 rounded-xl border border-[#00BD70]/30">
+              <span class="text-[9px] text-[#007940] uppercase tracking-wider font-semibold">Friend (P2)</span>
+              <div class="mt-0.5 font-black text-[#064E39] text-sm"><span id="p2-moves">0</span> moves</div>
+              <div class="font-bold text-[#007940] text-[11px]"><span id="p2-time">00:00</span></div>
+            </div>
+          </div>
+        </div>
+        <div id="victory-winner-banner" class="text-[#007940] font-extrabold text-xs tracking-wide bg-[#C2F5DD] py-2 px-3 rounded-full border border-[#00BD70]/30">
+          Player 1 Wins! 🎉
+        </div>
+      </div>
+
+      <!-- Solved Panel Options (1: Next Level, 2: Play Another, 3: Pass to Friend, 4: Save Recap) -->
+      <div class="flex flex-col gap-2 w-full shrink-0 select-none">
+        <!-- 1) Next Level -->
+        <button id="btn-victory-next" class="w-full h-12 bg-[#007940] hover:bg-[#064E39] active:scale-95 text-white font-bold text-xs rounded-full transition-all uppercase tracking-wider flex items-center justify-center gap-2 shadow-md shadow-[#007940]/20">
+          <span>Next Level</span>
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+          </svg>
+        </button>
+
+        <!-- 2) Play Another -->
+        <button id="btn-victory-restart" class="w-full h-12 bg-[#F4F5F6] border border-[#D7DCE0] hover:bg-[#E2E8F0] active:scale-95 text-[#1F2124] font-bold text-xs rounded-full transition-all uppercase tracking-wider flex items-center justify-center gap-2 shadow-sm">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-[#007940]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+          </svg>
+          <span>Play Another</span>
+        </button>
+
+        <!-- 3) Pass to Friend -->
+        <button id="btn-victory-pass-friend" class="w-full h-12 bg-amber-500 hover:bg-amber-600 active:scale-95 text-white font-bold text-xs rounded-full transition-all uppercase tracking-wider flex items-center justify-center gap-2 shadow-md">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+          </svg>
+          Pass to Friend
+        </button>
+
+        <!-- 4) Save Recap (Only shown if speed recap was seen fully) -->
+        <button id="btn-victory-download" class="hidden w-full h-12 bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white font-bold text-xs rounded-full transition-all uppercase tracking-wider flex items-center justify-center gap-2 shadow-md">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+          </svg>
+          Save Recap
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    class SoundSynth {
+      constructor() {
+        this.ctx = null;
+        this.enabled = true;
+      }
+
+      init() {
+        if (this.ctx) return;
+        try {
+          const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+          this.ctx = new AudioContextClass();
+          
+          if (navigator.audioSession) {
+            navigator.audioSession.type = "playback";
+          }
+        } catch (e) {
+          console.warn('Web Audio API not supported', e);
+        }
+      }
+
+      resume() {
+        if (this.ctx && this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
+      }
+
+      toggleAudio() {
+        this.enabled = !this.enabled;
+        const iconOn = document.getElementById('icon-audio-on');
+        const iconOff = document.getElementById('icon-audio-off');
+        if (this.enabled) {
+          if (iconOn) iconOn.classList.remove('hidden');
+          if (iconOff) iconOff.classList.add('hidden');
+        } else {
+          if (iconOn) iconOn.classList.add('hidden');
+          if (iconOff) iconOff.classList.remove('hidden');
+        }
+      }
+
+      playGrab() {
+        if (!this.enabled || !this.ctx) return;
+        this.resume();
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(240, now);
+        osc.frequency.exponentialRampToValueAtTime(320, now + 0.08);
+
+        gain.gain.setValueAtTime(0.08, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        
+        osc.start(now);
+        osc.stop(now + 0.08);
+      }
+
+      playSnap() {
+        if (!this.enabled || !this.ctx) return;
+        this.resume();
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(350, now);
+        osc.frequency.exponentialRampToValueAtTime(150, now + 0.12);
+
+        gain.gain.setValueAtTime(0.12, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+
+        osc.start(now);
+        osc.stop(now + 0.12);
+      }
+
+      playTangleSuccess() {
+        if (!this.enabled || !this.ctx) return;
+        this.resume();
+        const now = this.ctx.currentTime;
+        
+        const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+        notes.forEach((freq, idx) => {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          const startTime = now + idx * 0.06;
+
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, startTime);
+          osc.frequency.exponentialRampToValueAtTime(freq * 1.05, startTime + 0.2);
+
+          gain.gain.setValueAtTime(0, startTime);
+          gain.gain.linearRampToValueAtTime(0.08, startTime + 0.02);
+          gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.22);
+
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+
+          osc.start(startTime);
+          osc.stop(startTime + 0.22);
+        });
+      }
+
+      playVictory() {
+        if (!this.enabled || !this.ctx) return;
+        this.resume();
+        const now = this.ctx.currentTime;
+        
+        const rootNotes = [261.63, 329.63, 392.00, 523.25, 659.25, 783.99, 1046.50];
+        rootNotes.forEach((freq, idx) => {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          const startTime = now + idx * 0.12;
+
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(freq, startTime);
+          
+          gain.gain.setValueAtTime(0, startTime);
+          gain.gain.linearRampToValueAtTime(0.08, startTime + 0.05);
+          gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.8);
+
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+
+          osc.start(startTime);
+          osc.stop(startTime + 0.8);
+        });
+      }
+    }
+
+    const sound = new SoundSynth();
+  </script>
+
+  <script>
+    // --- Storage Helpers (localStorage with cookie fallback) ---
+    function saveStorage(key, value) {
+      try {
+        localStorage.setItem(key, JSON.stringify(value));
+      } catch (e) {
+        document.cookie = `${key}=${encodeURIComponent(JSON.stringify(value))};path=/;max-age=31536000`;
+      }
+    }
+
+    function loadStorage(key, defaultValue) {
+      try {
+        const item = localStorage.getItem(key);
+        if (item !== null) return JSON.parse(item);
+      } catch (e) {
+        const nameEQ = key + "=";
+        const ca = document.cookie.split(';');
+        for (let i = 0; i < ca.length; i++) {
+          let c = ca[i].trim();
+          if (c.indexOf(nameEQ) === 0) {
+            try {
+              return JSON.parse(decodeURIComponent(c.substring(nameEQ.length)));
+            } catch (err) {}
+          }
+        }
+      }
+      return defaultValue;
+    }
+
+    // --- Global Game State & Configuration ---
+    let N = loadStorage('rover_grid_size', 3);
+    let currentLevel = loadStorage('rover_current_level', 1);
+    const CELL_SPACING = 1.3;
+    let petsGrid = []; // N x N array representation
+    let isTransitioning = false;
+    let isPaused = false;
+    let isReplaying = false;
+    let recapSkipped = false;
+    let isVictoryTriggered = false;
+    let movesCount = 0;
+    let startTime = null;
+    let timerInterval = null;
+    let firstInteractionDone = false;
+    let elapsedSeconds = 0;
+
+    // Undo & Replay State Tracking
+    let moveHistory = [];
+    let actionHistory = [];
+    let originalScrambleState = null;
+    let initialTangleValue = 0;
+
+    // Pass To Friend Local Multi-player stats
+    let isFriendMode = false;
+    let player1Results = null;
+    let friendResults = null;
+    let victoryParticleInterval = null;
+
+    // WebM Recording vars
+    let mediaRecorder = null;
+    let recordedChunks = [];
+    let recordedBlobUrl = null;
+    let recordCanvas = document.createElement('canvas');
+    let recordCtx = recordCanvas.getContext('2d');
+
+    // WebGL properties
+    let scene, camera, renderer;
+    let boardGroup;
+    let columnTracks = [];
+
+    // Drag-to-Rotate tracking vars
+    let isDragging = false;
+    let dragStartWorld = new THREE.Vector3();
+    let dragCurrentWorld = new THREE.Vector3();
+    let dragLockedDir = null; // 'horizontal', 'vertical', or null
+    let dragRowIdx = -1;
+    let dragColIdx = -1;
+    let dragClones = [];
+    let initialPetPositions = [];
+
+    // Emoji Pet Options (🐶 Dog, 🐱 Cat, 🐟 Fish, 🐰 Bunny, 🐴 Horse, 🐮 Cow, 🐹 Hamster)
+    const petEmojis = ['🐶', '🐱', '🐟', '🐰', '🐴', '🐮', '🐹'];
+
+    function createEmojiTexture(emojiString) {
+      const canvas = document.createElement('canvas');
+      canvas.width = 256;
+      canvas.height = 256;
+      const ctx = canvas.getContext('2d');
+
+      ctx.clearRect(0, 0, 256, 256);
+      ctx.font = '160px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      
+      // Render emoji cleanly upright
+      ctx.fillText(emojiString, 128, 136);
+
+      const texture = new THREE.CanvasTexture(canvas);
+      texture.needsUpdate = true;
+      return texture;
+    }
+
+    function createPetMesh(type) {
+      const group = new THREE.Group();
+      const texture = createEmojiTexture(petEmojis[type % petEmojis.length]);
+      const mat = new THREE.MeshBasicMaterial({
+        map: texture,
+        transparent: true,
+        side: THREE.DoubleSide
+      });
+      const geo = new THREE.PlaneGeometry(0.9, 0.9);
+      const mesh = new THREE.Mesh(geo, mat);
+      
+      group.add(mesh);
+      group.userData = { isPet: true, type: type };
+      return group;
+    }
+
+    window.onload = function() {
+      initEngine();
+      initGame();
+      setupEvents();
+    };
+
+    function initEngine() {
+      const container = document.getElementById('canvas-container');
+      const width = container.clientWidth;
+      const height = container.clientHeight;
+
+      scene = new THREE.Scene();
+
+      camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 100);
+      camera.position.set(0, 0, 7.5);
+      camera.lookAt(0, 0, 0);
+
+      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.setSize(width, height);
+      container.appendChild(renderer.domElement);
+
+      boardGroup = new THREE.Group();
+      scene.add(boardGroup);
+
+      const ambientLight = new THREE.AmbientLight(0xffffff, 1.0);
+      scene.add(ambientLight);
+
+      function animate() {
+        requestAnimationFrame(animate);
+        applyBoundaryClipping();
+        renderer.render(scene, camera);
+        if (mediaRecorder && mediaRecorder.state === 'recording') {
+          drawFullUiToRecordCanvas();
+        }
+      }
+      animate();
+    }
+
+    function buildColumnTracks() {
+      // Remove existing tracks
+      columnTracks.forEach(track => boardGroup.remove(track));
+      columnTracks.length = 0;
+
+      // Remove existing divider lines
+      if (window.columnDividers) {
+        window.columnDividers.forEach(d => boardGroup.remove(d));
+      }
+      window.columnDividers = [];
+
+      const trackHeight = N * CELL_SPACING;
+      const trackGeo = new THREE.PlaneGeometry(CELL_SPACING * 0.94, trackHeight, 1, 1);
+      const lineGeo = new THREE.PlaneGeometry(0.04, trackHeight, 1, 1);
+
+      for (let c = 0; c < N; c++) {
+        const x = (c - (N - 1) / 2) * CELL_SPACING;
+        const trackMat = new THREE.MeshBasicMaterial({
+          color: 0xF0FDF4,
+          transparent: true,
+          opacity: 0.6,
+          side: THREE.DoubleSide
+        });
+        const track = new THREE.Mesh(trackGeo, trackMat);
+        track.position.set(x, 0, -0.1);
+        track.userData = { colIndex: c };
+
+        boardGroup.add(track);
+        columnTracks.push(track);
+
+        // Add distinct column divider lines between every pair of adjacent columns
+        if (c < N - 1) {
+          const dividerMat = new THREE.MeshBasicMaterial({
+            color: 0x00BD70,
+            transparent: true,
+            opacity: 0.35
+          });
+          const divider = new THREE.Mesh(lineGeo, dividerMat);
+          divider.position.set(x + CELL_SPACING / 2, 0, -0.09);
+          boardGroup.add(divider);
+          window.columnDividers.push(divider);
+        }
+      }
+    }
+
+    function getColumnTangle(c) {
+      const counts = {};
+      for (let r = 0; r < N; r++) {
+        if (petsGrid[r] && petsGrid[r][c]) {
+          const type = petsGrid[r][c].type;
+          counts[type] = (counts[type] || 0) + 1;
+        }
+      }
+      let maxCount = 0;
+      for (const type in counts) {
+        if (counts[type] > maxCount) maxCount = counts[type];
+      }
+      return N - maxCount;
+    }
+
+    function calculateTangleOnly() {
+      let totalTangle = 0;
+      for (let c = 0; c < N; c++) {
+        totalTangle += getColumnTangle(c);
+      }
+      return totalTangle;
+    }
+
+    function initGame(sameScramble = false) {
+      isVictoryTriggered = false;
+      petsGrid.forEach(row => {
+        if (row) {
+          row.forEach(cell => {
+            if (cell && cell.mesh) boardGroup.remove(cell.mesh);
+          });
+        }
+      });
+      petsGrid = [];
+
+      for (let r = 0; r < N; r++) {
+        petsGrid.push(new Array(N).fill(null));
+      }
+
+      if (sameScramble && originalScrambleState) {
+        for (let r = 0; r < N; r++) {
+          for (let c = 0; c < N; c++) {
+            const type = originalScrambleState[r][c];
+            const mesh = createPetMesh(type);
+            boardGroup.add(mesh);
+            petsGrid[r][c] = { type: type, mesh: mesh };
+          }
+        }
+        initialTangleValue = calculateTangleOnly();
+      } else {
+        for (let c = 0; c < N; c++) {
+          for (let r = 0; r < N; r++) {
+            const type = c;
+            const mesh = createPetMesh(type);
+            boardGroup.add(mesh);
+            petsGrid[r][c] = { type: type, mesh: mesh };
+          }
+        }
+        repositionBoardAllStatic();
+        scrambleBoard();
+
+        originalScrambleState = petsGrid.map(row => row.map(cell => cell.type));
+        initialTangleValue = calculateTangleOnly();
+        isFriendMode = false;
+        player1Results = null;
+        friendResults = null;
+      }
+
+      repositionBoardAllStatic();
+      buildColumnTracks();
+
+      moveHistory = [];
+      actionHistory = [];
+      saveStateToHistory();
+
+      movesCount = 0;
+      document.getElementById('stat-moves').innerText = movesCount;
+      resetTimer();
+
+      updateTangleValue();
+      updateTrackVisuals();
+      updateUndoButtonState();
+
+      isPaused = false;
+      isReplaying = false;
+      recapSkipped = false;
+      document.getElementById('btn-skip-recap').classList.add('hidden');
+      document.getElementById('modal-pause').classList.add('hidden');
+      document.getElementById('modal-victory').classList.add('hidden');
+
+      resizeCameraAndBoard();
+    }
+
+    function saveStateToHistory() {
+      const stateCopy = petsGrid.map(row => row.map(cell => cell.type));
+      moveHistory.push(stateCopy);
+      updateUndoButtonState();
+    }
+
+    function applyStateToGrid(state) {
+      for (let r = 0; r < N; r++) {
+        for (let c = 0; c < N; c++) {
+          const targetType = state[r][c];
+          const cell = petsGrid[r][c];
+          
+          if (!cell || cell.type !== targetType) {
+            if (cell && cell.mesh) boardGroup.remove(cell.mesh);
+            
+            const newMesh = createPetMesh(targetType);
+            boardGroup.add(newMesh);
+            
+            petsGrid[r][c] = {
+              type: targetType,
+              mesh: newMesh
+            };
+          }
+        }
+      }
+      repositionBoardAllStatic();
+    }
+
+    function passToFriend() {
+      player1Results = {
+        moves: movesCount,
+        time: document.getElementById('stat-time').innerText,
+        seconds: elapsedSeconds
+      };
+      isFriendMode = true;
+      initGame(true);
+    }
+
+    function togglePause() {
+      if (isTransitioning || isReplaying) return;
+
+      isPaused = !isPaused;
+      const modal = document.getElementById('modal-pause');
+      const txtPause = document.getElementById('txt-pause');
+      const svgPause = document.getElementById('svg-pause');
+
+      if (isPaused) {
+        modal.classList.remove('hidden');
+        if (timerInterval) {
+          clearInterval(timerInterval);
+          timerInterval = null;
+        }
+        txtPause.innerText = "Resume";
+        svgPause.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.348a1.125 1.125 0 010 1.971l-11.54 6.347a1.125 1.125 0 01-1.667-.985V5.653z" />`;
+        sound.playSnap();
+      } else {
+        modal.classList.add('hidden');
+        if (firstInteractionDone) {
+          startTime = Date.now() - elapsedSeconds * 1000;
+          timerInterval = setInterval(updateTimerUI, 1000);
+        }
+        txtPause.innerText = "Pause";
+        svgPause.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25v13.5m-7.5-13.5v13.5" />`;
+        sound.playSnap();
+      }
+    }
+
+    function undoLastMove() {
+      if (isTransitioning || isDragging || isPaused || isReplaying) return;
+      if (moveHistory.length <= 1) return;
+
+      moveHistory.pop();
+      actionHistory.pop();
+
+      const prevState = moveHistory[moveHistory.length - 1];
+      applyStateToGrid(prevState);
+
+      movesCount = Math.max(0, movesCount - 1);
+      document.getElementById('stat-moves').innerText = movesCount;
+
+      sound.playSnap();
+      updateTangleValue();
+      updateTrackVisuals();
+      updateUndoButtonState();
+    }
+
+    function updateUndoButtonState() {
+      const btnUndo = document.getElementById('btn-undo');
+      if (!btnUndo) return;
+      if (moveHistory.length <= 1) {
+        btnUndo.classList.add('opacity-40', 'pointer-events-none');
+      } else {
+        btnUndo.classList.remove('opacity-40', 'pointer-events-none');
+      }
+    }
+
+    function repositionBoardAllStatic() {
+      for (let r = 0; r < N; r++) {
+        for (let c = 0; c < N; c++) {
+          const item = petsGrid[r][c];
+          if (item && item.mesh) {
+            const px = (c - (N - 1) / 2) * CELL_SPACING;
+            const py = (r - (N - 1) / 2) * CELL_SPACING;
+            item.mesh.position.set(px, py, 0);
+            item.mesh.scale.set(1, 1, 1);
+            item.mesh.visible = true;
+          }
+        }
+      }
+    }
+
+    function scrambleBoard() {
+      const scrambleSteps = N * 12;
+      for (let s = 0; s < scrambleSteps; s++) {
+        const isRow = Math.random() > 0.5;
+        const index = Math.floor(Math.random() * N);
+        const dir = Math.random() > 0.5 ? 1 : -1;
+        if (isRow) shiftRowImmediate(index, dir);
+        else shiftColImmediate(index, dir);
+      }
+      repositionBoardAllStatic();
+    }
+
+    function shiftRowImmediate(r, shift) {
+      petsGrid[r] = arrayRotate(petsGrid[r], shift);
+    }
+
+    function shiftColImmediate(c, shift) {
+      let colArr = [];
+      for (let r = 0; r < N; r++) colArr.push(petsGrid[r][c]);
+      colArr = arrayRotate(colArr, shift);
+      for (let r = 0; r < N; r++) petsGrid[r][c] = colArr[r];
+    }
+
+    function arrayRotate(arr, count) {
+      const len = arr.length;
+      const rot = ((count % len) + len) % len;
+      if (rot === 0) return arr;
+      return arr.slice(len - rot).concat(arr.slice(0, len - rot));
+    }
+
+    function updateTangleValue() {
+      let totalTangle = 0;
+      for (let c = 0; c < N; c++) totalTangle += getColumnTangle(c);
+      
+      const scoreElement = document.getElementById('score-tangle');
+      if (scoreElement) {
+        scoreElement.innerText = totalTangle;
+        if (totalTangle === 0 && !isReplaying && !isVictoryTriggered) {
+          isVictoryTriggered = true;
+          triggerVictory();
+        }
+      }
+
+      return totalTangle;
+    }
+
+    function updateTrackVisuals() {
+      for (let c = 0; c < N; c++) {
+        const colTangle = getColumnTangle(c);
+        const maxPossibleTangle = N - 1;
+        // solvedRatio scales smoothly from 0.0 (all distinct) to 1.0 (all matching)
+        const solvedRatio = maxPossibleTangle > 0 ? (1.0 - (colTangle / maxPossibleTangle)) : 1.0;
+
+        const track = columnTracks[c];
+        if (track) {
+          // Interpolate from Neutral Off-White (#F4F5F6) to Bright Rover Light Green (#C2F5DD)
+          const r = Math.round(244 + (194 - 244) * solvedRatio);
+          const g = 245;
+          const b = Math.round(246 + (221 - 246) * solvedRatio);
+
+          // Opacity scales continuously from subtle (0.15) to vivid (0.85)
+          const targetOpacity = 0.15 + (0.70 * solvedRatio);
+
+          gsap.to(track.material, {
+            duration: 0.35,
+            opacity: targetOpacity,
+            overwrite: 'auto'
+          });
+          track.material.color.setRGB(r / 255, g / 255, b / 255);
+        }
+      }
+    }
+
+    function applyBoundaryClipping() {
+      const halfBoard = (N * CELL_SPACING) / 2;
+      boardGroup.children.forEach(child => {
+        if (child.userData && child.userData.isPet) {
+          const distFromCenterH = Math.abs(child.position.x);
+          const distFromCenterV = Math.abs(child.position.y);
+          const maxDist = Math.max(distFromCenterH, distFromCenterV);
+          
+          const fadeStart = halfBoard - 0.15;
+          const fadeEnd = halfBoard + 0.35;
+          
+          let scaleFactor = 1.0;
+          if (maxDist > fadeStart) {
+            scaleFactor = 1.0 - (maxDist - fadeStart) / (fadeEnd - fadeStart);
+            scaleFactor = Math.max(0.0, Math.min(1.0, scaleFactor));
+          }
+          child.scale.set(scaleFactor, scaleFactor, scaleFactor);
+          child.visible = (scaleFactor > 0.02);
+        }
+      });
+    }
+
+    function executeSlideAnimation(type, index, shift, duration, onCompleteCallback) {
+      const totalWidth = N * CELL_SPACING;
+      const movementUnit = shift * CELL_SPACING;
+
+      if (type === 'row') {
+        const rowPets = petsGrid[index];
+        const clones = [];
+        rowPets.forEach(item => {
+          const c1 = item.mesh.clone(); c1.position.x -= totalWidth; boardGroup.add(c1); clones.push(c1);
+          const c2 = item.mesh.clone(); c2.position.x += totalWidth; boardGroup.add(c2); clones.push(c2);
+        });
+
+        const timeline = gsap.timeline({
+          onUpdate: () => {
+            rowPets.forEach((item, idx) => {
+              const currentX = item.mesh.position.x;
+              clones[idx * 2].position.x = currentX - totalWidth;
+              clones[idx * 2 + 1].position.x = currentX + totalWidth;
+            });
+          },
+          onComplete: () => {
+            clones.forEach(c => boardGroup.remove(c));
+            shiftRowImmediate(index, shift);
+            repositionBoardAllStatic();
+            if (onCompleteCallback) onCompleteCallback();
+          }
+        });
+
+        rowPets.forEach(item => {
+          timeline.to(item.mesh.position, { x: `+=${movementUnit}`, duration: duration, ease: "power2.inOut" }, 0);
+        });
+        clones.forEach(c => {
+          timeline.to(c.position, { x: `+=${movementUnit}`, duration: duration, ease: "power2.inOut" }, 0);
+        });
+      } else {
+        const colPets = [];
+        for (let r = 0; r < N; r++) colPets.push(petsGrid[r][index]);
+
+        const clones = [];
+        colPets.forEach(item => {
+          const c1 = item.mesh.clone(); c1.position.y -= totalWidth; boardGroup.add(c1); clones.push(c1);
+          const c2 = item.mesh.clone(); c2.position.y += totalWidth; boardGroup.add(c2); clones.push(c2);
+        });
+
+        const timeline = gsap.timeline({
+          onUpdate: () => {
+            colPets.forEach((item, idx) => {
+              const currentY = item.mesh.position.y;
+              clones[idx * 2].position.y = currentY - totalWidth;
+              clones[idx * 2 + 1].position.y = currentY + totalWidth;
+            });
+          },
+          onComplete: () => {
+            clones.forEach(c => boardGroup.remove(c));
+            shiftColImmediate(index, shift);
+            repositionBoardAllStatic();
+            if (onCompleteCallback) onCompleteCallback();
+          }
+        });
+
+        colPets.forEach(item => {
+          timeline.to(item.mesh.position, { y: `+=${movementUnit}`, duration: duration, ease: "power2.inOut" }, 0);
+        });
+        clones.forEach(c => {
+          timeline.to(c.position, { y: `+=${movementUnit}`, duration: duration, ease: "power2.inOut" }, 0);
+        });
+      }
+    }
+
+    function finalizeMove() {
+      movesCount++;
+      document.getElementById('stat-moves').innerText = movesCount;
+
+      const previousTangle = parseInt(document.getElementById('score-tangle').innerText, 10);
+      const newTangle = updateTangleValue();
+
+      if (newTangle < previousTangle) {
+        sound.playTangleSuccess();
+        spawnSplashParticles(0, 0, 0x10b981);
+      }
+      updateTrackVisuals();
+      saveStateToHistory();
+      isTransitioning = false;
+    }
+
+    const raycaster = new THREE.Raycaster();
+    const touchCoord = new THREE.Vector2();
+
+    function setupEvents() {
+      const container = document.getElementById('canvas-container');
+
+      container.addEventListener('pointerdown', onPointerDown, { passive: false });
+      container.addEventListener('pointermove', onPointerMove, { passive: false });
+      window.addEventListener('pointerup', onPointerUp, { passive: false });
+      window.addEventListener('pointercancel', onPointerUp, { passive: false });
+
+      window.addEventListener('resize', resizeCameraAndBoard);
+
+      document.getElementById('btn-audio').addEventListener('click', () => {
+        sound.init();
+        sound.toggleAudio();
+      });
+
+      document.getElementById('btn-scramble').addEventListener('click', () => {
+        if (isPaused || isReplaying) return;
+        sound.init();
+        initGame();
+      });
+
+      document.getElementById('btn-pause').addEventListener('click', togglePause);
+      document.getElementById('btn-resume').addEventListener('click', togglePause);
+      document.getElementById('btn-undo').addEventListener('click', undoLastMove);
+
+      const btnConfig = document.getElementById('btn-config');
+      const modalConfig = document.getElementById('modal-config');
+      const closeConfig = document.getElementById('modal-config-close');
+      const applyConfig = document.getElementById('modal-config-apply');
+
+      btnConfig.addEventListener('click', () => {
+        if (isPaused || isReplaying) return;
+        sound.init();
+        sizeBtns.forEach(b => {
+          const size = parseInt(b.getAttribute('data-size'), 10);
+          if (size === N) {
+            b.className = "btn-size py-3 text-xs bg-[#007940] text-white rounded-2xl font-bold transition-all shadow-sm";
+          } else {
+            b.className = "btn-size py-3 text-xs bg-[#F4F5F6] border border-[#D7DCE0] rounded-2xl font-bold text-[#1F2124] hover:bg-[#C2F5DD] transition-all";
+          }
+        });
+        modalConfig.classList.remove('hidden');
+      });
+
+      closeConfig.addEventListener('click', () => modalConfig.classList.add('hidden'));
+
+      applyConfig.addEventListener('click', () => {
+        modalConfig.classList.add('hidden');
+        initGame();
+      });
+
+      const sizeBtns = document.querySelectorAll('.btn-size');
+      sizeBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+          sizeBtns.forEach(b => {
+            b.className = "btn-size py-3 text-xs bg-[#F4F5F6] border border-[#D7DCE0] rounded-2xl font-bold text-[#1F2124] hover:bg-[#C2F5DD] transition-all";
+          });
+          btn.className = "btn-size py-3 text-xs bg-[#007940] text-white rounded-2xl font-bold transition-all shadow-sm";
+          N = parseInt(btn.getAttribute('data-size'), 10);
+          saveStorage('rover_grid_size', N);
+        });
+      });
+
+      // Solved panel actions
+      document.getElementById('btn-victory-restart').addEventListener('click', () => {
+        document.getElementById('modal-victory').classList.add('hidden');
+        isFriendMode = false;
+        initGame();
+      });
+
+      document.getElementById('btn-victory-next').addEventListener('click', () => {
+        document.getElementById('modal-victory').classList.add('hidden');
+        currentLevel++;
+        if (N < 6) {
+          N++;
+        }
+        saveStorage('rover_current_level', currentLevel);
+        saveStorage('rover_grid_size', N);
+        isFriendMode = false;
+        initGame();
+      });
+
+      document.getElementById('btn-victory-pass-friend').addEventListener('click', passToFriend);
+      document.getElementById('btn-victory-download').addEventListener('click', downloadRecapVideo);
+
+      // Skip Recap Button Listener
+      document.getElementById('btn-skip-recap').addEventListener('click', skipSpeedRecap);
+    }
+
+    function resizeCameraAndBoard() {
+      const container = document.getElementById('canvas-container');
+      if (!container) return;
+      const width = container.clientWidth;
+      const height = container.clientHeight;
+
+      renderer.setSize(width, height);
+      camera.aspect = width / height;
+      camera.updateProjectionMatrix();
+
+      const boardSize = N * CELL_SPACING + 0.3;
+      const vFOV = camera.fov * Math.PI / 180;
+      const visibleHeight = 2 * Math.tan(vFOV / 2) * 7.5;
+      const visibleWidth = visibleHeight * camera.aspect;
+
+      const scaleY = visibleHeight / boardSize;
+      const scaleX = visibleWidth / boardSize;
+      const optimalScale = Math.min(scaleX, scaleY) * 1.08;
+
+      boardGroup.scale.set(optimalScale, optimalScale, optimalScale);
+    }
+
+    function onPointerDown(e) {
+      if (isTransitioning) return;
+      sound.init();
+
+      if (isReplaying) {
+        skipSpeedRecap();
+        return;
+      }
+
+      if (isPaused) return;
+
+      if (e.cancelable) e.preventDefault();
+
+      const rect = renderer.domElement.getBoundingClientRect();
+      touchCoord.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+      touchCoord.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+
+      raycaster.setFromCamera(touchCoord, camera);
+      const targetZPlane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
+      const intersectPoint = new THREE.Vector3();
+
+      if (raycaster.ray.intersectPlane(targetZPlane, intersectPoint)) {
+        const localX = intersectPoint.x / boardGroup.scale.x;
+        const localY = intersectPoint.y / boardGroup.scale.y;
+
+        const colIndex = Math.round(localX / CELL_SPACING + (N - 1) / 2);
+        const rowIndex = Math.round(localY / CELL_SPACING + (N - 1) / 2);
+
+        if (colIndex >= 0 && colIndex < N && rowIndex >= 0 && rowIndex < N) {
+          isDragging = true;
+          dragRowIdx = rowIndex;
+          dragColIdx = colIndex;
+          dragLockedDir = null;
+          dragStartWorld.copy(intersectPoint);
+
+          initialPetPositions = [];
+          for (let r = 0; r < N; r++) {
+            initialPetPositions.push([]);
+            for (let c = 0; c < N; c++) {
+              if (petsGrid[r] && petsGrid[r][c] && petsGrid[r][c].mesh) {
+                initialPetPositions[r].push(petsGrid[r][c].mesh.position.clone());
+              } else {
+                initialPetPositions[r].push(new THREE.Vector3());
+              }
+            }
+          }
+        }
+      }
+    }
+
+    function onPointerMove(e) {
+      if (!isDragging || isPaused || isReplaying) return;
+      if (e.cancelable) e.preventDefault();
+
+      const rect = renderer.domElement.getBoundingClientRect();
+      touchCoord.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+      touchCoord.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+
+      raycaster.setFromCamera(touchCoord, camera);
+      const targetZPlane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
+      raycaster.ray.intersectPlane(targetZPlane, dragCurrentWorld);
+
+      const delta = dragCurrentWorld.clone().sub(dragStartWorld);
+
+      if (dragLockedDir === null) {
+        if (delta.length() > 0.12) {
+          if (Math.abs(delta.x) > Math.abs(delta.y)) {
+            dragLockedDir = 'horizontal';
+            sound.playGrab();
+            buildDragClones('row', dragRowIdx);
+          } else {
+            dragLockedDir = 'vertical';
+            sound.playGrab();
+            buildDragClones('col', dragColIdx);
+          }
+          document.getElementById('gesture-hint').classList.add('opacity-0');
+        }
+        return;
+      }
+
+      const totalWidth = N * CELL_SPACING;
+
+      if (dragLockedDir === 'horizontal') {
+        const movementUnit = delta.x / boardGroup.scale.x;
+        const rowPets = petsGrid[dragRowIdx];
+        rowPets.forEach((item, c) => {
+          const originalX = initialPetPositions[dragRowIdx][c].x;
+          let targetX = originalX + movementUnit;
+          const halfTotal = totalWidth / 2;
+          while (targetX < -halfTotal) targetX += totalWidth;
+          while (targetX > halfTotal) targetX -= totalWidth;
+
+          item.mesh.position.x = targetX;
+          dragClones[c * 2].position.set(targetX - totalWidth, item.mesh.position.y, 0);
+          dragClones[c * 2 + 1].position.set(targetX + totalWidth, item.mesh.position.y, 0);
+        });
+      } else if (dragLockedDir === 'vertical') {
+        const movementUnit = delta.y / boardGroup.scale.y;
+        for (let r = 0; r < N; r++) {
+          const item = petsGrid[r][dragColIdx];
+          const originalY = initialPetPositions[r][dragColIdx].y;
+          let targetY = originalY + movementUnit;
+          const halfTotal = totalWidth / 2;
+          while (targetY < -halfTotal) targetY += totalWidth;
+          while (targetY > halfTotal) targetY -= totalWidth;
+
+          item.mesh.position.y = targetY;
+          dragClones[r * 2].position.set(item.mesh.position.x, targetY - totalWidth, 0);
+          dragClones[r * 2 + 1].position.set(item.mesh.position.x, targetY + totalWidth, 0);
+        }
+      }
+    }
+
+    function buildDragClones(type, idx) {
+      dragClones.forEach(c => boardGroup.remove(c));
+      dragClones.length = 0;
+
+      const totalWidth = N * CELL_SPACING;
+
+      if (type === 'row') {
+        const row = petsGrid[idx];
+        row.forEach(item => {
+          const leftClone = item.mesh.clone(); leftClone.position.x -= totalWidth; boardGroup.add(leftClone); dragClones.push(leftClone);
+          const rightClone = item.mesh.clone(); rightClone.position.x += totalWidth; boardGroup.add(rightClone); dragClones.push(rightClone);
+        });
+      } else {
+        for (let r = 0; r < N; r++) {
+          const item = petsGrid[r][idx];
+          const downClone = item.mesh.clone(); downClone.position.y -= totalWidth; boardGroup.add(downClone); dragClones.push(downClone);
+          const upClone = item.mesh.clone(); upClone.position.y += totalWidth; boardGroup.add(upClone); dragClones.push(upClone);
+        }
+      }
+    }
+
+    function onPointerUp() {
+      if (!isDragging || isPaused || isReplaying) return;
+      isDragging = false;
+      startGameplayTimer();
+
+      if (dragLockedDir === null) return;
+      isTransitioning = true;
+
+      const delta = dragCurrentWorld.clone().sub(dragStartWorld);
+      const totalWidth = N * CELL_SPACING;
+      const localDeltaX = delta.x / boardGroup.scale.x;
+      const localDeltaY = delta.y / boardGroup.scale.y;
+
+      let shiftAmount = (dragLockedDir === 'horizontal') ? Math.round(localDeltaX / CELL_SPACING) : Math.round(localDeltaY / CELL_SPACING);
+      const targetSnapOffset = shiftAmount * CELL_SPACING;
+      const snapObj = { offset: (dragLockedDir === 'horizontal') ? localDeltaX : localDeltaY };
+
+      sound.playSnap();
+
+      gsap.to(snapObj, {
+        offset: targetSnapOffset,
+        duration: 0.28,
+        ease: "back.out(1.2)",
+        onUpdate: () => {
+          if (dragLockedDir === 'horizontal') {
+            const rowPets = petsGrid[dragRowIdx];
+            rowPets.forEach((item, c) => {
+              const originalX = initialPetPositions[dragRowIdx][c].x;
+              let targetX = originalX + snapObj.offset;
+              const halfTotal = totalWidth / 2;
+              while (targetX < -halfTotal) targetX += totalWidth;
+              while (targetX > halfTotal) targetX -= totalWidth;
+
+              item.mesh.position.x = targetX;
+              dragClones[c * 2].position.x = targetX - totalWidth;
+              dragClones[c * 2 + 1].position.x = targetX + totalWidth;
+            });
+          } else {
+            for (let r = 0; r < N; r++) {
+              const item = petsGrid[r][dragColIdx];
+              const originalY = initialPetPositions[r][dragColIdx].y;
+              let targetY = originalY + snapObj.offset;
+              const halfTotal = totalWidth / 2;
+              while (targetY < -halfTotal) targetY += totalWidth;
+              while (targetY > halfTotal) targetY -= totalWidth;
+
+              item.mesh.position.y = targetY;
+              dragClones[r * 2].position.y = targetY - totalWidth;
+              dragClones[r * 2 + 1].position.y = targetY + totalWidth;
+            }
+          }
+        },
+        onComplete: () => {
+          dragClones.forEach(c => boardGroup.remove(c));
+          dragClones.length = 0;
+
+          if (shiftAmount !== 0) {
+            if (dragLockedDir === 'horizontal') {
+              shiftRowImmediate(dragRowIdx, shiftAmount);
+            } else {
+              shiftColImmediate(dragColIdx, shiftAmount);
+            }
+
+            actionHistory.push({
+              type: dragLockedDir === 'horizontal' ? 'row' : 'col',
+              index: dragLockedDir === 'horizontal' ? dragRowIdx : dragColIdx,
+              shift: shiftAmount
+            });
+
+            repositionBoardAllStatic();
+            finalizeMove();
+          } else {
+            repositionBoardAllStatic();
+            isTransitioning = false;
+          }
+        }
+      });
+    }
+
+    function drawFullUiToRecordCanvas() {
+      const container = document.getElementById('canvas-container');
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+
+      if (recordCanvas.width !== w || recordCanvas.height !== h) {
+        recordCanvas.width = w;
+        recordCanvas.height = h;
+      }
+
+      // Fill background
+      recordCtx.fillStyle = '#F5FEF5';
+      recordCtx.fillRect(0, 0, w, h);
+
+      // Draw Header Title & Logo
+      recordCtx.fillStyle = '#007940';
+      recordCtx.font = 'bold 22px "Fraunces", serif';
+      recordCtx.textAlign = 'left';
+      recordCtx.textBaseline = 'top';
+      recordCtx.fillText('🐾 Pet Tangle', 16, 16);
+
+      // Draw Moves Counter & Timer
+      const movesText = (document.getElementById('stat-moves')?.innerText || '0') + ' moves';
+      const timeText = document.getElementById('stat-time')?.innerText || '00:00';
+
+      recordCtx.font = 'bold 15px "Plus Jakarta Sans", sans-serif';
+      recordCtx.textAlign = 'right';
+      recordCtx.fillStyle = '#007940';
+      recordCtx.fillText(movesText, w - 85, 18);
+
+      recordCtx.fillStyle = '#1F2124';
+      recordCtx.fillText(timeText, w - 16, 18);
+
+      // Draw Main Game Board Canvas
+      if (container) {
+        const rect = container.getBoundingClientRect();
+        recordCtx.drawImage(renderer.domElement, rect.left, rect.top, rect.width, rect.height);
+      }
+
+      // Draw Bottom Toolbar Buttons
+      const btnY = h - 36;
+      const btnRadius = 18;
+      const btnSpacing = 48;
+      const startX = w / 2 - (btnSpacing * 2);
+
+      const icons = ['↩️', '⏸️', '🔄', '🔊', '⚙️'];
+      icons.forEach((icon, idx) => {
+        const cx = startX + idx * btnSpacing;
+        recordCtx.beginPath();
+        recordCtx.arc(cx, btnY, btnRadius, 0, Math.PI * 2);
+        recordCtx.fillStyle = idx === 2 ? '#007940' : '#FFFFFF';
+        recordCtx.fill();
+        recordCtx.strokeStyle = '#D7DCE0';
+        recordCtx.lineWidth = 1;
+        recordCtx.stroke();
+
+        recordCtx.font = '13px sans-serif';
+        recordCtx.textAlign = 'center';
+        recordCtx.textBaseline = 'middle';
+        recordCtx.fillText(icon, cx, btnY);
+      });
+    }
+
+    function startAutoSpeedRecap() {
+      if (actionHistory.length === 0) {
+        showVictoryModal();
+        return;
+      }
+
+      isReplaying = true;
+      recapSkipped = false;
+      document.getElementById('modal-victory').classList.add('hidden');
+      document.getElementById('btn-skip-recap').classList.remove('hidden');
+
+      applyStateToGrid(originalScrambleState);
+      document.getElementById('stat-moves').innerText = "0";
+      document.getElementById('stat-time').innerText = "00:00";
+      updateTangleValue();
+      updateTrackVisuals();
+
+      // Start WebM Video Recording with Full UI Composite Stream
+      try {
+        recordedChunks = [];
+        drawFullUiToRecordCanvas();
+        const stream = recordCanvas.captureStream(30);
+        let mimeType = 'video/webm';
+        if (typeof MediaRecorder !== 'undefined') {
+          if (MediaRecorder.isTypeSupported('video/webm;codecs=vp9')) mimeType = 'video/webm;codecs=vp9';
+          else if (MediaRecorder.isTypeSupported('video/webm')) mimeType = 'video/webm';
+          else if (MediaRecorder.isTypeSupported('video/mp4')) mimeType = 'video/mp4';
+        }
+        mediaRecorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
+        mediaRecorder.ondataavailable = (e) => {
+          if (e.data && e.data.size > 0) recordedChunks.push(e.data);
+        };
+        mediaRecorder.start();
+      } catch (err) {
+        console.warn('Canvas MediaRecorder not supported', err);
+        mediaRecorder = null;
+      }
+
+      let stepIdx = 0;
+      const totalGameSeconds = elapsedSeconds;
+
+      function playNextStep() {
+        if (!isReplaying) return;
+
+        if (stepIdx >= actionHistory.length) {
+          // Recap completed fully without skipping!
+          spawnSplashParticles(0, 0, 0x10b981);
+          sound.playTangleSuccess();
+          setTimeout(() => {
+            const finishAndShowModal = () => {
+              isReplaying = false;
+              document.getElementById('btn-skip-recap').classList.add('hidden');
+              showVictoryModal();
+            };
+
+            if (mediaRecorder && mediaRecorder.state === 'recording') {
+              mediaRecorder.onstop = () => {
+                try {
+                  const blob = new Blob(recordedChunks, { type: mediaRecorder.mimeType || 'video/webm' });
+                  if (recordedBlobUrl) URL.revokeObjectURL(recordedBlobUrl);
+                  recordedBlobUrl = URL.createObjectURL(blob);
+                } catch (e) {
+                  console.warn('Error creating recap blob', e);
+                }
+                finishAndShowModal();
+              };
+              mediaRecorder.stop();
+            } else {
+              finishAndShowModal();
+            }
+          }, 600);
+          return;
+        }
+
+        const action = actionHistory[stepIdx];
+        sound.playSnap();
+
+        executeSlideAnimation(action.type, action.index, action.shift, 0.40, () => {
+          stepIdx++;
+          document.getElementById('stat-moves').innerText = stepIdx;
+          const currentSeconds = Math.floor((stepIdx / actionHistory.length) * totalGameSeconds);
+          const minutes = Math.floor(currentSeconds / 60).toString().padStart(2, '0');
+          const seconds = (currentSeconds % 60).toString().padStart(2, '0');
+          document.getElementById('stat-time').innerText = `${minutes}:${seconds}`;
+
+          updateTangleValue();
+          updateTrackVisuals();
+          setTimeout(playNextStep, 120);
+        });
+      }
+      playNextStep();
+    }
+
+    function skipSpeedRecap() {
+      if (!isReplaying) return;
+      recapSkipped = true;
+      isReplaying = false;
+
+      if (mediaRecorder && mediaRecorder.state === 'recording') {
+        try { mediaRecorder.stop(); } catch (e) {}
+      }
+
+      document.getElementById('btn-skip-recap').classList.add('hidden');
+      showVictoryModal();
+    }
+
+    function downloadRecapVideo() {
+      if (!recordedBlobUrl) return;
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = recordedBlobUrl;
+      a.download = `PetTangle-Recap.webm`;
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => document.body.removeChild(a), 100);
+    }
+
+    function triggerVictory() {
+      clearInterval(timerInterval);
+      timerInterval = null;
+
+      sound.playVictory();
+
+      let count = 0;
+      if (victoryParticleInterval) clearInterval(victoryParticleInterval);
+      victoryParticleInterval = setInterval(() => {
+        spawnSplashParticles(0, 0, 0x10b981);
+        count++;
+        if (count >= 4) {
+          clearInterval(victoryParticleInterval);
+          victoryParticleInterval = null;
+        }
+      }, 250);
+
+      // Launch automatic speed recap after celebration delay
+      setTimeout(() => {
+        startAutoSpeedRecap();
+      }, 800);
+    }
+
+    function startAutoSpeedRecap() {
+      clearSplashParticles();
+
+      if (actionHistory.length === 0) {
+        showVictoryModal();
+        return;
+      }
+
+      isReplaying = true;
+      recapSkipped = false;
+      document.getElementById('modal-victory').classList.add('hidden');
+      document.getElementById('btn-skip-recap').classList.remove('hidden');
+
+      applyStateToGrid(originalScrambleState);
+      document.getElementById('stat-moves').innerText = "0";
+      document.getElementById('stat-time').innerText = "00:00";
+      updateTangleValue();
+      updateTrackVisuals();
+
+      // Start WebM Video Recording with Full UI Composite Stream
+      try {
+        recordedChunks = [];
+        drawFullUiToRecordCanvas();
+        const stream = recordCanvas.captureStream(30);
+        let mimeType = 'video/webm';
+        if (typeof MediaRecorder !== 'undefined') {
+          if (MediaRecorder.isTypeSupported('video/webm;codecs=vp9')) mimeType = 'video/webm;codecs=vp9';
+          else if (MediaRecorder.isTypeSupported('video/webm')) mimeType = 'video/webm';
+          else if (MediaRecorder.isTypeSupported('video/mp4')) mimeType = 'video/mp4';
+        }
+        mediaRecorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
+        mediaRecorder.ondataavailable = (e) => {
+          if (e.data && e.data.size > 0) recordedChunks.push(e.data);
+        };
+        mediaRecorder.start();
+      } catch (err) {
+        console.warn('Canvas MediaRecorder not supported', err);
+        mediaRecorder = null;
+      }
+
+      let stepIdx = 0;
+      const totalGameSeconds = elapsedSeconds;
+
+      function playNextStep() {
+        if (!isReplaying) return;
+
+        if (stepIdx >= actionHistory.length) {
+          // Recap completed fully without skipping!
+          spawnSplashParticles(0, 0, 0x10b981);
+          sound.playTangleSuccess();
+          setTimeout(() => {
+            const finishAndShowModal = () => {
+              isReplaying = false;
+              document.getElementById('btn-skip-recap').classList.add('hidden');
+              showVictoryModal();
+            };
+
+            if (mediaRecorder && mediaRecorder.state === 'recording') {
+              mediaRecorder.onstop = () => {
+                try {
+                  const blob = new Blob(recordedChunks, { type: mediaRecorder.mimeType || 'video/webm' });
+                  if (recordedBlobUrl) URL.revokeObjectURL(recordedBlobUrl);
+                  recordedBlobUrl = URL.createObjectURL(blob);
+                } catch (e) {
+                  console.warn('Error creating recap blob', e);
+                }
+                finishAndShowModal();
+              };
+              mediaRecorder.stop();
+            } else {
+              finishAndShowModal();
+            }
+          }, 600);
+          return;
+        }
+
+        const action = actionHistory[stepIdx];
+        sound.playSnap();
+
+        executeSlideAnimation(action.type, action.index, action.shift, 0.40, () => {
+          stepIdx++;
+          document.getElementById('stat-moves').innerText = stepIdx + ' moves';
+          const currentSeconds = Math.floor((stepIdx / actionHistory.length) * totalGameSeconds);
+          const minutes = Math.floor(currentSeconds / 60).toString().padStart(2, '0');
+          const seconds = (currentSeconds % 60).toString().padStart(2, '0');
+          document.getElementById('stat-time').innerText = `${minutes}:${seconds}`;
+
+          updateTangleValue();
+          updateTrackVisuals();
+          setTimeout(playNextStep, 120);
+        });
+      }
+      playNextStep();
+    }
+
+    function skipSpeedRecap() {
+      if (!isReplaying) return;
+      recapSkipped = true;
+      isReplaying = false;
+
+      if (mediaRecorder && mediaRecorder.state === 'recording') {
+        try { mediaRecorder.stop(); } catch (e) {}
+      }
+
+      document.getElementById('btn-skip-recap').classList.add('hidden');
+      showVictoryModal();
+    }
+
+    function showVictoryModal() {
+      isReplaying = false;
+      const normalStats = document.getElementById('victory-normal-stats');
+      const scoreboard = document.getElementById('victory-comparison-scoreboard');
+      const btnPassFriend = document.getElementById('btn-victory-pass-friend');
+      const btnDownload = document.getElementById('btn-victory-download');
+      const subtitle = document.getElementById('victory-subtitle');
+
+      // Populate victory stats
+      document.getElementById('vic-tangle').innerText = initialTangleValue || (N * (N - 1));
+      document.getElementById('vic-moves').innerText = movesCount;
+      const minutes = Math.floor(elapsedSeconds / 60).toString().padStart(2, '0');
+      const seconds = (elapsedSeconds % 60).toString().padStart(2, '0');
+      document.getElementById('vic-time').innerText = `${minutes}:${seconds}`;
+
+      if (isFriendMode) {
+        friendResults = {
+          moves: movesCount,
+          time: `${minutes}:${seconds}`,
+          seconds: elapsedSeconds
+        };
+
+        document.getElementById('p1-moves').innerText = player1Results.moves;
+        document.getElementById('p1-time').innerText = player1Results.time;
+        document.getElementById('p2-moves').innerText = friendResults.moves;
+        document.getElementById('p2-time').innerText = friendResults.time;
+
+        let winnerText = "";
+        if (friendResults.moves < player1Results.moves) {
+          winnerText = "Friend (P2) wins! 🏆";
+        } else if (player1Results.moves < friendResults.moves) {
+          winnerText = "You (P1) win! 🏆";
+        } else {
+          if (friendResults.seconds < player1Results.seconds) winnerText = "Friend (P2) wins on time! ⚡";
+          else if (player1Results.seconds < friendResults.seconds) winnerText = "You (P1) win on time! ⚡";
+          else winnerText = "It's an absolute tie! 🤝";
+        }
+
+        document.getElementById('victory-winner-banner').innerText = winnerText;
+        subtitle.innerText = "Comparison Results";
+        subtitle.classList.remove('hidden');
+
+        normalStats.classList.add('hidden');
+        scoreboard.classList.remove('hidden');
+        btnPassFriend.classList.add('hidden');
+      } else {
+        subtitle.classList.add('hidden');
+        normalStats.classList.remove('hidden');
+        scoreboard.classList.add('hidden');
+        btnPassFriend.classList.remove('hidden');
+      }
+
+      // Show "Save Recap" button ONLY if the recap was seen fully without skipping
+      if (!recapSkipped && recordedBlobUrl) {
+        btnDownload.classList.remove('hidden');
+      } else {
+        btnDownload.classList.add('hidden');
+      }
+
+      document.getElementById('modal-victory').classList.remove('hidden');
+    }
+
+    function spawnSplashParticles(cx, cy, colorValue) {
+      const pCount = 30;
+      const geo = new THREE.SphereGeometry(0.06, 8, 8);
+
+      for (let i = 0; i < pCount; i++) {
+        const mat = new THREE.MeshBasicMaterial({ color: colorValue });
+        const m = new THREE.Mesh(geo, mat);
+        m.userData = { isParticle: true };
+        m.position.set(cx + (Math.random() - 0.5) * 1.2, cy + (Math.random() - 0.5) * 1.2, 0.2);
+        boardGroup.add(m);
+
+        const angle = Math.random() * Math.PI * 2;
+        const velocity = 1.2 + Math.random() * 2.0;
+        const vx = Math.cos(angle) * velocity;
+        const vy = Math.sin(angle) * velocity;
+
+        gsap.to(m.position, {
+          x: m.position.x + vx,
+          y: m.position.y + vy,
+          duration: 0.7,
+          ease: "power2.out"
+        });
+
+        gsap.to(m.scale, {
+          x: 0,
+          y: 0,
+          duration: 0.7,
+          ease: "power2.in",
+          onComplete: () => {
+            boardGroup.remove(m);
+            mat.dispose();
+          }
+        });
+      }
+      geo.dispose();
+    }
+
+    function clearSplashParticles() {
+      if (victoryParticleInterval) {
+        clearInterval(victoryParticleInterval);
+        victoryParticleInterval = null;
+      }
+      for (let i = boardGroup.children.length - 1; i >= 0; i--) {
+        const child = boardGroup.children[i];
+        if (child && child.userData && child.userData.isParticle) {
+          gsap.killTweensOf(child.position);
+          gsap.killTweensOf(child.scale);
+          boardGroup.remove(child);
+          if (child.material) child.material.dispose();
+        }
+      }
+    }
+
+    function startGameplayTimer() {
+      if (firstInteractionDone) return;
+      firstInteractionDone = true;
+      startTime = Date.now();
+      timerInterval = setInterval(updateTimerUI, 1000);
+    }
+
+    function resetTimer() {
+      firstInteractionDone = false;
+      elapsedSeconds = 0;
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+      }
+      document.getElementById('stat-time').innerText = "00:00";
+    }
+
+    function updateTimerUI() {
+      if (!startTime) return;
+      elapsedSeconds = Math.floor((Date.now() - startTime) / 1000);
+      const minutes = Math.floor(elapsedSeconds / 60).toString().padStart(2, '0');
+      const seconds = (elapsedSeconds % 60).toString().padStart(2, '0');
+      document.getElementById('stat-time').innerText = `${minutes}:${seconds}`;
+    }
+  </script>
+</body>
+</html>
