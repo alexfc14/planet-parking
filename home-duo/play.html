@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>Tactical Pebble Board Game</title>
+  <title>Home Duo</title>
   <style>
     * {
       box-sizing: border-box;
@@ -29,7 +29,7 @@
       z-index: 1;
     }
     
-    /* UI Layer */
+    /* UI Overlay Layer */
     .ui-layer {
       position: absolute;
       top: 0;
@@ -41,68 +41,95 @@
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      padding: 16px;
+      padding: 16px 0px 8px 0px;
     }
     .interactive {
       pointer-events: auto;
     }
 
-    /* Top Bar */
-    .top-bar {
+    /* Top Stats Panel (Padded Left) */
+    .top-panel {
       display: flex;
-      justify-content: space-between;
       align-items: center;
-      width: 100%;
-    }
-    .status-panel {
+      align-self: flex-start;
       background: rgba(30, 41, 59, 0.85);
-      backdrop-filter: blur(8px);
-      padding: 8px 18px;
-      border-radius: 24px;
+      backdrop-filter: blur(12px);
+      padding: 10px 18px;
+      border-radius: 30px;
       border: 1px solid rgba(255, 255, 255, 0.15);
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+      gap: 16px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
+      transition: margin-left 0.15s ease-out;
     }
+
     .turn-indicator {
       display: flex;
       align-items: center;
       gap: 8px;
-      font-weight: 700;
-      font-size: 1rem;
-      letter-spacing: 0.5px;
     }
     .dot {
-      width: 14px;
-      height: 14px;
+      width: 16px;
+      height: 16px;
       border-radius: 50%;
       display: inline-block;
-      box-shadow: 0 0 10px currentColor;
+      box-shadow: 0 0 12px currentColor;
+      transition: background-color 0.3s ease, color 0.3s ease;
     }
     .dot.green { background: #10b981; color: #10b981; }
     .dot.blue { background: #3b82f6; color: #3b82f6; }
+
+    .turn-countdown {
+      font-weight: 800;
+      font-size: 1.05rem;
+      font-variant-numeric: tabular-nums;
+      color: #f8fafc;
+      letter-spacing: 0.5px;
+    }
+    .turn-countdown.warning {
+      color: #ef4444;
+      animation: pulse-red 0.8s infinite alternate;
+    }
+    @keyframes pulse-red {
+      from { opacity: 1; transform: scale(1); }
+      to { opacity: 0.6; transform: scale(1.1); }
+    }
     
     .stats-compact {
-      font-size: 0.85rem;
-      color: #94a3b8;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #cbd5e1;
       border-left: 1px solid rgba(255, 255, 255, 0.2);
-      padding-left: 12px;
+      padding-left: 14px;
       display: flex;
-      gap: 12px;
+      align-items: center;
+      gap: 14px;
+      font-variant-numeric: tabular-nums;
     }
 
-    /* Icon Buttons */
+    /* Bottom Center Action Button Bar */
+    .bottom-panel {
+      display: flex;
+      justify-content: center;
+      width: 100%;
+      margin-bottom: 4px;
+      padding-bottom: 4px;
+    }
     .btn-bar {
       display: flex;
-      gap: 8px;
+      gap: 12px;
+      background: rgba(15, 23, 42, 0.2);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      padding: 10px 18px;
+      border-radius: 32px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.25);
     }
     .icon-btn {
-      width: 42px;
-      height: 42px;
+      width: 44px;
+      height: 44px;
       border-radius: 50%;
-      background: rgba(30, 41, 59, 0.85);
-      backdrop-filter: blur(8px);
+      background: rgba(255, 255, 255, 0.08);
       border: 1px solid rgba(255, 255, 255, 0.15);
       color: #f8fafc;
       display: flex;
@@ -110,23 +137,24 @@
       justify-content: center;
       cursor: pointer;
       transition: all 0.2s ease;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     }
     .icon-btn:hover {
-      background: rgba(51, 65, 85, 0.95);
+      background: rgba(255, 255, 255, 0.2);
       transform: translateY(-2px);
-      border-color: rgba(255, 255, 255, 0.3);
+      border-color: rgba(255, 255, 255, 0.4);
     }
     .icon-btn:active {
       transform: translateY(0);
+      background: rgba(255, 255, 255, 0.12);
     }
     .icon-btn svg {
-      width: 20px;
-      height: 20px;
+      width: 22px;
+      height: 22px;
       fill: currentColor;
     }
 
-    /* Toast Notification */
+    /* Floating Toast Notification */
     .toast-message {
       position: absolute;
       top: 15%;
@@ -148,7 +176,7 @@
       transform: translate(-50%, -60%);
     }
 
-    /* Modals */
+    /* Modals Overlay */
     .modal-overlay {
       position: absolute;
       top: 0;
@@ -172,10 +200,10 @@
     .card {
       background: #1e293b;
       border: 1px solid rgba(255, 255, 255, 0.15);
-      border-radius: 20px;
-      padding: 24px;
+      border-radius: 24px;
+      padding: 26px;
       width: 90%;
-      max-width: 420px;
+      max-width: 400px;
       text-align: center;
       box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
       display: flex;
@@ -189,10 +217,14 @@
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
+    .card p {
+      font-size: 0.95rem;
+      color: #94a3b8;
+    }
     .card-stats {
       background: #0f172a;
-      border-radius: 14px;
-      padding: 14px;
+      border-radius: 16px;
+      padding: 16px;
       display: grid;
       grid-template-columns: repeat(2, 1fr);
       gap: 12px;
@@ -216,14 +248,14 @@
     .btn-group {
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 10px;
     }
     .primary-btn {
       background: linear-gradient(135deg, #0284c7, #2563eb);
       color: white;
       border: none;
       padding: 12px;
-      border-radius: 10px;
+      border-radius: 12px;
       font-weight: 700;
       font-size: 0.95rem;
       cursor: pointer;
@@ -234,12 +266,28 @@
       transform: translateY(-2px);
       box-shadow: 0 6px 16px rgba(37, 99, 235, 0.4);
     }
+    .danger-btn {
+      background: linear-gradient(135deg, #dc2626, #b91c1c);
+      color: white;
+      border: none;
+      padding: 12px;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+    }
+    .danger-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(220, 38, 38, 0.4);
+    }
     .secondary-btn {
       background: #334155;
       color: #e2e8f0;
       border: 1px solid rgba(255,255,255,0.08);
-      padding: 10px;
-      border-radius: 10px;
+      padding: 11px;
+      border-radius: 12px;
       font-weight: 600;
       font-size: 0.9rem;
       cursor: pointer;
@@ -250,37 +298,21 @@
       color: #fff;
     }
 
-    /* Scoreboard Table */
-    .scoreboard-table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-    .scoreboard-table th, .scoreboard-table td {
-      padding: 8px 10px;
-      text-align: center;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-      font-size: 0.85rem;
-    }
-    .scoreboard-table th {
-      color: #94a3b8;
-      font-weight: 600;
-    }
-
-    /* Settings Switch */
+    /* Settings Control Rows */
     .setting-row {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 6px 0;
-      border-bottom: 1px solid rgba(255,255,255,0.05);
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
     }
     .setting-row label {
       font-weight: 600;
-      font-size: 0.9rem;
+      font-size: 0.95rem;
     }
     .toggle-checkbox {
-      width: 38px;
-      height: 20px;
+      width: 40px;
+      height: 22px;
       appearance: none;
       background: #334155;
       border-radius: 12px;
@@ -295,8 +327,8 @@
     .toggle-checkbox::before {
       content: '';
       position: absolute;
-      width: 14px;
-      height: 14px;
+      width: 16px;
+      height: 16px;
       border-radius: 50%;
       top: 3px;
       left: 3px;
@@ -308,37 +340,41 @@
     }
   </style>
 
+  <!-- Three.js Library -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
 <body>
 
   <div id="canvas-container"></div>
 
+  <!-- UI Overlay -->
   <div class="ui-layer">
-    <div class="top-bar">
-      <div class="status-panel">
-        <div class="turn-indicator" id="turn-display">
-          <span class="dot green" id="turn-dot"></span>
-          <span id="turn-text">Green</span>
-        </div>
-        <div class="stats-compact">
-          <span>Moves: <strong id="move-count" style="color:#fff;">0</strong></span>
-          <span>Time: <strong id="timer-display" style="color:#fff;">00:00</strong></span>
-        </div>
+    <!-- Top Left Padded Status Panel -->
+    <div class="top-panel">
+      <div class="turn-indicator">
+        <span class="dot green" id="turn-dot" title="Current Turn"></span>
+        <span class="turn-countdown" id="turn-countdown">60s</span>
       </div>
+      <div class="stats-compact">
+        <span id="move-count">0 moves</span>
+        <span id="timer-display">00:00</span>
+      </div>
+    </div>
 
+    <!-- Bottom Center Action Buttons Bar -->
+    <div class="bottom-panel">
       <div class="btn-bar interactive">
         <button class="icon-btn" id="btn-undo" title="Undo Move">
           <svg viewBox="0 0 24 24"><path d="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z"/></svg>
         </button>
-        <button class="icon-btn" id="btn-restart" title="Restart">
+        <button class="icon-btn" id="btn-restart" title="Restart Game">
           <svg viewBox="0 0 24 24"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
         </button>
-        <button class="icon-btn" id="btn-audio" title="Audio">
+        <button class="icon-btn" id="btn-audio" title="Sound Toggle">
           <svg id="audio-icon-on" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
           <svg id="audio-icon-off" viewBox="0 0 24 24" style="display:none;"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/></svg>
         </button>
-        <button class="icon-btn" id="btn-pause" title="Pause">
+        <button class="icon-btn" id="btn-pause" title="Pause Game">
           <svg viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
         </button>
         <button class="icon-btn" id="btn-settings" title="Settings">
@@ -350,7 +386,7 @@
     <div class="toast-message" id="toast">Move Pebble</div>
   </div>
 
-  <!-- Modals -->
+  <!-- Settings Modal -->
   <div class="modal-overlay" id="modal-settings">
     <div class="card">
       <h2>Settings</h2>
@@ -363,28 +399,39 @@
           <label>Background Music</label>
           <input type="checkbox" id="set-music" class="toggle-checkbox" checked>
         </div>
-        <div class="setting-row">
-          <label>Camera Motion</label>
-          <input type="checkbox" id="set-rotate" class="toggle-checkbox" checked>
-        </div>
       </div>
       <button class="primary-btn" id="btn-close-settings">Done</button>
     </div>
   </div>
 
+  <!-- Confirm Restart Modal -->
+  <div class="modal-overlay" id="modal-confirm-restart">
+    <div class="card">
+      <h2>Restart Match?</h2>
+      <p>Are you sure you want to reset the current game?</p>
+      <div class="btn-group">
+        <button class="danger-btn" id="btn-confirm-restart">Yes, Restart</button>
+        <button class="secondary-btn" id="btn-cancel-restart">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pause Modal -->
   <div class="modal-overlay" id="modal-pause">
     <div class="card">
       <h2>Game Paused</h2>
       <div class="btn-group">
         <button class="primary-btn" id="btn-resume">Resume</button>
-        <button class="secondary-btn" id="btn-pause-restart">Restart Level</button>
+        <button class="secondary-btn" id="btn-pause-restart">Restart Match</button>
       </div>
     </div>
   </div>
 
+  <!-- Victory Modal -->
   <div class="modal-overlay" id="modal-victory">
     <div class="card">
-      <h2 id="victory-title">Green Wins!</h2>
+      <h2 id="victory-title">GREEN WINS!</h2>
+      <p id="victory-subtext">Target Captured</p>
 
       <div class="card-stats">
         <div class="stat-item">
@@ -407,37 +454,6 @@
 
       <div class="btn-group">
         <button class="primary-btn" id="btn-play-again">Play Again</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="modal-overlay" id="modal-pass-scoreboard">
-    <div class="card">
-      <h2>Pass to Friend Stats</h2>
-      <table class="scoreboard-table">
-        <thead>
-          <tr>
-            <th>Player</th>
-            <th>Moves</th>
-            <th>Time</th>
-            <th>Result</th>
-          </tr>
-        </thead>
-        <tbody id="scoreboard-body"></tbody>
-      </table>
-      <div class="btn-group">
-        <button class="primary-btn" id="btn-pass-continue">Continue</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="modal-overlay" id="modal-recap-playing">
-    <div class="card">
-      <h2>Speed Recap</h2>
-      <div style="font-size: 1.2rem; font-weight: bold; color: #38bdf8;" id="recap-counter">Move 0 / 0</div>
-      <div class="btn-group">
-        <button class="secondary-btn" id="btn-download-webm">Download WebM Video</button>
-        <button class="primary-btn" id="btn-close-recap">Close</button>
       </div>
     </div>
   </div>
@@ -472,8 +488,8 @@
       }
     };
 
-    let appSettings = Storage.get('pebble_game_settings', { sfx: true, music: true, rotate: false });
-    let gameData = Storage.get('pebble_game_data', { level: 1, streak: 0 });
+    let appSettings = Storage.get('home_duo_settings', { sfx: true, music: true });
+    let gameData = Storage.get('home_duo_data', { streak: 0 });
 
     class SoundEngine {
       constructor() {
@@ -542,6 +558,18 @@
             osc.start(now + idx * 0.1);
             osc.stop(now + idx * 0.1 + 0.3);
           });
+        } else if (type === 'timeout') {
+          const osc = this.ctx.createOscillator();
+          const g = this.ctx.createGain();
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(300, now);
+          osc.frequency.exponentialRampToValueAtTime(120, now + 0.3);
+          g.gain.setValueAtTime(0.3, now);
+          g.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+          osc.connect(g);
+          g.connect(this.sfxGain);
+          osc.start(now);
+          osc.stop(now + 0.3);
         }
       }
 
@@ -604,6 +632,8 @@
     // Blue's target to capture: Green's home at bottom-left (Row 3, Col 0)
     const BLUE_GOAL = { r: 3, c: 0 };  
 
+    const TURN_TIME_LIMIT = 60; // 60 seconds thinking limit per turn
+
     let gameState = {
       board: [],
       turn: TEAM_GREEN,
@@ -611,12 +641,12 @@
       validMoves: [],
       moveHistory: [],
       timeElapsed: 0,
+      turnTimeLeft: TURN_TIME_LIMIT,
       timerInterval: null,
+      turnCountdownInterval: null,
       isPaused: false,
       isGameOver: false,
-      moveCount: 0,
-      passToFriendMode: false,
-      passFriendStats: []
+      moveCount: 0
     };
 
     function initBoardState() {
@@ -631,7 +661,7 @@
       return board;
     }
 
-    // Rook-style linear movement: slides in straight lines until blocked by any piece
+    // Rook-style linear sliding movement
     function calculateValidMoves(r, c, board) {
       const piece = board[r][c];
       if (!piece) return [];
@@ -660,7 +690,7 @@
             currR += dir.dr;
             currC += dir.dc;
           } else {
-            // Blocked by another piece: CANNOT pass through or jump over
+            // Blocked by another piece
             break;
           }
         }
@@ -684,7 +714,7 @@
       scene.background = new THREE.Color(0x0f172a);
 
       const aspect = window.innerWidth / window.innerHeight;
-      const viewSize = 6.5; // Adjusted framing for 4x4 board
+      const viewSize = 7.0; // Comfortably frames 4x4 board with top & bottom margins
       
       if (aspect >= 1) {
         camera = new THREE.OrthographicCamera(
@@ -700,8 +730,9 @@
         );
       }
       
-      camera.position.set(0, 20, 0);
-      camera.lookAt(0, 0, 0);
+      // Gently balance camera target between top status bar and bottom buttons
+      camera.position.set(0, 20, 0.2);
+      camera.lookAt(0, 0, 0.2);
 
       renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
       renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -747,14 +778,14 @@
       baseMesh.receiveShadow = true;
       boardGroup.add(baseMesh);
 
-      // Invisible Raycast Intersection Plane
+      // Raycast Plane
       const planeGeo = new THREE.PlaneGeometry(20, 20);
       const planeMat = new THREE.MeshBasicMaterial({ visible: false });
       clickPlane = new THREE.Mesh(planeGeo, planeMat);
       clickPlane.rotation.x = -Math.PI / 2;
       scene.add(clickPlane);
 
-      // Tiles
+      // Grid Tiles
       const tileSize = 1.15;
       for (let r = 0; r < GRID_SIZE; r++) {
         for (let c = 0; c < GRID_SIZE; c++) {
@@ -919,7 +950,7 @@
 
       // Select active team's piece
       if (piece && piece.team === gameState.turn) {
-        // Toggle de-selection if clicking the currently selected piece
+        // De-select if clicking the currently selected piece
         if (gameState.selectedPiece && gameState.selectedPiece.r === r && gameState.selectedPiece.c === c) {
           gameState.selectedPiece = null;
           gameState.validMoves = [];
@@ -960,7 +991,7 @@
       gameState.board[toMove.r][toMove.c] = piece;
 
       gameState.moveCount++;
-      document.getElementById('move-count').innerText = gameState.moveCount;
+      document.getElementById('move-count').innerText = `${gameState.moveCount} moves`;
 
       audioEngine.playSFX('move');
 
@@ -969,11 +1000,13 @@
 
       if (checkWinCondition()) {
         renderPiecesFromState();
-        handleVictory();
+        handleVictory(gameState.turn, "Target Captured");
         return;
       }
 
+      // Switch turn & reset countdown
       gameState.turn = gameState.turn === TEAM_GREEN ? TEAM_BLUE : TEAM_GREEN;
+      resetTurnCountdown();
       updateTurnUI();
       renderPiecesFromState();
       showToast("Moved");
@@ -987,10 +1020,11 @@
       gameState.turn = lastState.turn;
       gameState.moveCount = lastState.moveCount;
 
-      document.getElementById('move-count').innerText = gameState.moveCount;
+      document.getElementById('move-count').innerText = `${gameState.moveCount} moves`;
       gameState.selectedPiece = null;
       gameState.validMoves = [];
 
+      resetTurnCountdown();
       updateTurnUI();
       renderPiecesFromState();
       audioEngine.playSFX('select');
@@ -998,11 +1032,11 @@
     }
 
     function checkWinCondition() {
-      // Green reaches Green Goal (1, 4)
+      // Green reaches Green Goal (Row 0, Col 3)
       const pAtGreenGoal = gameState.board[GREEN_GOAL.r][GREEN_GOAL.c];
       if (pAtGreenGoal && pAtGreenGoal.team === TEAM_GREEN) return TEAM_GREEN;
 
-      // Blue reaches Blue Goal (4, 1)
+      // Blue reaches Blue Goal (Row 3, Col 0)
       const pAtBlueGoal = gameState.board[BLUE_GOAL.r][BLUE_GOAL.c];
       if (pAtBlueGoal && pAtBlueGoal.team === TEAM_BLUE) return TEAM_BLUE;
 
@@ -1011,14 +1045,27 @@
 
     function updateTurnUI() {
       const dot = document.getElementById('turn-dot');
-      const text = document.getElementById('turn-text');
 
       if (gameState.turn === TEAM_GREEN) {
         dot.className = "dot green";
-        text.innerText = "Green";
       } else {
         dot.className = "dot blue";
-        text.innerText = "Blue";
+      }
+    }
+
+    function resetTurnCountdown() {
+      gameState.turnTimeLeft = TURN_TIME_LIMIT;
+      updateCountdownDisplay();
+    }
+
+    function updateCountdownDisplay() {
+      const el = document.getElementById('turn-countdown');
+      el.innerText = `${gameState.turnTimeLeft}s`;
+
+      if (gameState.turnTimeLeft <= 10) {
+        el.classList.add('warning');
+      } else {
+        el.classList.remove('warning');
       }
     }
 
@@ -1029,8 +1076,11 @@
       setTimeout(() => toast.classList.remove('show'), 1200);
     }
 
-    function startTimer() {
+    function startTimers() {
       clearInterval(gameState.timerInterval);
+      clearInterval(gameState.turnCountdownInterval);
+
+      // Match game timer
       gameState.timerInterval = setInterval(() => {
         if (!gameState.isPaused && !gameState.isGameOver) {
           gameState.timeElapsed++;
@@ -1039,6 +1089,24 @@
           document.getElementById('timer-display').innerText = `${mins}:${secs}`;
         }
       }, 1000);
+
+      // Turn 60s countdown timer
+      gameState.turnCountdownInterval = setInterval(() => {
+        if (!gameState.isPaused && !gameState.isGameOver) {
+          gameState.turnTimeLeft--;
+          updateCountdownDisplay();
+
+          if (gameState.turnTimeLeft <= 0) {
+            handleTimeout();
+          }
+        }
+      }, 1000);
+    }
+
+    function handleTimeout() {
+      audioEngine.playSFX('timeout');
+      const winner = gameState.turn === TEAM_GREEN ? TEAM_BLUE : TEAM_GREEN;
+      handleVictory(winner, "Turn Time Expired!");
     }
 
     function resetGame() {
@@ -1048,124 +1116,66 @@
       gameState.validMoves = [];
       gameState.moveHistory = [];
       gameState.timeElapsed = 0;
+      gameState.turnTimeLeft = TURN_TIME_LIMIT;
       gameState.moveCount = 0;
       gameState.isGameOver = false;
       gameState.isPaused = false;
 
-      document.getElementById('move-count').innerText = "0";
+      document.getElementById('move-count').innerText = "0 moves";
       document.getElementById('timer-display').innerText = "00:00";
       
+      resetTurnCountdown();
       updateTurnUI();
       renderPiecesFromState();
-      startTimer();
+      startTimers();
     }
 
-    function handleVictory() {
+    function handleVictory(winner, subtext) {
       gameState.isGameOver = true;
-      audioEngine.playSFX('win');
+      clearInterval(gameState.timerInterval);
+      clearInterval(gameState.turnCountdownInterval);
 
-      const winner = gameState.turn;
+      if (subtext !== "Turn Time Expired!") {
+        audioEngine.playSFX('win');
+      }
+
       gameData.streak++;
-      Storage.set('pebble_game_data', gameData);
+      Storage.set('home_duo_data', gameData);
 
       const mins = String(Math.floor(gameState.timeElapsed / 60)).padStart(2, '0');
       const secs = String(gameState.timeElapsed % 60).padStart(2, '0');
       const timeStr = `${mins}:${secs}`;
 
       document.getElementById('victory-title').innerText = `${winner.toUpperCase()} WINS!`;
+      document.getElementById('victory-subtext').innerText = subtext || "Target Captured";
       document.getElementById('stat-moves').innerText = gameState.moveCount;
       document.getElementById('stat-time').innerText = timeStr;
       document.getElementById('stat-winner').innerText = winner.toUpperCase();
       document.getElementById('stat-winner').style.color = winner === TEAM_GREEN ? "#10b981" : "#3b82f6";
       document.getElementById('stat-streak').innerText = `${gameData.streak}`;
 
-      if (gameState.passToFriendMode) {
-        gameState.passFriendStats.push({
-          player: `Player ${gameState.passFriendStats.length + 1}`,
-          moves: gameState.moveCount,
-          time: timeStr,
-          result: `${winner.toUpperCase()} Won`
-        });
-
-        if (gameState.passFriendStats.length >= 2) {
-          showPassFriendScoreboard();
-          return;
-        }
-      }
-
       document.getElementById('modal-victory').classList.add('active');
     }
 
-    function showPassFriendScoreboard() {
-      const tbody = document.getElementById('scoreboard-body');
-      tbody.innerHTML = "";
-
-      gameState.passFriendStats.forEach(st => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td><strong>${st.player}</strong></td>
-          <td>${st.moves}</td>
-          <td>${st.time}</td>
-          <td>${st.result}</td>
-        `;
-        tbody.appendChild(tr);
-      });
-
-      document.getElementById('modal-pass-scoreboard').classList.add('active');
-    }
-
-    let isRecapRunning = false;
-
-    function startSpeedRecap() {
-      document.getElementById('modal-victory').classList.remove('active');
-      document.getElementById('modal-recap-playing').classList.add('active');
-
-      if (gameState.moveHistory.length === 0) return;
-
-      isRecapRunning = true;
-      let recapIdx = 0;
-      const history = [...gameState.moveHistory];
-
-      const interval = setInterval(() => {
-        if (!isRecapRunning || recapIdx >= history.length) {
-          clearInterval(interval);
-          isRecapRunning = false;
-          return;
-        }
-
-        const state = history[recapIdx];
-        gameState.board = state.board;
-        gameState.turn = state.turn;
-        renderPiecesFromState();
-
-        document.getElementById('recap-counter').innerText = `Move ${recapIdx + 1} / ${history.length}`;
-        recapIdx++;
-      }, 350);
-    }
-
-    function downloadWebMRecap() {
-      const stream = renderer.domElement.captureStream(30);
-      const recorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
-      const chunks = [];
-
-      recorder.ondataavailable = e => chunks.push(e.data);
-      recorder.onstop = () => {
-        const blob = new Blob(chunks, { type: 'video/webm' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'pebble_recap.webm';
-        a.click();
-      };
-
-      recorder.start();
-      startSpeedRecap();
-      setTimeout(() => recorder.stop(), gameState.moveHistory.length * 350 + 400);
-    }
-
     document.getElementById('btn-undo').addEventListener('click', undoMove);
-    document.getElementById('btn-restart').addEventListener('click', resetGame);
     
+    // Restart confirmation logic
+    document.getElementById('btn-restart').addEventListener('click', () => {
+      gameState.isPaused = true;
+      document.getElementById('modal-confirm-restart').classList.add('active');
+    });
+
+    document.getElementById('btn-confirm-restart').addEventListener('click', () => {
+      document.getElementById('modal-confirm-restart').classList.remove('active');
+      resetGame();
+    });
+
+    document.getElementById('btn-cancel-restart').addEventListener('click', () => {
+      document.getElementById('modal-confirm-restart').classList.remove('active');
+      gameState.isPaused = false;
+    });
+
+    // Pause modal
     document.getElementById('btn-pause').addEventListener('click', () => {
       gameState.isPaused = true;
       document.getElementById('modal-pause').classList.add('active');
@@ -1178,39 +1188,32 @@
 
     document.getElementById('btn-pause-restart').addEventListener('click', () => {
       document.getElementById('modal-pause').classList.remove('active');
-      resetGame();
+      document.getElementById('modal-confirm-restart').classList.add('active');
     });
 
+    // Settings
     document.getElementById('btn-settings').addEventListener('click', () => {
+      gameState.isPaused = true;
       document.getElementById('modal-settings').classList.add('active');
     });
 
     document.getElementById('btn-close-settings').addEventListener('click', () => {
       document.getElementById('modal-settings').classList.remove('active');
+      gameState.isPaused = false;
     });
 
     const sfxToggle = document.getElementById('set-sfx');
     const musicToggle = document.getElementById('set-music');
-    const cornersToggle = document.getElementById('set-corners');
-
-    if (cornersToggle) {
-      cornersToggle.checked = appSettings.quasiCorners !== false;
-      cornersToggle.addEventListener('change', (e) => {
-        appSettings.quasiCorners = e.target.checked;
-        Storage.set('pebble_game_settings', appSettings);
-        resetGame();
-      });
-    }
 
     sfxToggle.addEventListener('change', (e) => {
       appSettings.sfx = e.target.checked;
-      Storage.set('pebble_game_settings', appSettings);
+      Storage.set('home_duo_settings', appSettings);
       audioEngine.updateSettings();
     });
 
     musicToggle.addEventListener('change', (e) => {
       appSettings.music = e.target.checked;
-      Storage.set('pebble_game_settings', appSettings);
+      Storage.set('home_duo_settings', appSettings);
       audioEngine.updateSettings();
     });
 
@@ -1223,52 +1226,19 @@
       document.getElementById('audio-icon-on').style.display = appSettings.music ? 'block' : 'none';
       document.getElementById('audio-icon-off').style.display = appSettings.music ? 'none' : 'block';
 
-      Storage.set('pebble_game_settings', appSettings);
+      Storage.set('home_duo_settings', appSettings);
       audioEngine.updateSettings();
     });
 
+    // Victory
     document.getElementById('btn-play-again').addEventListener('click', () => {
       document.getElementById('modal-victory').classList.remove('active');
       resetGame();
     });
 
-    const btnPassFriend = document.getElementById('btn-pass-friend');
-    if (btnPassFriend) {
-      btnPassFriend.addEventListener('click', () => {
-        gameState.passToFriendMode = true;
-        document.getElementById('modal-victory').classList.remove('active');
-        resetGame();
-      });
-    }
-
-    const btnPassContinue = document.getElementById('btn-pass-continue');
-    if (btnPassContinue) {
-      btnPassContinue.addEventListener('click', () => {
-        document.getElementById('modal-pass-scoreboard').classList.remove('active');
-        gameState.passToFriendMode = false;
-        gameState.passFriendStats = [];
-        resetGame();
-      });
-    }
-
-    const btnRecap = document.getElementById('btn-recap');
-    if (btnRecap) btnRecap.addEventListener('click', startSpeedRecap);
-
-    const btnDownloadWebm = document.getElementById('btn-download-webm');
-    if (btnDownloadWebm) btnDownloadWebm.addEventListener('click', downloadWebMRecap);
-
-    const btnCloseRecap = document.getElementById('btn-close-recap');
-    if (btnCloseRecap) {
-      btnCloseRecap.addEventListener('click', () => {
-        isRecapRunning = false;
-        document.getElementById('modal-recap-playing').classList.remove('active');
-        document.getElementById('modal-victory').classList.add('active');
-      });
-    }
-
     function onWindowResize() {
       const aspect = window.innerWidth / window.innerHeight;
-      const viewSize = 6.5;
+      const viewSize = 7.0;
       
       if (aspect >= 1) {
         camera.left = -viewSize * aspect / 2;
@@ -1282,22 +1252,31 @@
         camera.bottom = -(viewSize / aspect) / 2;
       }
       
+      camera.position.set(0, 20, 0.2);
+      camera.lookAt(0, 0, 0.2);
       camera.updateProjectionMatrix();
       renderer.setSize(window.innerWidth, window.innerHeight);
+      updateTopPanelPosition();
+    }
+
+    function updateTopPanelPosition() {
+      const topPanel = document.querySelector('.top-panel');
+      if (!topPanel || !camera) return;
+      const viewHeightInUnits = camera.top - camera.bottom;
+      const pixelsPerUnit = window.innerHeight / viewHeightInUnits;
+      const boardHalfWidthUnits = 2.85; // Half of board base width (5.7 units)
+      const boardLeftPx = Math.max(12, (window.innerWidth / 2) - (boardHalfWidthUnits * pixelsPerUnit));
+      topPanel.style.marginLeft = `${boardLeftPx}px`;
     }
 
     function animate() {
       requestAnimationFrame(animate);
-
-      if (appSettings.rotate && boardGroup && !gameState.isPaused) {
-        boardGroup.rotation.z = Math.sin(Date.now() * 0.0003) * 0.03;
-      }
-
       renderer.render(scene, camera);
     }
 
     window.addEventListener('load', () => {
       init3D();
+      updateTopPanelPosition();
       resetGame();
     });
   </script>
