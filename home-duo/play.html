@@ -1,0 +1,1305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Tactical Pebble Board Game</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
+      margin: 0;
+      padding: 0;
+    }
+    body, html {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: #0f172a;
+      color: #f8fafc;
+    }
+    #canvas-container {
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: 1;
+    }
+    
+    /* UI Layer */
+    .ui-layer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 10;
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 16px;
+    }
+    .interactive {
+      pointer-events: auto;
+    }
+
+    /* Top Bar */
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+    }
+    .status-panel {
+      background: rgba(30, 41, 59, 0.85);
+      backdrop-filter: blur(8px);
+      padding: 8px 18px;
+      border-radius: 24px;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+    }
+    .turn-indicator {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 700;
+      font-size: 1rem;
+      letter-spacing: 0.5px;
+    }
+    .dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      display: inline-block;
+      box-shadow: 0 0 10px currentColor;
+    }
+    .dot.green { background: #10b981; color: #10b981; }
+    .dot.blue { background: #3b82f6; color: #3b82f6; }
+    
+    .stats-compact {
+      font-size: 0.85rem;
+      color: #94a3b8;
+      border-left: 1px solid rgba(255, 255, 255, 0.2);
+      padding-left: 12px;
+      display: flex;
+      gap: 12px;
+    }
+
+    /* Icon Buttons */
+    .btn-bar {
+      display: flex;
+      gap: 8px;
+    }
+    .icon-btn {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      background: rgba(30, 41, 59, 0.85);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #f8fafc;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+    }
+    .icon-btn:hover {
+      background: rgba(51, 65, 85, 0.95);
+      transform: translateY(-2px);
+      border-color: rgba(255, 255, 255, 0.3);
+    }
+    .icon-btn:active {
+      transform: translateY(0);
+    }
+    .icon-btn svg {
+      width: 20px;
+      height: 20px;
+      fill: currentColor;
+    }
+
+    /* Toast Notification */
+    .toast-message {
+      position: absolute;
+      top: 15%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      padding: 8px 18px;
+      border-radius: 20px;
+      font-weight: 600;
+      color: #38bdf8;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.3s ease, transform 0.3s ease;
+      box-shadow: 0 10px 15px -3px rgba(0,0,0,0.4);
+    }
+    .toast-message.show {
+      opacity: 1;
+      transform: translate(-50%, -60%);
+    }
+
+    /* Modals */
+    .modal-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(15, 23, 42, 0.8);
+      backdrop-filter: blur(12px);
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+    .modal-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .card {
+      background: #1e293b;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 20px;
+      padding: 24px;
+      width: 90%;
+      max-width: 420px;
+      text-align: center;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+    .card h2 {
+      font-size: 1.6rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #38bdf8, #34d399);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .card-stats {
+      background: #0f172a;
+      border-radius: 14px;
+      padding: 14px;
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      text-align: left;
+    }
+    .stat-item {
+      display: flex;
+      flex-direction: column;
+    }
+    .stat-label {
+      font-size: 0.75rem;
+      color: #94a3b8;
+      text-transform: uppercase;
+    }
+    .stat-val {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #f8fafc;
+    }
+    
+    .btn-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .primary-btn {
+      background: linear-gradient(135deg, #0284c7, #2563eb);
+      color: white;
+      border: none;
+      padding: 12px;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+    }
+    .primary-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(37, 99, 235, 0.4);
+    }
+    .secondary-btn {
+      background: #334155;
+      color: #e2e8f0;
+      border: 1px solid rgba(255,255,255,0.08);
+      padding: 10px;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .secondary-btn:hover {
+      background: #475569;
+      color: #fff;
+    }
+
+    /* Scoreboard Table */
+    .scoreboard-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .scoreboard-table th, .scoreboard-table td {
+      padding: 8px 10px;
+      text-align: center;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      font-size: 0.85rem;
+    }
+    .scoreboard-table th {
+      color: #94a3b8;
+      font-weight: 600;
+    }
+
+    /* Settings Switch */
+    .setting-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    .setting-row label {
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+    .toggle-checkbox {
+      width: 38px;
+      height: 20px;
+      appearance: none;
+      background: #334155;
+      border-radius: 12px;
+      position: relative;
+      outline: none;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    .toggle-checkbox:checked {
+      background: #10b981;
+    }
+    .toggle-checkbox::before {
+      content: '';
+      position: absolute;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      top: 3px;
+      left: 3px;
+      background: white;
+      transition: transform 0.3s;
+    }
+    .toggle-checkbox:checked::before {
+      transform: translateX(18px);
+    }
+  </style>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+
+  <div id="canvas-container"></div>
+
+  <div class="ui-layer">
+    <div class="top-bar">
+      <div class="status-panel">
+        <div class="turn-indicator" id="turn-display">
+          <span class="dot green" id="turn-dot"></span>
+          <span id="turn-text">Green</span>
+        </div>
+        <div class="stats-compact">
+          <span>Moves: <strong id="move-count" style="color:#fff;">0</strong></span>
+          <span>Time: <strong id="timer-display" style="color:#fff;">00:00</strong></span>
+        </div>
+      </div>
+
+      <div class="btn-bar interactive">
+        <button class="icon-btn" id="btn-undo" title="Undo Move">
+          <svg viewBox="0 0 24 24"><path d="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z"/></svg>
+        </button>
+        <button class="icon-btn" id="btn-restart" title="Restart">
+          <svg viewBox="0 0 24 24"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+        </button>
+        <button class="icon-btn" id="btn-audio" title="Audio">
+          <svg id="audio-icon-on" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+          <svg id="audio-icon-off" viewBox="0 0 24 24" style="display:none;"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/></svg>
+        </button>
+        <button class="icon-btn" id="btn-pause" title="Pause">
+          <svg viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+        </button>
+        <button class="icon-btn" id="btn-settings" title="Settings">
+          <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="toast-message" id="toast">Move Pebble</div>
+  </div>
+
+  <!-- Modals -->
+  <div class="modal-overlay" id="modal-settings">
+    <div class="card">
+      <h2>Settings</h2>
+      <div>
+        <div class="setting-row">
+          <label>Sound Effects</label>
+          <input type="checkbox" id="set-sfx" class="toggle-checkbox" checked>
+        </div>
+        <div class="setting-row">
+          <label>Background Music</label>
+          <input type="checkbox" id="set-music" class="toggle-checkbox" checked>
+        </div>
+        <div class="setting-row">
+          <label>Camera Motion</label>
+          <input type="checkbox" id="set-rotate" class="toggle-checkbox" checked>
+        </div>
+      </div>
+      <button class="primary-btn" id="btn-close-settings">Done</button>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modal-pause">
+    <div class="card">
+      <h2>Game Paused</h2>
+      <div class="btn-group">
+        <button class="primary-btn" id="btn-resume">Resume</button>
+        <button class="secondary-btn" id="btn-pause-restart">Restart Level</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modal-victory">
+    <div class="card">
+      <h2 id="victory-title">Green Wins!</h2>
+
+      <div class="card-stats">
+        <div class="stat-item">
+          <span class="stat-label">Moves</span>
+          <span class="stat-val" id="stat-moves">0</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Time</span>
+          <span class="stat-val" id="stat-time">00:00</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Winner</span>
+          <span class="stat-val" id="stat-winner">Green</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Streak</span>
+          <span class="stat-val" id="stat-streak">0</span>
+        </div>
+      </div>
+
+      <div class="btn-group">
+        <button class="primary-btn" id="btn-play-again">Play Again</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modal-pass-scoreboard">
+    <div class="card">
+      <h2>Pass to Friend Stats</h2>
+      <table class="scoreboard-table">
+        <thead>
+          <tr>
+            <th>Player</th>
+            <th>Moves</th>
+            <th>Time</th>
+            <th>Result</th>
+          </tr>
+        </thead>
+        <tbody id="scoreboard-body"></tbody>
+      </table>
+      <div class="btn-group">
+        <button class="primary-btn" id="btn-pass-continue">Continue</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modal-recap-playing">
+    <div class="card">
+      <h2>Speed Recap</h2>
+      <div style="font-size: 1.2rem; font-weight: bold; color: #38bdf8;" id="recap-counter">Move 0 / 0</div>
+      <div class="btn-group">
+        <button class="secondary-btn" id="btn-download-webm">Download WebM Video</button>
+        <button class="primary-btn" id="btn-close-recap">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    if (navigator.audioSession) {
+      try {
+        navigator.audioSession.type = "playback";
+      } catch (e) {
+        console.warn("AudioSession setting not supported.");
+      }
+    }
+
+    const Storage = {
+      set: function(key, val) {
+        const strVal = JSON.stringify(val);
+        try {
+          localStorage.setItem(key, strVal);
+        } catch(e) {
+          document.cookie = key + "=" + encodeURIComponent(strVal) + "; path=/; max-age=31536000";
+        }
+      },
+      get: function(key, defaultVal) {
+        try {
+          const item = localStorage.getItem(key);
+          if (item !== null) return JSON.parse(item);
+        } catch(e) {
+          const match = document.cookie.match(new RegExp('(^| )' + key + '=([^;]+)'));
+          if (match) return JSON.parse(decodeURIComponent(match[2]));
+        }
+        return defaultVal;
+      }
+    };
+
+    let appSettings = Storage.get('pebble_game_settings', { sfx: true, music: true, rotate: false });
+    let gameData = Storage.get('pebble_game_data', { level: 1, streak: 0 });
+
+    class SoundEngine {
+      constructor() {
+        this.ctx = null;
+        this.musicGain = null;
+        this.sfxGain = null;
+        this.isPlayingMusic = false;
+        this.musicInterval = null;
+      }
+
+      init() {
+        if (this.ctx) return;
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        this.ctx = new AudioCtx();
+
+        this.musicGain = this.ctx.createGain();
+        this.musicGain.gain.value = appSettings.music ? 0.08 : 0;
+        this.musicGain.connect(this.ctx.destination);
+
+        this.sfxGain = this.ctx.createGain();
+        this.sfxGain.gain.value = appSettings.sfx ? 0.25 : 0;
+        this.sfxGain.connect(this.ctx.destination);
+
+        if (appSettings.music) this.startBackgroundMusic();
+      }
+
+      playSFX(type) {
+        if (!this.ctx || !appSettings.sfx) return;
+        const now = this.ctx.currentTime;
+
+        if (type === 'select') {
+          const osc = this.ctx.createOscillator();
+          const g = this.ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(350, now);
+          osc.frequency.exponentialRampToValueAtTime(500, now + 0.08);
+          g.gain.setValueAtTime(0.2, now);
+          g.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+          osc.connect(g);
+          g.connect(this.sfxGain);
+          osc.start(now);
+          osc.stop(now + 0.08);
+        } else if (type === 'move') {
+          const osc = this.ctx.createOscillator();
+          const g = this.ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(220, now);
+          osc.frequency.exponentialRampToValueAtTime(110, now + 0.12);
+          g.gain.setValueAtTime(0.3, now);
+          g.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
+          osc.connect(g);
+          g.connect(this.sfxGain);
+          osc.start(now);
+          osc.stop(now + 0.12);
+        } else if (type === 'win') {
+          const notes = [261.63, 329.63, 392.00, 523.25];
+          notes.forEach((freq, idx) => {
+            const osc = this.ctx.createOscillator();
+            const g = this.ctx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(freq, now + idx * 0.1);
+            g.gain.setValueAtTime(0.25, now + idx * 0.1);
+            g.gain.exponentialRampToValueAtTime(0.01, now + idx * 0.1 + 0.3);
+            osc.connect(g);
+            g.connect(this.sfxGain);
+            osc.start(now + idx * 0.1);
+            osc.stop(now + idx * 0.1 + 0.3);
+          });
+        }
+      }
+
+      startBackgroundMusic() {
+        if (this.isPlayingMusic || !this.ctx) return;
+        this.isPlayingMusic = true;
+
+        const scale = [146.83, 164.81, 196.00, 220.00, 293.66];
+        let step = 0;
+
+        this.musicInterval = setInterval(() => {
+          if (!appSettings.music || !this.ctx) return;
+          const now = this.ctx.currentTime;
+          
+          if (step % 2 === 0) {
+            const osc = this.ctx.createOscillator();
+            const g = this.ctx.createGain();
+            const freq = scale[Math.floor(Math.random() * scale.length)];
+            
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(freq, now);
+            g.gain.setValueAtTime(0.01, now);
+            g.gain.linearRampToValueAtTime(0.06, now + 0.3);
+            g.gain.exponentialRampToValueAtTime(0.001, now + 1.5);
+
+            osc.connect(g);
+            g.connect(this.musicGain);
+            osc.start(now);
+            osc.stop(now + 1.5);
+          }
+          step++;
+        }, 1100);
+      }
+
+      stopBackgroundMusic() {
+        if (this.musicInterval) {
+          clearInterval(this.musicInterval);
+          this.musicInterval = null;
+        }
+        this.isPlayingMusic = false;
+      }
+
+      updateSettings() {
+        if (this.musicGain) this.musicGain.gain.value = appSettings.music ? 0.08 : 0;
+        if (this.sfxGain) this.sfxGain.gain.value = appSettings.sfx ? 0.25 : 0;
+        if (appSettings.music && !this.isPlayingMusic) this.startBackgroundMusic();
+        if (!appSettings.music && this.isPlayingMusic) this.stopBackgroundMusic();
+      }
+    }
+
+    const audioEngine = new SoundEngine();
+
+    const GRID_SIZE = 4;
+    const TEAM_GREEN = 'green';
+    const TEAM_BLUE = 'blue';
+
+    // Target Goals on 4x4 Grid
+    // Green's target to capture: Blue's home at top-right (Row 0, Col 3)
+    const GREEN_GOAL = { r: 0, c: 3 }; 
+    // Blue's target to capture: Green's home at bottom-left (Row 3, Col 0)
+    const BLUE_GOAL = { r: 3, c: 0 };  
+
+    let gameState = {
+      board: [],
+      turn: TEAM_GREEN,
+      selectedPiece: null,
+      validMoves: [],
+      moveHistory: [],
+      timeElapsed: 0,
+      timerInterval: null,
+      isPaused: false,
+      isGameOver: false,
+      moveCount: 0,
+      passToFriendMode: false,
+      passFriendStats: []
+    };
+
+    function initBoardState() {
+      const board = Array(GRID_SIZE).fill(null).map(() => Array(GRID_SIZE).fill(null));
+
+      // Inner quasi-corner positions touching target homes
+      board[2][0] = { team: TEAM_GREEN, id: 'g1' };
+      board[3][1] = { team: TEAM_GREEN, id: 'g2' };
+      board[0][2] = { team: TEAM_BLUE, id: 'b1' };
+      board[1][3] = { team: TEAM_BLUE, id: 'b2' };
+
+      return board;
+    }
+
+    // Rook-style linear movement: slides in straight lines until blocked by any piece
+    function calculateValidMoves(r, c, board) {
+      const piece = board[r][c];
+      if (!piece) return [];
+
+      const moves = [];
+      const directions = [
+        { dr: -1, dc: 0 }, // Up
+        { dr: 1, dc: 0 },  // Down
+        { dr: 0, dc: -1 }, // Left
+        { dr: 0, dc: 1 }   // Right
+      ];
+
+      // Pieces cannot sit on or occupy their own home circle
+      const ownHome = piece.team === TEAM_GREEN ? BLUE_GOAL : GREEN_GOAL;
+
+      directions.forEach(dir => {
+        let currR = r + dir.dr;
+        let currC = c + dir.dc;
+
+        while (currR >= 0 && currR < GRID_SIZE && currC >= 0 && currC < GRID_SIZE) {
+          if (!board[currR][currC]) {
+            // Empty tile: valid move unless it's the piece's own home circle
+            if (currR !== ownHome.r || currC !== ownHome.c) {
+              moves.push({ r: currR, c: currC });
+            }
+            currR += dir.dr;
+            currC += dir.dc;
+          } else {
+            // Blocked by another piece: CANNOT pass through or jump over
+            break;
+          }
+        }
+      });
+
+      return moves;
+    }
+
+    let scene, camera, renderer, raycaster, mouse;
+    let pieceMeshes = new Map();
+    let highlightMeshes = [];
+    let boardGroup;
+    let clickPlane;
+
+    const TILE_SPACING = 1.25;
+
+    function init3D() {
+      const container = document.getElementById('canvas-container');
+
+      scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x0f172a);
+
+      const aspect = window.innerWidth / window.innerHeight;
+      const viewSize = 6.5; // Adjusted framing for 4x4 board
+      
+      if (aspect >= 1) {
+        camera = new THREE.OrthographicCamera(
+          -viewSize * aspect / 2, viewSize * aspect / 2,
+          viewSize / 2, -viewSize / 2,
+          0.1, 1000
+        );
+      } else {
+        camera = new THREE.OrthographicCamera(
+          -viewSize / 2, viewSize / 2,
+          (viewSize / aspect) / 2, -(viewSize / aspect) / 2,
+          0.1, 1000
+        );
+      }
+      
+      camera.position.set(0, 20, 0);
+      camera.lookAt(0, 0, 0);
+
+      renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      container.appendChild(renderer.domElement);
+
+      raycaster = new THREE.Raycaster();
+      mouse = new THREE.Vector2();
+
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.85);
+      scene.add(ambientLight);
+
+      const dirLight = new THREE.DirectionalLight(0xfff5ea, 0.9);
+      dirLight.position.set(5, 20, 5);
+      dirLight.castShadow = true;
+      dirLight.shadow.mapSize.width = 2048;
+      dirLight.shadow.mapSize.height = 2048;
+      scene.add(dirLight);
+
+      createBoard();
+
+      window.addEventListener('resize', onWindowResize);
+      renderer.domElement.addEventListener('pointerdown', onPointerDown);
+
+      animate();
+    }
+
+    function createBoard() {
+      boardGroup = new THREE.Group();
+      scene.add(boardGroup);
+
+      // Board Base
+      const baseGeo = new THREE.BoxGeometry(5.7, 0.2, 5.7);
+      const baseMat = new THREE.MeshStandardMaterial({
+        color: 0x1e293b,
+        roughness: 0.4,
+        metalness: 0.1
+      });
+      const baseMesh = new THREE.Mesh(baseGeo, baseMat);
+      baseMesh.position.y = -0.15;
+      baseMesh.receiveShadow = true;
+      boardGroup.add(baseMesh);
+
+      // Invisible Raycast Intersection Plane
+      const planeGeo = new THREE.PlaneGeometry(20, 20);
+      const planeMat = new THREE.MeshBasicMaterial({ visible: false });
+      clickPlane = new THREE.Mesh(planeGeo, planeMat);
+      clickPlane.rotation.x = -Math.PI / 2;
+      scene.add(clickPlane);
+
+      // Tiles
+      const tileSize = 1.15;
+      for (let r = 0; r < GRID_SIZE; r++) {
+        for (let c = 0; c < GRID_SIZE; c++) {
+          const tileGeo = new THREE.BoxGeometry(tileSize, 0.1, tileSize);
+          const isAlt = (r + c) % 2 === 0;
+          const tileMat = new THREE.MeshStandardMaterial({
+            color: isAlt ? 0x334155 : 0x1e293b,
+            roughness: 0.5,
+            metalness: 0.05
+          });
+
+          const tile = new THREE.Mesh(tileGeo, tileMat);
+          const pos = getTilePosition(r, c);
+          tile.position.set(pos.x, 0, pos.z);
+          tile.receiveShadow = true;
+
+          boardGroup.add(tile);
+        }
+      }
+
+      // Home Target Rings
+      // GREEN_GOAL (0, 3) is Blue's Home -> render in Blue color (0x3b82f6)
+      createTargetRing(GREEN_GOAL.r, GREEN_GOAL.c, 0x3b82f6);
+      
+      // BLUE_GOAL (3, 0) is Green's Home -> render in Green color (0x10b981)
+      createTargetRing(BLUE_GOAL.r, BLUE_GOAL.c, 0x10b981);
+    }
+
+    function createTargetRing(r, c, colorHex) {
+      const pos = getTilePosition(r, c);
+
+      const ringGeo = new THREE.RingGeometry(0.28, 0.48, 32);
+      const ringMat = new THREE.MeshBasicMaterial({
+        color: colorHex,
+        side: THREE.DoubleSide,
+        transparent: true,
+        opacity: 0.95
+      });
+      const ring = new THREE.Mesh(ringGeo, ringMat);
+      ring.rotation.x = Math.PI / 2;
+      ring.position.set(pos.x, 0.06, pos.z);
+      boardGroup.add(ring);
+    }
+
+    function getTilePosition(r, c) {
+      return {
+        x: (c - (GRID_SIZE - 1) / 2) * TILE_SPACING,
+        y: 0.25,
+        z: (r - (GRID_SIZE - 1) / 2) * TILE_SPACING
+      };
+    }
+
+    function renderPiecesFromState() {
+      clearHighlights();
+      const currentKeys = new Set();
+
+      for (let r = 0; r < GRID_SIZE; r++) {
+        for (let c = 0; c < GRID_SIZE; c++) {
+          const p = gameState.board[r][c];
+          if (p) {
+            currentKeys.add(p.id);
+            const targetPos = getTilePosition(r, c);
+
+            if (!pieceMeshes.has(p.id)) {
+              const geo = new THREE.SphereGeometry(0.42, 32, 24);
+              geo.scale(1.1, 0.5, 1.1);
+
+              const color = p.team === TEAM_GREEN ? 0x10b981 : 0x3b82f6;
+              const mat = new THREE.MeshPhysicalMaterial({
+                color: color,
+                roughness: 0.2,
+                metalness: 0.1,
+                clearcoat: 0.9,
+                transparent: true,
+                opacity: 0.95
+              });
+
+              const mesh = new THREE.Mesh(geo, mat);
+              mesh.castShadow = true;
+              mesh.receiveShadow = true;
+              mesh.position.set(targetPos.x, targetPos.y, targetPos.z);
+
+              scene.add(mesh);
+              pieceMeshes.set(p.id, mesh);
+            } else {
+              const mesh = pieceMeshes.get(p.id);
+              mesh.position.set(targetPos.x, targetPos.y, targetPos.z);
+            }
+          }
+        }
+      }
+
+      pieceMeshes.forEach((mesh, id) => {
+        if (!currentKeys.has(id)) {
+          scene.remove(mesh);
+          mesh.geometry.dispose();
+          mesh.material.dispose();
+          pieceMeshes.delete(id);
+        }
+      });
+
+      if (gameState.selectedPiece) {
+        const selPos = getTilePosition(gameState.selectedPiece.r, gameState.selectedPiece.c);
+        createHighlight(selPos.x, selPos.z, 0xf59e0b, 0.52);
+
+        gameState.validMoves.forEach(mv => {
+          const mPos = getTilePosition(mv.r, mv.c);
+          createHighlight(mPos.x, mPos.z, 0xe2e8f0, 0.44);
+        });
+      }
+    }
+
+    function createHighlight(x, z, colorHex, radius) {
+      const geo = new THREE.RingGeometry(radius * 0.5, radius, 32);
+      const mat = new THREE.MeshBasicMaterial({
+        color: colorHex,
+        side: THREE.DoubleSide,
+        transparent: true,
+        opacity: 0.85
+      });
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.rotation.x = Math.PI / 2;
+      mesh.position.set(x, 0.08, z);
+      boardGroup.add(mesh);
+      highlightMeshes.push(mesh);
+    }
+
+    function clearHighlights() {
+      highlightMeshes.forEach(m => {
+        boardGroup.remove(m);
+        m.geometry.dispose();
+        m.material.dispose();
+      });
+      highlightMeshes = [];
+    }
+
+    function onPointerDown(event) {
+      if (gameState.isGameOver || gameState.isPaused) return;
+
+      audioEngine.init();
+
+      mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+      mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+      raycaster.setFromCamera(mouse, camera);
+      const intersects = raycaster.intersectObject(clickPlane);
+
+      if (intersects.length > 0) {
+        const pt = intersects[0].point;
+
+        const c = Math.round(pt.x / TILE_SPACING + (GRID_SIZE - 1) / 2);
+        const r = Math.round(pt.z / TILE_SPACING + (GRID_SIZE - 1) / 2);
+
+        if (r >= 0 && r < GRID_SIZE && c >= 0 && c < GRID_SIZE) {
+          handleCellClick(r, c);
+        }
+      }
+    }
+
+    function handleCellClick(r, c) {
+      const piece = gameState.board[r][c];
+
+      // Select active team's piece
+      if (piece && piece.team === gameState.turn) {
+        // Toggle de-selection if clicking the currently selected piece
+        if (gameState.selectedPiece && gameState.selectedPiece.r === r && gameState.selectedPiece.c === c) {
+          gameState.selectedPiece = null;
+          gameState.validMoves = [];
+          renderPiecesFromState();
+          return;
+        }
+
+        gameState.selectedPiece = { r, c, piece };
+        gameState.validMoves = calculateValidMoves(r, c, gameState.board);
+        audioEngine.playSFX('select');
+        renderPiecesFromState();
+        return;
+      }
+
+      // Execute move if clicking valid destination
+      if (gameState.selectedPiece) {
+        const move = gameState.validMoves.find(m => m.r === r && m.c === c);
+        if (move) {
+          executeMove(gameState.selectedPiece, move);
+        } else {
+          gameState.selectedPiece = null;
+          gameState.validMoves = [];
+          renderPiecesFromState();
+        }
+      }
+    }
+
+    function executeMove(from, toMove) {
+      const boardSnapshot = JSON.parse(JSON.stringify(gameState.board));
+      gameState.moveHistory.push({
+        board: boardSnapshot,
+        turn: gameState.turn,
+        moveCount: gameState.moveCount
+      });
+
+      const piece = gameState.board[from.r][from.c];
+      gameState.board[from.r][from.c] = null;
+      gameState.board[toMove.r][toMove.c] = piece;
+
+      gameState.moveCount++;
+      document.getElementById('move-count').innerText = gameState.moveCount;
+
+      audioEngine.playSFX('move');
+
+      gameState.selectedPiece = null;
+      gameState.validMoves = [];
+
+      if (checkWinCondition()) {
+        renderPiecesFromState();
+        handleVictory();
+        return;
+      }
+
+      gameState.turn = gameState.turn === TEAM_GREEN ? TEAM_BLUE : TEAM_GREEN;
+      updateTurnUI();
+      renderPiecesFromState();
+      showToast("Moved");
+    }
+
+    function undoMove() {
+      if (gameState.moveHistory.length === 0 || gameState.isGameOver) return;
+
+      const lastState = gameState.moveHistory.pop();
+      gameState.board = lastState.board;
+      gameState.turn = lastState.turn;
+      gameState.moveCount = lastState.moveCount;
+
+      document.getElementById('move-count').innerText = gameState.moveCount;
+      gameState.selectedPiece = null;
+      gameState.validMoves = [];
+
+      updateTurnUI();
+      renderPiecesFromState();
+      audioEngine.playSFX('select');
+      showToast("Undone");
+    }
+
+    function checkWinCondition() {
+      // Green reaches Green Goal (1, 4)
+      const pAtGreenGoal = gameState.board[GREEN_GOAL.r][GREEN_GOAL.c];
+      if (pAtGreenGoal && pAtGreenGoal.team === TEAM_GREEN) return TEAM_GREEN;
+
+      // Blue reaches Blue Goal (4, 1)
+      const pAtBlueGoal = gameState.board[BLUE_GOAL.r][BLUE_GOAL.c];
+      if (pAtBlueGoal && pAtBlueGoal.team === TEAM_BLUE) return TEAM_BLUE;
+
+      return null;
+    }
+
+    function updateTurnUI() {
+      const dot = document.getElementById('turn-dot');
+      const text = document.getElementById('turn-text');
+
+      if (gameState.turn === TEAM_GREEN) {
+        dot.className = "dot green";
+        text.innerText = "Green";
+      } else {
+        dot.className = "dot blue";
+        text.innerText = "Blue";
+      }
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      toast.innerText = msg;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 1200);
+    }
+
+    function startTimer() {
+      clearInterval(gameState.timerInterval);
+      gameState.timerInterval = setInterval(() => {
+        if (!gameState.isPaused && !gameState.isGameOver) {
+          gameState.timeElapsed++;
+          const mins = String(Math.floor(gameState.timeElapsed / 60)).padStart(2, '0');
+          const secs = String(gameState.timeElapsed % 60).padStart(2, '0');
+          document.getElementById('timer-display').innerText = `${mins}:${secs}`;
+        }
+      }, 1000);
+    }
+
+    function resetGame() {
+      gameState.board = initBoardState();
+      gameState.turn = TEAM_GREEN;
+      gameState.selectedPiece = null;
+      gameState.validMoves = [];
+      gameState.moveHistory = [];
+      gameState.timeElapsed = 0;
+      gameState.moveCount = 0;
+      gameState.isGameOver = false;
+      gameState.isPaused = false;
+
+      document.getElementById('move-count').innerText = "0";
+      document.getElementById('timer-display').innerText = "00:00";
+      
+      updateTurnUI();
+      renderPiecesFromState();
+      startTimer();
+    }
+
+    function handleVictory() {
+      gameState.isGameOver = true;
+      audioEngine.playSFX('win');
+
+      const winner = gameState.turn;
+      gameData.streak++;
+      Storage.set('pebble_game_data', gameData);
+
+      const mins = String(Math.floor(gameState.timeElapsed / 60)).padStart(2, '0');
+      const secs = String(gameState.timeElapsed % 60).padStart(2, '0');
+      const timeStr = `${mins}:${secs}`;
+
+      document.getElementById('victory-title').innerText = `${winner.toUpperCase()} WINS!`;
+      document.getElementById('stat-moves').innerText = gameState.moveCount;
+      document.getElementById('stat-time').innerText = timeStr;
+      document.getElementById('stat-winner').innerText = winner.toUpperCase();
+      document.getElementById('stat-winner').style.color = winner === TEAM_GREEN ? "#10b981" : "#3b82f6";
+      document.getElementById('stat-streak').innerText = `${gameData.streak}`;
+
+      if (gameState.passToFriendMode) {
+        gameState.passFriendStats.push({
+          player: `Player ${gameState.passFriendStats.length + 1}`,
+          moves: gameState.moveCount,
+          time: timeStr,
+          result: `${winner.toUpperCase()} Won`
+        });
+
+        if (gameState.passFriendStats.length >= 2) {
+          showPassFriendScoreboard();
+          return;
+        }
+      }
+
+      document.getElementById('modal-victory').classList.add('active');
+    }
+
+    function showPassFriendScoreboard() {
+      const tbody = document.getElementById('scoreboard-body');
+      tbody.innerHTML = "";
+
+      gameState.passFriendStats.forEach(st => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><strong>${st.player}</strong></td>
+          <td>${st.moves}</td>
+          <td>${st.time}</td>
+          <td>${st.result}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      document.getElementById('modal-pass-scoreboard').classList.add('active');
+    }
+
+    let isRecapRunning = false;
+
+    function startSpeedRecap() {
+      document.getElementById('modal-victory').classList.remove('active');
+      document.getElementById('modal-recap-playing').classList.add('active');
+
+      if (gameState.moveHistory.length === 0) return;
+
+      isRecapRunning = true;
+      let recapIdx = 0;
+      const history = [...gameState.moveHistory];
+
+      const interval = setInterval(() => {
+        if (!isRecapRunning || recapIdx >= history.length) {
+          clearInterval(interval);
+          isRecapRunning = false;
+          return;
+        }
+
+        const state = history[recapIdx];
+        gameState.board = state.board;
+        gameState.turn = state.turn;
+        renderPiecesFromState();
+
+        document.getElementById('recap-counter').innerText = `Move ${recapIdx + 1} / ${history.length}`;
+        recapIdx++;
+      }, 350);
+    }
+
+    function downloadWebMRecap() {
+      const stream = renderer.domElement.captureStream(30);
+      const recorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
+      const chunks = [];
+
+      recorder.ondataavailable = e => chunks.push(e.data);
+      recorder.onstop = () => {
+        const blob = new Blob(chunks, { type: 'video/webm' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'pebble_recap.webm';
+        a.click();
+      };
+
+      recorder.start();
+      startSpeedRecap();
+      setTimeout(() => recorder.stop(), gameState.moveHistory.length * 350 + 400);
+    }
+
+    document.getElementById('btn-undo').addEventListener('click', undoMove);
+    document.getElementById('btn-restart').addEventListener('click', resetGame);
+    
+    document.getElementById('btn-pause').addEventListener('click', () => {
+      gameState.isPaused = true;
+      document.getElementById('modal-pause').classList.add('active');
+    });
+
+    document.getElementById('btn-resume').addEventListener('click', () => {
+      gameState.isPaused = false;
+      document.getElementById('modal-pause').classList.remove('active');
+    });
+
+    document.getElementById('btn-pause-restart').addEventListener('click', () => {
+      document.getElementById('modal-pause').classList.remove('active');
+      resetGame();
+    });
+
+    document.getElementById('btn-settings').addEventListener('click', () => {
+      document.getElementById('modal-settings').classList.add('active');
+    });
+
+    document.getElementById('btn-close-settings').addEventListener('click', () => {
+      document.getElementById('modal-settings').classList.remove('active');
+    });
+
+    const sfxToggle = document.getElementById('set-sfx');
+    const musicToggle = document.getElementById('set-music');
+    const cornersToggle = document.getElementById('set-corners');
+
+    if (cornersToggle) {
+      cornersToggle.checked = appSettings.quasiCorners !== false;
+      cornersToggle.addEventListener('change', (e) => {
+        appSettings.quasiCorners = e.target.checked;
+        Storage.set('pebble_game_settings', appSettings);
+        resetGame();
+      });
+    }
+
+    sfxToggle.addEventListener('change', (e) => {
+      appSettings.sfx = e.target.checked;
+      Storage.set('pebble_game_settings', appSettings);
+      audioEngine.updateSettings();
+    });
+
+    musicToggle.addEventListener('change', (e) => {
+      appSettings.music = e.target.checked;
+      Storage.set('pebble_game_settings', appSettings);
+      audioEngine.updateSettings();
+    });
+
+    document.getElementById('btn-audio').addEventListener('click', () => {
+      appSettings.music = !appSettings.music;
+      appSettings.sfx = appSettings.music;
+      sfxToggle.checked = appSettings.music;
+      musicToggle.checked = appSettings.music;
+
+      document.getElementById('audio-icon-on').style.display = appSettings.music ? 'block' : 'none';
+      document.getElementById('audio-icon-off').style.display = appSettings.music ? 'none' : 'block';
+
+      Storage.set('pebble_game_settings', appSettings);
+      audioEngine.updateSettings();
+    });
+
+    document.getElementById('btn-play-again').addEventListener('click', () => {
+      document.getElementById('modal-victory').classList.remove('active');
+      resetGame();
+    });
+
+    const btnPassFriend = document.getElementById('btn-pass-friend');
+    if (btnPassFriend) {
+      btnPassFriend.addEventListener('click', () => {
+        gameState.passToFriendMode = true;
+        document.getElementById('modal-victory').classList.remove('active');
+        resetGame();
+      });
+    }
+
+    const btnPassContinue = document.getElementById('btn-pass-continue');
+    if (btnPassContinue) {
+      btnPassContinue.addEventListener('click', () => {
+        document.getElementById('modal-pass-scoreboard').classList.remove('active');
+        gameState.passToFriendMode = false;
+        gameState.passFriendStats = [];
+        resetGame();
+      });
+    }
+
+    const btnRecap = document.getElementById('btn-recap');
+    if (btnRecap) btnRecap.addEventListener('click', startSpeedRecap);
+
+    const btnDownloadWebm = document.getElementById('btn-download-webm');
+    if (btnDownloadWebm) btnDownloadWebm.addEventListener('click', downloadWebMRecap);
+
+    const btnCloseRecap = document.getElementById('btn-close-recap');
+    if (btnCloseRecap) {
+      btnCloseRecap.addEventListener('click', () => {
+        isRecapRunning = false;
+        document.getElementById('modal-recap-playing').classList.remove('active');
+        document.getElementById('modal-victory').classList.add('active');
+      });
+    }
+
+    function onWindowResize() {
+      const aspect = window.innerWidth / window.innerHeight;
+      const viewSize = 6.5;
+      
+      if (aspect >= 1) {
+        camera.left = -viewSize * aspect / 2;
+        camera.right = viewSize * aspect / 2;
+        camera.top = viewSize / 2;
+        camera.bottom = -viewSize / 2;
+      } else {
+        camera.left = -viewSize / 2;
+        camera.right = viewSize / 2;
+        camera.top = (viewSize / aspect) / 2;
+        camera.bottom = -(viewSize / aspect) / 2;
+      }
+      
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+
+    function animate() {
+      requestAnimationFrame(animate);
+
+      if (appSettings.rotate && boardGroup && !gameState.isPaused) {
+        boardGroup.rotation.z = Math.sin(Date.now() * 0.0003) * 0.03;
+      }
+
+      renderer.render(scene, camera);
+    }
+
+    window.addEventListener('load', () => {
+      init3D();
+      resetGame();
+    });
+  </script>
+</body>
+</html>
