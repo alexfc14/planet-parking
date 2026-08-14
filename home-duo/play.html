@@ -29,7 +29,6 @@
       z-index: 1;
     }
     
-    /* UI Overlay Layer */
     .ui-layer {
       position: absolute;
       top: 0;
@@ -47,7 +46,6 @@
       pointer-events: auto;
     }
 
-    /* Top Stats Panel */
     .top-panel {
       display: flex;
       align-items: center;
@@ -106,7 +104,6 @@
       font-variant-numeric: tabular-nums;
     }
 
-    /* Bottom Center Action Button Bar */
     .bottom-panel {
       display: flex;
       justify-content: center;
@@ -154,7 +151,6 @@
       fill: currentColor;
     }
 
-    /* Floating Toast Notification */
     .toast-message {
       position: absolute;
       top: 15%;
@@ -176,7 +172,6 @@
       transform: translate(-50%, -60%);
     }
 
-    /* Modals Overlay */
     .modal-overlay {
       position: absolute;
       top: 0;
@@ -221,6 +216,7 @@
       font-size: 0.95rem;
       color: #94a3b8;
     }
+
     .card-stats {
       background: #0f172a;
       border-radius: 16px;
@@ -314,7 +310,6 @@
       color: #fff;
     }
 
-    /* Settings Control Rows */
     .setting-row {
       display: flex;
       justify-content: space-between;
@@ -326,6 +321,36 @@
       font-weight: 600;
       font-size: 0.95rem;
     }
+    .rules-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      text-align: left;
+      font-size: 0.9rem;
+      color: #cbd5e1;
+      line-height: 1.45;
+    }
+    .rule-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      background: #0f172a;
+      padding: 10px 14px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+    .rule-icon {
+      font-size: 1.25rem;
+      line-height: 1;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+    .rule-text strong {
+      color: #f8fafc;
+      display: block;
+      margin-bottom: 2px;
+    }
+
     .select-input {
       background: #334155;
       color: #f8fafc;
@@ -376,7 +401,6 @@
 
   <!-- UI Overlay -->
   <div class="ui-layer">
-    <!-- Top Left Padded Status Panel -->
     <div class="top-panel">
       <div class="turn-indicator">
         <span class="dot green" id="turn-dot" title="Current Turn"></span>
@@ -401,6 +425,9 @@
           <svg id="audio-icon-on" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
           <svg id="audio-icon-off" viewBox="0 0 24 24" style="display:none;"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/></svg>
         </button>
+        <button class="icon-btn" id="btn-rules" title="How to Play">
+          <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 16h-2v-2h2v2zm1.07-7.75l-.9.92C12.45 11.9 12 12.5 12 14h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H7c0-2.76 2.24-5 5-5s5 2.24 5 5c0 1.04-.42 1.99-1.07 2.75z"/></svg>
+        </button>
         <button class="icon-btn" id="btn-pause" title="Pause Game">
           <svg viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
         </button>
@@ -413,7 +440,6 @@
     <div class="toast-message" id="toast">Move Pebble</div>
   </div>
 
-  <!-- Settings Modal -->
   <div class="modal-overlay" id="modal-settings">
     <div class="card">
       <h2>Settings</h2>
@@ -451,6 +477,13 @@
           </select>
         </div>
         <div class="setting-row">
+          <label>Board Mode</label>
+          <select id="set-board-size" class="select-input">
+            <option value="4x4">4x4 (2 Pieces)</option>
+            <option value="5x5">5x5 (3 Pieces)</option>
+          </select>
+        </div>
+        <div class="setting-row">
           <label>Sound Effects</label>
           <input type="checkbox" id="set-sfx" class="toggle-checkbox" checked>
         </div>
@@ -463,7 +496,43 @@
     </div>
   </div>
 
-  <!-- Confirm Restart Modal -->
+  <div class="modal-overlay" id="modal-rules">
+    <div class="card">
+      <h2>How to Play</h2>
+      <div class="rules-list">
+        <div class="rule-item">
+          <span class="rule-icon">🎯</span>
+          <div class="rule-text">
+            <strong>Goal</strong>
+            Land one of your pieces into your target home ring (Green lands in Blue's ring; Blue lands in Green's ring).
+          </div>
+        </div>
+        <div class="rule-item">
+          <span class="rule-icon">↔️</span>
+          <div class="rule-text">
+            <strong>Sliding Moves</strong>
+            Pieces slide horizontally or vertically through open tiles. You cannot jump over or land on other pieces.
+          </div>
+        </div>
+        <div class="rule-item">
+          <span class="rule-icon">⛔</span>
+          <div class="rule-text">
+            <strong>Home Protection</strong>
+            Pieces can never land on or pass through their own starting home target ring.
+          </div>
+        </div>
+        <div class="rule-item">
+          <span class="rule-icon">⏱️</span>
+          <div class="rule-text">
+            <strong>Turn Clock</strong>
+            You have 60 seconds per turn to decide and execute your move.
+          </div>
+        </div>
+      </div>
+      <button class="primary-btn" id="btn-close-rules">Got It!</button>
+    </div>
+  </div>
+
   <div class="modal-overlay" id="modal-confirm-restart">
     <div class="card">
       <h2>Restart Match?</h2>
@@ -475,7 +544,6 @@
     </div>
   </div>
 
-  <!-- Pause Modal -->
   <div class="modal-overlay" id="modal-pause">
     <div class="card">
       <h2>Game Paused</h2>
@@ -486,7 +554,6 @@
     </div>
   </div>
 
-  <!-- Victory / Game Over Modal -->
   <div class="modal-overlay" id="modal-victory">
     <div class="card">
       <h2 id="victory-title">GREEN WINS!</h2>
@@ -512,7 +579,7 @@
       </div>
 
       <div class="btn-group" id="victory-btn-group">
-        <button class="accent-btn" id="btn-diff-action">Increase Difficulty</button>
+        <button class="accent-btn" id="btn-diff-action" style="display:none;">Adjust Difficulty</button>
         <button class="primary-btn" id="btn-play-again">Play Another</button>
       </div>
     </div>
@@ -548,18 +615,28 @@
       }
     };
 
-    // Default mode is VS AI, Medium difficulty, and Who Starts is Random
     let appSettings = Storage.get('home_duo_settings', { 
       sfx: true, 
       music: true, 
       opponent: 'ai', 
       aiDifficulty: 'medium', 
       starter: 'random',
-      boardLayout: 'corners'
+      boardLayout: 'corners',
+      boardSize: '4x4'
     });
     
     let gameData = Storage.get('home_duo_data', { streak: 0 });
     let aiTimeout = null;
+
+    let gridSize = 4;
+    let greenGoal = { r: 0, c: 3 };
+    let blueGoal = { r: 3, c: 0 };
+
+    function updateGridDimensions() {
+      gridSize = appSettings.boardSize === '5x5' ? 5 : 4;
+      greenGoal = { r: 0, c: gridSize - 1 };
+      blueGoal = { r: gridSize - 1, c: 0 };
+    }
 
     const DIFFICULTIES = ['easy', 'medium', 'medium-hard', 'hard', 'master'];
     const DIFF_NAMES = {
@@ -570,11 +647,15 @@
       'master': 'Master'
     };
 
+    const TEAM_GREEN = 'green';
+    const TEAM_BLUE = 'blue';
+    const TURN_TIME_LIMIT = 60; 
+
     const AI = {
       getBestMove: function(board, aiTeam, difficulty) {
         const allMoves = [];
-        for (let r = 0; r < GRID_SIZE; r++) {
-          for (let c = 0; c < GRID_SIZE; c++) {
+        for (let r = 0; r < gridSize; r++) {
+          for (let c = 0; c < gridSize; c++) {
             const piece = board[r][c];
             if (piece && piece.team === aiTeam) {
               const moves = calculateValidMoves(r, c, board);
@@ -589,13 +670,9 @@
           return allMoves[Math.floor(Math.random() * allMoves.length)];
         }
 
-        const depthMap = { 
-          'easy': 1, 
-          'medium': 2, 
-          'medium-hard': 3, 
-          'hard': 4, 
-          'master': 5 
-        };
+        const depthMap = gridSize === 5 ? 
+          { 'easy': 1, 'medium': 2, 'medium-hard': 2, 'hard': 3, 'master': 3 } : 
+          { 'easy': 1, 'medium': 2, 'medium-hard': 3, 'hard': 4, 'master': 5 };
         const maxDepth = depthMap[difficulty] || 2;
 
         let bestMove = null;
@@ -633,8 +710,8 @@
         const currentTeam = isMaximizing ? aiTeam : oppTeam;
         const moves = [];
 
-        for (let r = 0; r < GRID_SIZE; r++) {
-          for (let c = 0; c < GRID_SIZE; c++) {
+        for (let r = 0; r < gridSize; r++) {
+          for (let c = 0; c < gridSize; c++) {
             const p = board[r][c];
             if (p && p.team === currentTeam) {
               const valid = calculateValidMoves(r, c, board);
@@ -676,13 +753,13 @@
 
       evaluateBoard: function(board, aiTeam) {
         const oppTeam = aiTeam === TEAM_BLUE ? TEAM_GREEN : TEAM_BLUE;
-        const aiTarget = aiTeam === TEAM_BLUE ? BLUE_GOAL : GREEN_GOAL;
-        const oppTarget = oppTeam === TEAM_BLUE ? BLUE_GOAL : GREEN_GOAL;
+        const aiTarget = aiTeam === TEAM_BLUE ? blueGoal : greenGoal;
+        const oppTarget = oppTeam === TEAM_BLUE ? blueGoal : greenGoal;
 
         let score = 0;
 
-        for (let r = 0; r < GRID_SIZE; r++) {
-          for (let c = 0; c < GRID_SIZE; c++) {
+        for (let r = 0; r < gridSize; r++) {
+          for (let c = 0; c < gridSize; c++) {
             const p = board[r][c];
             if (!p) continue;
 
@@ -694,7 +771,6 @@
             if (dr > 0) slides++;
             if (dc > 0) slides++;
 
-            // Unblocked path check
             if (r === target.r) {
               const minC = Math.min(c, target.c), maxC = Math.max(c, target.c);
               let blocked = false;
@@ -715,7 +791,7 @@
             if (p.team === aiTeam) {
               score += val;
             } else {
-              score -= val * 1.25; // Prioritize defensive blocking
+              score -= val * 1.25;
             }
           }
         }
@@ -723,9 +799,9 @@
       },
 
       cloneBoard: function(board) {
-        const newB = Array(GRID_SIZE).fill(null).map(() => Array(GRID_SIZE).fill(null));
-        for (let r = 0; r < GRID_SIZE; r++) {
-          for (let c = 0; c < GRID_SIZE; c++) {
+        const newB = Array(gridSize).fill(null).map(() => Array(gridSize).fill(null));
+        for (let r = 0; r < gridSize; r++) {
+          for (let c = 0; c < gridSize; c++) {
             if (board[r][c]) {
               newB[r][c] = { team: board[r][c].team, id: board[r][c].id };
             }
@@ -735,10 +811,10 @@
       },
 
       checkBoardWin: function(board) {
-        const pGreen = board[GREEN_GOAL.r][GREEN_GOAL.c];
+        const pGreen = board[greenGoal.r][greenGoal.c];
         if (pGreen && pGreen.team === TEAM_GREEN) return TEAM_GREEN;
 
-        const pBlue = board[BLUE_GOAL.r][BLUE_GOAL.c];
+        const pBlue = board[blueGoal.r][blueGoal.c];
         if (pBlue && pBlue.team === TEAM_BLUE) return TEAM_BLUE;
 
         return null;
@@ -876,15 +952,6 @@
 
     const audioEngine = new SoundEngine();
 
-    const GRID_SIZE = 4;
-    const TEAM_GREEN = 'green';
-    const TEAM_BLUE = 'blue';
-
-    const GREEN_GOAL = { r: 0, c: 3 }; 
-    const BLUE_GOAL = { r: 3, c: 0 };  
-
-    const TURN_TIME_LIMIT = 60; 
-
     let gameState = {
       board: [],
       turn: TEAM_GREEN,
@@ -900,19 +967,85 @@
       moveCount: 0
     };
 
-    function initBoardState() {
-      const board = Array(GRID_SIZE).fill(null).map(() => Array(GRID_SIZE).fill(null));
+    function resetTurnCountdown() {
+      gameState.turnTimeLeft = TURN_TIME_LIMIT;
+      updateCountdownDisplay();
+    }
 
-      if (appSettings.boardLayout === 'center') {
-        board[1][1] = { team: TEAM_GREEN, id: 'g1' };
-        board[2][1] = { team: TEAM_GREEN, id: 'g2' };
-        board[1][2] = { team: TEAM_BLUE, id: 'b1' };
-        board[2][2] = { team: TEAM_BLUE, id: 'b2' };
+    function updateCountdownDisplay() {
+      const el = document.getElementById('turn-countdown');
+      if (!el) return;
+      el.innerText = `${gameState.turnTimeLeft}s`;
+
+      if (gameState.turnTimeLeft <= 10) {
+        el.classList.add('warning');
       } else {
-        board[2][0] = { team: TEAM_GREEN, id: 'g1' };
-        board[3][1] = { team: TEAM_GREEN, id: 'g2' };
-        board[0][2] = { team: TEAM_BLUE, id: 'b1' };
-        board[1][3] = { team: TEAM_BLUE, id: 'b2' };
+        el.classList.remove('warning');
+      }
+    }
+
+    function triggerAIMoveIfNeeded() {
+      if (gameState.isGameOver || gameState.isPaused) return;
+      if (appSettings.opponent === 'ai' && gameState.turn === TEAM_BLUE) {
+        if (aiTimeout) clearTimeout(aiTimeout);
+        aiTimeout = setTimeout(() => {
+          if (gameState.isGameOver || gameState.isPaused || gameState.turn !== TEAM_BLUE) return;
+          const bestMove = AI.getBestMove(gameState.board, TEAM_BLUE, appSettings.aiDifficulty);
+          if (bestMove) {
+            executeMove(bestMove.from, bestMove.to);
+          }
+        }, 500);
+      }
+    }
+
+    function updateTurnUI() {
+      const dot = document.getElementById('turn-dot');
+      if (dot) {
+        dot.className = gameState.turn === TEAM_GREEN ? "dot green" : "dot blue";
+      }
+      triggerAIMoveIfNeeded();
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      if (!toast) return;
+      toast.innerText = msg;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 1200);
+    }
+
+    function initBoardState() {
+      updateGridDimensions();
+      const board = Array(gridSize).fill(null).map(() => Array(gridSize).fill(null));
+
+      if (gridSize === 5) {
+        if (appSettings.boardLayout === 'center') {
+          board[2][1] = { team: TEAM_GREEN, id: 'g1' };
+          board[3][1] = { team: TEAM_GREEN, id: 'g2' };
+          board[3][2] = { team: TEAM_GREEN, id: 'g3' };
+          board[1][2] = { team: TEAM_BLUE, id: 'b1' };
+          board[1][3] = { team: TEAM_BLUE, id: 'b2' };
+          board[2][3] = { team: TEAM_BLUE, id: 'b3' };
+        } else {
+          board[3][0] = { team: TEAM_GREEN, id: 'g1' };
+          board[4][1] = { team: TEAM_GREEN, id: 'g2' };
+          board[3][1] = { team: TEAM_GREEN, id: 'g3' };
+          board[0][3] = { team: TEAM_BLUE, id: 'b1' };
+          board[1][4] = { team: TEAM_BLUE, id: 'b2' };
+          board[1][3] = { team: TEAM_BLUE, id: 'b3' };
+        }
+      } else {
+        if (appSettings.boardLayout === 'center') {
+          board[1][1] = { team: TEAM_GREEN, id: 'g1' };
+          board[2][1] = { team: TEAM_GREEN, id: 'g2' };
+          board[1][2] = { team: TEAM_BLUE, id: 'b1' };
+          board[2][2] = { team: TEAM_BLUE, id: 'b2' };
+        } else {
+          board[2][0] = { team: TEAM_GREEN, id: 'g1' };
+          board[3][1] = { team: TEAM_GREEN, id: 'g2' };
+          board[0][2] = { team: TEAM_BLUE, id: 'b1' };
+          board[1][3] = { team: TEAM_BLUE, id: 'b2' };
+        }
       }
 
       return board;
@@ -930,13 +1063,13 @@
         { dr: 0, dc: 1 }  
       ];
 
-      const ownHome = piece.team === TEAM_GREEN ? BLUE_GOAL : GREEN_GOAL;
+      const ownHome = piece.team === TEAM_GREEN ? blueGoal : greenGoal;
 
       directions.forEach(dir => {
         let currR = r + dir.dr;
         let currC = c + dir.dc;
 
-        while (currR >= 0 && currR < GRID_SIZE && currC >= 0 && currC < GRID_SIZE) {
+        while (currR >= 0 && currR < gridSize && currC >= 0 && currC < gridSize) {
           if (!board[currR][currC]) {
             if (currR !== ownHome.r || currC !== ownHome.c) {
               moves.push({ r: currR, c: currC });
@@ -967,7 +1100,7 @@
       scene.background = new THREE.Color(0x0f172a);
 
       const aspect = window.innerWidth / window.innerHeight;
-      const viewSize = 7.0;
+      const viewSize = gridSize === 5 ? 8.2 : 7.0;
       
       if (aspect >= 1) {
         camera = new THREE.OrthographicCamera(
@@ -1015,10 +1148,22 @@
     }
 
     function createBoard() {
-      boardGroup = new THREE.Group();
-      scene.add(boardGroup);
+      if (!boardGroup) {
+        boardGroup = new THREE.Group();
+        scene.add(boardGroup);
+      } else {
+        while (boardGroup.children.length > 0) {
+          const obj = boardGroup.children[0];
+          boardGroup.remove(obj);
+          if (obj.geometry) obj.geometry.dispose();
+          if (obj.material) obj.material.dispose();
+        }
+      }
 
-      const baseGeo = new THREE.BoxGeometry(5.7, 0.2, 5.7);
+      updateGridDimensions();
+
+      const boardDimension = gridSize * TILE_SPACING + 0.7;
+      const baseGeo = new THREE.BoxGeometry(boardDimension, 0.2, boardDimension);
       const baseMat = new THREE.MeshStandardMaterial({
         color: 0x1e293b,
         roughness: 0.4,
@@ -1029,15 +1174,17 @@
       baseMesh.receiveShadow = true;
       boardGroup.add(baseMesh);
 
-      const planeGeo = new THREE.PlaneGeometry(20, 20);
-      const planeMat = new THREE.MeshBasicMaterial({ visible: false });
-      clickPlane = new THREE.Mesh(planeGeo, planeMat);
-      clickPlane.rotation.x = -Math.PI / 2;
-      scene.add(clickPlane);
+      if (!clickPlane) {
+        const planeGeo = new THREE.PlaneGeometry(20, 20);
+        const planeMat = new THREE.MeshBasicMaterial({ visible: false });
+        clickPlane = new THREE.Mesh(planeGeo, planeMat);
+        clickPlane.rotation.x = -Math.PI / 2;
+        scene.add(clickPlane);
+      }
 
       const tileSize = 1.15;
-      for (let r = 0; r < GRID_SIZE; r++) {
-        for (let c = 0; c < GRID_SIZE; c++) {
+      for (let r = 0; r < gridSize; r++) {
+        for (let c = 0; c < gridSize; c++) {
           const tileGeo = new THREE.BoxGeometry(tileSize, 0.1, tileSize);
           const isAlt = (r + c) % 2 === 0;
           const tileMat = new THREE.MeshStandardMaterial({
@@ -1055,8 +1202,8 @@
         }
       }
 
-      createTargetRing(GREEN_GOAL.r, GREEN_GOAL.c, 0x3b82f6);
-      createTargetRing(BLUE_GOAL.r, BLUE_GOAL.c, 0x10b981);
+      createTargetRing(greenGoal.r, greenGoal.c, 0x3b82f6);
+      createTargetRing(blueGoal.r, blueGoal.c, 0x10b981);
     }
 
     function createTargetRing(r, c, colorHex) {
@@ -1077,9 +1224,9 @@
 
     function getTilePosition(r, c) {
       return {
-        x: (c - (GRID_SIZE - 1) / 2) * TILE_SPACING,
+        x: (c - (gridSize - 1) / 2) * TILE_SPACING,
         y: 0.25,
-        z: (r - (GRID_SIZE - 1) / 2) * TILE_SPACING
+        z: (r - (gridSize - 1) / 2) * TILE_SPACING
       };
     }
 
@@ -1087,8 +1234,8 @@
       clearHighlights();
       const currentKeys = new Set();
 
-      for (let r = 0; r < GRID_SIZE; r++) {
-        for (let c = 0; c < GRID_SIZE; c++) {
+      for (let r = 0; r < gridSize; r++) {
+        for (let c = 0; c < gridSize; c++) {
           const p = gameState.board[r][c];
           if (p) {
             currentKeys.add(p.id);
@@ -1182,10 +1329,10 @@
       if (intersects.length > 0) {
         const pt = intersects[0].point;
 
-        const c = Math.round(pt.x / TILE_SPACING + (GRID_SIZE - 1) / 2);
-        const r = Math.round(pt.z / TILE_SPACING + (GRID_SIZE - 1) / 2);
+        const c = Math.round(pt.x / TILE_SPACING + (gridSize - 1) / 2);
+        const r = Math.round(pt.z / TILE_SPACING + (gridSize - 1) / 2);
 
-        if (r >= 0 && r < GRID_SIZE && c >= 0 && c < GRID_SIZE) {
+        if (r >= 0 && r < gridSize && c >= 0 && c < gridSize) {
           handleCellClick(r, c);
         }
       }
@@ -1280,62 +1427,13 @@
     }
 
     function checkWinCondition() {
-      const pAtGreenGoal = gameState.board[GREEN_GOAL.r][GREEN_GOAL.c];
+      const pAtGreenGoal = gameState.board[greenGoal.r][greenGoal.c];
       if (pAtGreenGoal && pAtGreenGoal.team === TEAM_GREEN) return TEAM_GREEN;
 
-      const pAtBlueGoal = gameState.board[BLUE_GOAL.r][BLUE_GOAL.c];
+      const pAtBlueGoal = gameState.board[blueGoal.r][blueGoal.c];
       if (pAtBlueGoal && pAtBlueGoal.team === TEAM_BLUE) return TEAM_BLUE;
 
       return null;
-    }
-
-    function updateTurnUI() {
-      const dot = document.getElementById('turn-dot');
-
-      if (gameState.turn === TEAM_GREEN) {
-        dot.className = "dot green";
-      } else {
-        dot.className = "dot blue";
-      }
-
-      triggerAIMoveIfNeeded();
-    }
-
-    function triggerAIMoveIfNeeded() {
-      if (gameState.isGameOver || gameState.isPaused) return;
-      if (appSettings.opponent === 'ai' && gameState.turn === TEAM_BLUE) {
-        if (aiTimeout) clearTimeout(aiTimeout);
-        aiTimeout = setTimeout(() => {
-          if (gameState.isGameOver || gameState.isPaused || gameState.turn !== TEAM_BLUE) return;
-          const bestMove = AI.getBestMove(gameState.board, TEAM_BLUE, appSettings.aiDifficulty);
-          if (bestMove) {
-            executeMove(bestMove.from, bestMove.to);
-          }
-        }, 500);
-      }
-    }
-
-    function resetTurnCountdown() {
-      gameState.turnTimeLeft = TURN_TIME_LIMIT;
-      updateCountdownDisplay();
-    }
-
-    function updateCountdownDisplay() {
-      const el = document.getElementById('turn-countdown');
-      el.innerText = `${gameState.turnTimeLeft}s`;
-
-      if (gameState.turnTimeLeft <= 10) {
-        el.classList.add('warning');
-      } else {
-        el.classList.remove('warning');
-      }
-    }
-
-    function showToast(msg) {
-      const toast = document.getElementById('toast');
-      toast.innerText = msg;
-      toast.classList.add('show');
-      setTimeout(() => toast.classList.remove('show'), 1200);
     }
 
     function startTimers() {
@@ -1371,6 +1469,7 @@
 
     function resetGame() {
       if (aiTimeout) clearTimeout(aiTimeout);
+      createBoard();
       gameState.board = initBoardState();
 
       let startingTeam = TEAM_GREEN;
@@ -1423,40 +1522,37 @@
       document.getElementById('stat-winner').style.color = winner === TEAM_GREEN ? "#10b981" : "#3b82f6";
       document.getElementById('stat-streak').innerText = `${gameData.streak}`;
 
-      // Handle AI difficulty upgrade / downgrade prompts based on win or loss
-      const diffActionBtn = document.getElementById('btn-diff-action');
-      const curIdx = DIFFICULTIES.indexOf(appSettings.aiDifficulty);
-
+      // Configure Difficulty adjustment button based on win/loss outcome vs AI
+      const diffBtn = document.getElementById('btn-diff-action');
       if (appSettings.opponent === 'ai') {
-        const isPlayerWin = (winner === TEAM_GREEN);
+        const curIdx = DIFFICULTIES.indexOf(appSettings.aiDifficulty);
+        const userWon = (winner === TEAM_GREEN);
 
-        if (isPlayerWin && curIdx < DIFFICULTIES.length - 1) {
+        if (userWon && curIdx < DIFFICULTIES.length - 1) {
           const nextDiff = DIFFICULTIES[curIdx + 1];
-          diffActionBtn.style.display = 'block';
-          diffActionBtn.className = 'accent-btn';
-          diffActionBtn.innerText = `Increase Difficulty (${DIFF_NAMES[nextDiff]})`;
-          diffActionBtn.onclick = () => {
+          diffBtn.innerText = `Increase Difficulty (${DIFF_NAMES[nextDiff]})`;
+          diffBtn.style.display = 'block';
+          diffBtn.onclick = () => {
             appSettings.aiDifficulty = nextDiff;
             Storage.set('home_duo_settings', appSettings);
             document.getElementById('modal-victory').classList.remove('active');
             resetGame();
           };
-        } else if (!isPlayerWin && curIdx > 0) {
+        } else if (!userWon && curIdx > 0) {
           const prevDiff = DIFFICULTIES[curIdx - 1];
-          diffActionBtn.style.display = 'block';
-          diffActionBtn.className = 'danger-btn';
-          diffActionBtn.innerText = `Decrease Difficulty (${DIFF_NAMES[prevDiff]})`;
-          diffActionBtn.onclick = () => {
+          diffBtn.innerText = `Decrease Difficulty (${DIFF_NAMES[prevDiff]})`;
+          diffBtn.style.display = 'block';
+          diffBtn.onclick = () => {
             appSettings.aiDifficulty = prevDiff;
             Storage.set('home_duo_settings', appSettings);
             document.getElementById('modal-victory').classList.remove('active');
             resetGame();
           };
         } else {
-          diffActionBtn.style.display = 'none';
+          diffBtn.style.display = 'none';
         }
       } else {
-        diffActionBtn.style.display = 'none';
+        diffBtn.style.display = 'none';
       }
 
       document.getElementById('modal-victory').classList.add('active');
@@ -1503,13 +1599,15 @@
       settingsSetupOnOpen = {
         opponent: appSettings.opponent,
         starter: appSettings.starter,
-        boardLayout: appSettings.boardLayout
+        boardLayout: appSettings.boardLayout,
+        boardSize: appSettings.boardSize
       };
 
       document.getElementById('set-mode').value = appSettings.opponent || 'ai';
       document.getElementById('set-difficulty').value = appSettings.aiDifficulty || 'medium';
       document.getElementById('set-starter').value = appSettings.starter || 'random';
       document.getElementById('set-layout').value = appSettings.boardLayout || 'corners';
+      document.getElementById('set-board-size').value = appSettings.boardSize || '4x4';
       document.getElementById('row-difficulty').style.display = (appSettings.opponent === 'human') ? 'none' : 'flex';
 
       document.getElementById('modal-settings').classList.add('active');
@@ -1536,12 +1634,18 @@
       Storage.set('home_duo_settings', appSettings);
     });
 
+    document.getElementById('set-board-size').addEventListener('change', (e) => {
+      appSettings.boardSize = e.target.value;
+      Storage.set('home_duo_settings', appSettings);
+    });
+
     document.getElementById('btn-close-settings').addEventListener('click', () => {
       document.getElementById('modal-settings').classList.remove('active');
 
       const setupChanged = (appSettings.opponent !== settingsSetupOnOpen.opponent) || 
                            (appSettings.starter !== settingsSetupOnOpen.starter) ||
-                           (appSettings.boardLayout !== settingsSetupOnOpen.boardLayout);
+                           (appSettings.boardLayout !== settingsSetupOnOpen.boardLayout) ||
+                           (appSettings.boardSize !== settingsSetupOnOpen.boardSize);
 
       if (setupChanged) {
         resetGame();
@@ -1549,6 +1653,18 @@
         gameState.isPaused = false;
         triggerAIMoveIfNeeded();
       }
+    });
+
+    document.getElementById('btn-rules').addEventListener('click', () => {
+      gameState.isPaused = true;
+      if (aiTimeout) clearTimeout(aiTimeout);
+      document.getElementById('modal-rules').classList.add('active');
+    });
+
+    document.getElementById('btn-close-rules').addEventListener('click', () => {
+      document.getElementById('modal-rules').classList.remove('active');
+      gameState.isPaused = false;
+      triggerAIMoveIfNeeded();
     });
 
     const sfxToggle = document.getElementById('set-sfx');
@@ -1586,7 +1702,7 @@
 
     function onWindowResize() {
       const aspect = window.innerWidth / window.innerHeight;
-      const viewSize = 7.0;
+      const viewSize = gridSize === 5 ? 8.2 : 7.0;
       
       if (aspect >= 1) {
         camera.left = -viewSize * aspect / 2;
@@ -1612,7 +1728,7 @@
       if (!topPanel || !camera) return;
       const viewHeightInUnits = camera.top - camera.bottom;
       const pixelsPerUnit = window.innerHeight / viewHeightInUnits;
-      const boardHalfWidthUnits = 2.85; 
+      const boardHalfWidthUnits = (gridSize * TILE_SPACING + 0.7) / 2; 
       const boardLeftPx = Math.max(12, (window.innerWidth / 2) - (boardHalfWidthUnits * pixelsPerUnit));
       topPanel.style.marginLeft = `${boardLeftPx}px`;
     }
