@@ -17,7 +17,7 @@ Live links to play:
 * [Brown Noise 💤🔊](https://alexfc14.github.io/vibe-games/brown-noise/play.html)
 * [Manhattan - Route Planner 🏗️🚲](https://alexfc14.github.io/vibe-games/manhattan/play.html)
 * [Home Duo 🔵⭕](https://alexfc14.github.io/vibe-games/home-duo/play.html)
-* [Congas 🚆](https://alexfc14.github.io/vibegames/congas/play.html)
+* [Congas 🚆](https://alexfc14.github.io/vibe-games/congas/play.html)
 
 ----
 # License
