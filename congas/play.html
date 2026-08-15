@@ -38,8 +38,13 @@
         .cell-R-bg { background-color: rgba(239, 68, 68, 0.06); }
         .cell-Y-bg { background-color: rgba(234, 179, 8, 0.06); }
         .cell-B-bg { background-color: rgba(59, 130, 246, 0.06); }
-        .cell-rb-bg { background-color: rgba(168, 85, 247, 0.1); }
-        .cell-yb-bg { background-color: rgba(20, 184, 166, 0.1); }
+        .cell-G-bg { background-color: rgba(34, 197, 94, 0.06); }
+        .cell-P-bg { background-color: rgba(168, 85, 247, 0.06); }
+
+        .cell-rb-bg { background-color: rgba(239, 68, 68, 0.1); }
+        .cell-yb-bg { background-color: rgba(234, 179, 8, 0.1); }
+        .cell-gb-bg { background-color: rgba(34, 197, 94, 0.1); }
+        .cell-pb-bg { background-color: rgba(168, 85, 247, 0.1); }
 
         /* Square Piece - Centered & Smaller than cell */
         .square-piece {
@@ -76,20 +81,42 @@
             background: linear-gradient(135deg, #3b82f6, #2563eb);
             border: 2px solid #bfdbfe;
         }
+
+        .piece-Green {
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            border: 2px solid #86efac;
+        }
+
+        .piece-Purple {
+            background: linear-gradient(135deg, #a855f7, #9333ea);
+            border: 2px solid #e9d5ff;
+        }
     </style>
 </head>
 
-<body class="min-h-screen flex flex-col items-center justify-between p-4 sm:p-6 bg-slate-950 text-slate-100">
+<body class="min-h-screen flex flex-col items-center justify-between p-3 sm:p-5 bg-slate-950 text-slate-100">
 
     <!-- Top Header Bar -->
-    <header class="w-full max-w-5xl flex flex-row items-center justify-between gap-4 mb-3">
-        <div>
-            <h1 class="text-3xl sm:text-4xl font-black title-font bg-clip-text text-transparent bg-gradient-to-r from-red-500 via-pink-500 to-purple-400 tracking-wide">
-                Congas
-            </h1>
-            <p class="text-xs sm:text-sm text-slate-400 mt-0.5">
-                Rota las congas de colores para devolver cada ficha a su circuito.
-            </p>
+    <header class="w-full max-w-5xl flex flex-col sm:flex-row items-center justify-between gap-3 mb-2">
+        <div class="flex flex-col sm:flex-row items-center gap-4 text-center sm:text-left">
+            <div>
+                <h1 class="text-3xl sm:text-4xl font-black title-font bg-clip-text text-transparent bg-gradient-to-r from-red-500 via-pink-500 to-purple-400 tracking-wide">
+                    Congas
+                </h1>
+                <p class="text-xs text-slate-400 mt-0.5">
+                    Rota las congas de colores para devolver cada ficha a su circuito.
+                </p>
+            </div>
+
+            <!-- Level Selector Tabs -->
+            <div class="flex items-center gap-1.5 bg-slate-900/90 border border-slate-800 p-1 rounded-xl shadow-md">
+                <button id="lvl-1-btn" onclick="switchLevel(1)" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md">
+                    Nivel 1 (6x5)
+                </button>
+                <button id="lvl-2-btn" onclick="switchLevel(2)" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-400 hover:text-slate-200">
+                    Nivel 2 (6x6)
+                </button>
+            </div>
         </div>
 
         <div class="flex items-center gap-4 bg-slate-900/90 border border-slate-800 px-4 py-2 rounded-2xl shadow-lg">
@@ -101,29 +128,14 @@
     </header>
 
     <!-- Main Content: Side Panel + Board -->
-    <main class="w-full max-w-5xl my-auto flex flex-row items-center justify-center gap-5 sm:gap-8">
+    <main class="w-full max-w-5xl my-auto flex flex-row items-center justify-center gap-4 sm:gap-7">
         
         <!-- Left Side Control Panel -->
         <div class="shrink-0 flex flex-col gap-3 justify-center items-center">
             
-            <!-- Capsule Container with 3 Circular Loop Controls -->
-            <div class="bg-slate-900/90 border border-slate-800/80 p-3.5 sm:p-4 rounded-[2.2rem] shadow-xl flex flex-col gap-4 items-center">
-                
-                <!-- Red Circle Button (Counter-clockwise ↺) -->
-                <button id="btn-red" onclick="rotateLoop('RED')" title="Conga Roja (↺)" class="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-gradient-to-br from-red-500 to-red-600 text-white shadow-lg shadow-red-950/80 hover:scale-105 active:scale-95 transition-all duration-150 flex items-center justify-center border-2 border-red-300/40 text-xl sm:text-2xl">
-                    <i class="fa-solid fa-rotate-left"></i>
-                </button>
-
-                <!-- Blue Circle Button (Counter-clockwise ↺) -->
-                <button id="btn-blue" onclick="rotateLoop('BLUE')" title="Conga Azul (↺)" class="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-950/80 hover:scale-105 active:scale-95 transition-all duration-150 flex items-center justify-center border-2 border-blue-300/40 text-xl sm:text-2xl">
-                    <i class="fa-solid fa-rotate-left"></i>
-                </button>
-
-                <!-- Yellow Circle Button (Clockwise ↻) -->
-                <button id="btn-yellow" onclick="rotateLoop('YELLOW')" title="Conga Amarilla (↻)" class="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-gradient-to-br from-amber-400 to-yellow-500 text-slate-950 shadow-lg shadow-amber-950/80 hover:scale-105 active:scale-95 transition-all duration-150 flex items-center justify-center border-2 border-yellow-200/50 text-xl sm:text-2xl">
-                    <i class="fa-solid fa-rotate-right"></i>
-                </button>
-
+            <!-- Capsule Container for Loop Rotation Controls -->
+            <div id="controls-capsule" class="bg-slate-900/90 border border-slate-800/80 p-3 sm:p-3.5 rounded-[2.2rem] shadow-xl flex flex-col gap-3 items-center">
+                <!-- Dynamically populated by JS based on level -->
             </div>
 
             <!-- Utility Icon Buttons Below Capsule -->
@@ -138,9 +150,9 @@
 
         </div>
 
-        <!-- Right Side: The 6x5 Board Grid -->
+        <!-- Right Side: Grid Board -->
         <div class="flex-1 min-w-0 max-w-[580px] flex justify-center">
-            <div class="bg-slate-900/90 p-4 sm:p-5 rounded-[2rem] border border-slate-800 shadow-2xl relative w-full">
+            <div class="bg-slate-900/90 p-3.5 sm:p-4 rounded-[2rem] border border-slate-800 shadow-2xl relative w-full">
                 
                 <!-- Win Overlay -->
                 <div id="win-overlay" class="hidden absolute inset-0 bg-slate-950/90 backdrop-blur-md rounded-[2rem] z-30 flex flex-col items-center justify-center p-6 text-center">
@@ -152,8 +164,8 @@
                     </button>
                 </div>
 
-                <!-- 6x5 Grid Container -->
-                <div id="board-grid" class="grid grid-cols-6 gap-0 w-full relative rounded-2xl overflow-hidden border border-slate-800/80">
+                <!-- Grid Container -->
+                <div id="board-grid" class="grid gap-0 w-full relative rounded-2xl overflow-hidden border border-slate-800/80">
                     <!-- Dynamic Grid Generated by JS -->
                 </div>
 
@@ -163,75 +175,209 @@
     </main>
 
     <!-- Footer -->
-    <footer class="text-[11px] text-slate-500 text-center mt-2">
-        Congas &bull; Rojo, Azul, Amarillo
+    <footer class="text-[11px] text-slate-500 text-center mt-1">
+        Congas &bull; Juegos de Circuitos Continuos
     </footer>
 
     <!-- JavaScript Game Logic -->
     <script>
-        // Grid Dimensions: 6 columns x 5 rows
-        const COLS = 6;
-        const ROWS = 5;
-
-        // Cell Layout matrix
-        const CELL_TYPES = [
-            ['R',  'R',  'R',  'Y',  'Y',  'Y'],
-            ['R',  'B',  'rb', 'yb', 'B',  'Y'],
-            ['R',  'B',  'R',  'Y',  'B',  'Y'],
-            ['R',  'B',  'rb', 'yb', 'B',  'Y'],
-            ['R',  'R',  'R',  'Y',  'Y',  'Y']
-        ];
-
-        // RED LOOP (CCW): 12 cells
-        const RED_PATH = [
-            [0, 0], [0, 1], [0, 2], [0, 3], [0, 4],
-            [1, 4], [2, 4],
-            [2, 3], [2, 2], [2, 1],
-            [2, 0], [1, 0]
-        ];
-
-        // YELLOW LOOP (CW): 12 cells
-        const YELLOW_PATH = [
-            [3, 0], [4, 0], [5, 0],
-            [5, 1], [5, 2], [5, 3], [5, 4],
-            [4, 4], [3, 4],
-            [3, 3], [3, 2], [3, 1]
-        ];
-
-        // BLUE LOOP (CCW): 10 cells
-        const BLUE_PATH = [
-            [1, 1], [1, 2], [1, 3],
-            [2, 3], [3, 3], [4, 3],
-            [4, 2], [4, 1],
-            [3, 1], [2, 1]
-        ];
-
         // Track Line Colors
         const TRACK_COLORS = {
             'R': '#ef4444',
             'B': '#3b82f6',
-            'Y': '#eab308'
+            'Y': '#eab308',
+            'G': '#22c55e',
+            'P': '#a855f7'
         };
 
-        const LOOPS = [
-            { color: 'R', path: RED_PATH },
-            { color: 'B', path: BLUE_PATH },
-            { color: 'Y', path: YELLOW_PATH }
-        ];
+        // LEVEL DEFINITIONS
+        const LEVELS = {
+            1: {
+                cols: 6,
+                rows: 5,
+                cellTypes: [
+                    ['R',  'R',  'R',  'Y',  'Y',  'Y'],
+                    ['R',  'B',  'rb', 'yb', 'B',  'Y'],
+                    ['R',  'B',  'R',  'Y',  'B',  'Y'],
+                    ['R',  'B',  'rb', 'yb', 'B',  'Y'],
+                    ['R',  'R',  'R',  'Y',  'Y',  'Y']
+                ],
+                loops: [
+                    {
+                        id: 'RED',
+                        color: 'R',
+                        pieceColor: 'Red',
+                        dir: 1, // CCW ↺
+                        icon: 'fa-rotate-left',
+                        title: 'Conga Roja (↺)',
+                        bgBtn: 'from-red-500 to-red-600 border-red-300/40 text-white shadow-red-950/80',
+                        path: [
+                            [0, 0], [0, 1], [0, 2], [0, 3], [0, 4],
+                            [1, 4], [2, 4],
+                            [2, 3], [2, 2], [2, 1],
+                            [2, 0], [1, 0]
+                        ]
+                    },
+                    {
+                        id: 'BLUE',
+                        color: 'B',
+                        pieceColor: 'Blue',
+                        dir: 1, // CCW ↺
+                        icon: 'fa-rotate-left',
+                        title: 'Conga Azul (↺)',
+                        bgBtn: 'from-blue-500 to-blue-600 border-blue-300/40 text-white shadow-blue-950/80',
+                        path: [
+                            [1, 1], [1, 2], [1, 3],
+                            [2, 3], [3, 3], [4, 3],
+                            [4, 2], [4, 1],
+                            [3, 1], [2, 1]
+                        ]
+                    },
+                    {
+                        id: 'YELLOW',
+                        color: 'Y',
+                        pieceColor: 'Yellow',
+                        dir: -1, // CW ↻
+                        icon: 'fa-rotate-right',
+                        title: 'Conga Amarilla (↻)',
+                        bgBtn: 'from-amber-400 to-yellow-500 border-yellow-200/50 text-slate-950 shadow-amber-950/80',
+                        path: [
+                            [3, 0], [4, 0], [5, 0],
+                            [5, 1], [5, 2], [5, 3], [5, 4],
+                            [4, 4], [3, 4],
+                            [3, 3], [3, 2], [3, 1]
+                        ]
+                    }
+                ],
+                initialPieces: function() {
+                    const pieces = [];
+                    // Red path
+                    this.loops[0].path.forEach(([x, y], idx) => {
+                        pieces.push({ x, y, piece: { id: `R${idx + 1}`, color: 'Red' } });
+                    });
+                    // Yellow path
+                    this.loops[2].path.forEach(([x, y], idx) => {
+                        pieces.push({ x, y, piece: { id: `Y${idx + 1}`, color: 'Yellow' } });
+                    });
+                    // Blue-only cells
+                    const blueCells = [[1, 1], [1, 2], [1, 3], [4, 1], [4, 2], [4, 3]];
+                    blueCells.forEach(([x, y], idx) => {
+                        pieces.push({ x, y, piece: { id: `B${idx + 1}`, color: 'Blue' } });
+                    });
+                    return pieces;
+                }
+            },
+            2: {
+                cols: 6,
+                rows: 6,
+                cellTypes: [
+                    ['R',  'R',  'R',  'Y',  'Y',  'Y'],
+                    ['R',  'B',  'rb', 'yb', 'B',  'Y'],
+                    ['R',  'rb', 'R',  'Y',  'yb', 'Y'],
+                    ['G',  'gb', 'G',  'P',  'pb', 'P'],
+                    ['G',  'B',  'gb', 'pb', 'B',  'P'],
+                    ['G',  'G',  'G',  'P',  'P',  'P']
+                ],
+                loops: [
+                    {
+                        id: 'RED',
+                        color: 'R',
+                        pieceColor: 'Red',
+                        dir: 1, // CCW ↺
+                        icon: 'fa-rotate-left',
+                        title: 'Conga Roja (↺)',
+                        bgBtn: 'from-red-500 to-red-600 border-red-300/40 text-white shadow-red-950/80',
+                        path: [
+                            [0, 0], [0, 1], [0, 2], [1, 2], [2, 2], [2, 1], [2, 0], [1, 0]
+                        ]
+                    },
+                    {
+                        id: 'YELLOW',
+                        color: 'Y',
+                        pieceColor: 'Yellow',
+                        dir: -1, // CCW ↺
+                        icon: 'fa-rotate-left',
+                        title: 'Conga Amarilla (↺)',
+                        bgBtn: 'from-amber-400 to-yellow-500 border-yellow-200/50 text-slate-950 shadow-amber-950/80',
+                        path: [
+                            [3, 0], [4, 0], [5, 0], [5, 1], [5, 2], [4, 2], [3, 2], [3, 1]
+                        ]
+                    },
+                    {
+                        id: 'BLUE',
+                        color: 'B',
+                        pieceColor: 'Blue',
+                        dir: 1, // CCW ↺
+                        icon: 'fa-rotate-left',
+                        title: 'Conga Azul (↺)',
+                        bgBtn: 'from-blue-500 to-blue-600 border-blue-300/40 text-white shadow-blue-950/80',
+                        path: [
+                            [1, 1], [1, 2], [1, 3], [1, 4], [2, 4], [3, 4], [4, 4], [4, 3], [4, 2], [4, 1], [3, 1], [2, 1]
+                        ]
+                    },
+                    {
+                        id: 'GREEN',
+                        color: 'G',
+                        pieceColor: 'Green',
+                        dir: 1, // CCW ↺
+                        icon: 'fa-rotate-left',
+                        title: 'Conga Verde (↺)',
+                        bgBtn: 'from-emerald-500 to-green-600 border-green-300/40 text-white shadow-green-950/80',
+                        path: [
+                            [0, 3], [0, 4], [0, 5], [1, 5], [2, 5], [2, 4], [2, 3], [1, 3]
+                        ]
+                    },
+                    {
+                        id: 'PURPLE',
+                        color: 'P',
+                        pieceColor: 'Purple',
+                        dir: -1, // CCW ↺
+                        icon: 'fa-rotate-left',
+                        title: 'Conga Púrpura (↺)',
+                        bgBtn: 'from-purple-500 to-purple-600 border-purple-300/40 text-white shadow-purple-950/80',
+                        path: [
+                            [3, 3], [4, 3], [5, 3], [5, 4], [5, 5], [4, 5], [3, 5], [3, 4]
+                        ]
+                    }
+                ],
+                initialPieces: function() {
+                    const pieces = [];
+                    this.loops[0].path.forEach(([x, y], idx) => pieces.push({ x, y, piece: { id: `R${idx + 1}`, color: 'Red' } }));
+                    this.loops[1].path.forEach(([x, y], idx) => pieces.push({ x, y, piece: { id: `Y${idx + 1}`, color: 'Yellow' } }));
+                    this.loops[3].path.forEach(([x, y], idx) => pieces.push({ x, y, piece: { id: `G${idx + 1}`, color: 'Green' } }));
+                    this.loops[4].path.forEach(([x, y], idx) => pieces.push({ x, y, piece: { id: `P${idx + 1}`, color: 'Purple' } }));
+                    
+                    // 4 Blue-only center cells
+                    const blueCells = [[1, 1], [4, 1], [1, 4], [4, 4]];
+                    blueCells.forEach(([x, y], idx) => {
+                        pieces.push({ x, y, piece: { id: `B${idx + 1}`, color: 'Blue' } });
+                    });
+                    return pieces;
+                }
+            }
+        };
+
+        // Global Game Variables
+        let currentLevel = 1;
+        let boardState = [];
+        let moveCount = 0;
+        let isAnimating = false;
+        let isScrambling = false;
+        let historyStack = [];
 
         // Generate continuous 3-line parallel vector tracks with smooth 90-degree corner curves
         function createMovementTracksSVG(r, c) {
+            const levelConfig = LEVELS[currentLevel];
             const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
             svg.setAttribute('viewBox', '0 0 100 100');
             svg.className = 'absolute inset-0 w-full h-full pointer-events-none z-0';
 
             const OFFSETS = [32, 50, 68]; // Parallel line offsets in SVG 0..100 space
 
-            LOOPS.forEach(loop => {
+            levelConfig.loops.forEach(loop => {
                 const path = loop.path;
                 const n = path.length;
 
-                // Check if cell (c, r) belongs to this loop
                 const idx = path.findIndex(([x, y]) => x === c && y === r);
                 if (idx === -1) return;
 
@@ -253,7 +399,6 @@
                 ];
 
                 const colorHex = TRACK_COLORS[loop.color] || '#64748b';
-
                 const isHoriz = sides.includes('LEFT') && sides.includes('RIGHT');
                 const isVert = sides.includes('TOP') && sides.includes('BOTTOM');
 
@@ -266,21 +411,16 @@
                     svgPath.setAttribute('stroke-linecap', 'round');
 
                     if (isHoriz) {
-                        // Straight Horizontal line
                         svgPath.setAttribute('d', `M 0,${o} L 100,${o}`);
                     } else if (isVert) {
-                        // Straight Vertical line
                         svgPath.setAttribute('d', `M ${o},0 L ${o},100`);
                     } else {
-                        // Corner Turn! Find the horizontal side and vertical side
                         const hSide = sides.find(s => s === 'LEFT' || s === 'RIGHT');
                         const vSide = sides.find(s => s === 'TOP' || s === 'BOTTOM');
 
                         if (hSide && vSide) {
                             const hX = hSide === 'LEFT' ? 0 : 100;
                             const vY = vSide === 'TOP' ? 0 : 100;
-
-                            // Smooth 90-degree quadratic arc connecting edge hX to vY through corner anchor (o, o)
                             svgPath.setAttribute('d', `M ${hX},${o} Q ${o},${o} ${o},${vY}`);
                         }
                     }
@@ -292,29 +432,22 @@
             return svg;
         }
 
-        // State Tracking
-        let boardState = Array(ROWS).fill(null).map(() => Array(COLS).fill(null));
-        let moveCount = 0;
-        let isAnimating = false;
-        let isScrambling = false;
-        let historyStack = [];
-
         function createGridDOM() {
             const gridEl = document.getElementById('board-grid');
-            if (gridEl.children.length > 0) return; // Grid already exists
-
+            const levelConfig = LEVELS[currentLevel];
+            
             gridEl.innerHTML = '';
+            gridEl.className = `grid grid-cols-${levelConfig.cols} gap-0 w-full relative rounded-2xl overflow-hidden border border-slate-800/80`;
 
-            for (let r = 0; r < ROWS; r++) {
-                for (let c = 0; c < COLS; c++) {
-                    const type = CELL_TYPES[r][c];
+            for (let r = 0; r < levelConfig.rows; r++) {
+                for (let c = 0; c < levelConfig.cols; c++) {
+                    const type = levelConfig.cellTypes[r][c];
                     const cellEl = document.createElement('div');
                     let bgClass = `cell-${type}-bg`;
 
                     cellEl.className = `grid-cell flex items-center justify-center ${bgClass}`;
                     cellEl.id = `cell-${c}-${r}`;
 
-                    // Add 3 movement track lines SVG (with dynamic curved corner routing)
                     const tracksSVG = createMovementTracksSVG(r, c);
                     cellEl.appendChild(tracksSVG);
 
@@ -323,27 +456,49 @@
             }
         }
 
+        function createControlsDOM() {
+            const container = document.getElementById('controls-capsule');
+            const levelConfig = LEVELS[currentLevel];
+            container.innerHTML = '';
+
+            levelConfig.loops.forEach(loop => {
+                const btn = document.createElement('button');
+                btn.id = `btn-${loop.id.toLowerCase()}`;
+                btn.title = loop.title;
+                btn.onclick = () => rotateLoop(loop.id);
+                btn.className = `w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gradient-to-br ${loop.bgBtn} shadow-lg hover:scale-105 active:scale-95 transition-all duration-150 flex items-center justify-center border-2 text-xl sm:text-2xl`;
+                
+                btn.innerHTML = `<i class="fa-solid ${loop.icon}"></i>`;
+                container.appendChild(btn);
+            });
+        }
+
+        function switchLevel(lvl) {
+            if (isAnimating || isScrambling) return;
+            currentLevel = lvl;
+
+            // Update level tab button styles
+            document.getElementById('lvl-1-btn').className = lvl === 1 
+                ? 'px-3 py-1.5 rounded-lg text-xs font-bold transition-all bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md'
+                : 'px-3 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-400 hover:text-slate-200';
+
+            document.getElementById('lvl-2-btn').className = lvl === 2 
+                ? 'px-3 py-1.5 rounded-lg text-xs font-bold transition-all bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md'
+                : 'px-3 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-400 hover:text-slate-200';
+
+            createControlsDOM();
+            createGridDOM();
+            scrambleBoardAnimated();
+        }
+
         function initBoard() {
-            boardState = Array(ROWS).fill(null).map(() => Array(COLS).fill(null));
+            const levelConfig = LEVELS[currentLevel];
+            boardState = Array(levelConfig.rows).fill(null).map(() => Array(levelConfig.cols).fill(null));
             historyStack = [];
 
-            // Fill Red Path with Red square pieces
-            RED_PATH.forEach(([x, y], idx) => {
-                boardState[y][x] = { id: `R${idx + 1}`, color: 'Red' };
-            });
-
-            // Fill Yellow Path with Yellow square pieces
-            YELLOW_PATH.forEach(([x, y], idx) => {
-                boardState[y][x] = { id: `Y${idx + 1}`, color: 'Yellow' };
-            });
-
-            // Fill Blue-only cells with Blue square pieces
-            const blueOnlyCells = [
-                [1, 1], [1, 2], [1, 3],
-                [4, 1], [4, 2], [4, 3]
-            ];
-            blueOnlyCells.forEach(([x, y], idx) => {
-                boardState[y][x] = { id: `B${idx + 1}`, color: 'Blue' };
+            const initialPieces = levelConfig.initialPieces();
+            initialPieces.forEach(({ x, y, piece }) => {
+                boardState[y][x] = piece;
             });
 
             moveCount = 0;
@@ -353,14 +508,13 @@
         }
 
         function renderBoard() {
-            createGridDOM();
+            const levelConfig = LEVELS[currentLevel];
 
-            for (let r = 0; r < ROWS; r++) {
-                for (let c = 0; c < COLS; c++) {
+            for (let r = 0; r < levelConfig.rows; r++) {
+                for (let c = 0; c < levelConfig.cols; c++) {
                     const piece = boardState[r][c];
                     const cellEl = getCellElement(c, r);
 
-                    // Remove existing piece if present
                     const existingPiece = cellEl.querySelector('.square-piece');
                     if (existingPiece) {
                         cellEl.removeChild(existingPiece);
@@ -380,27 +534,24 @@
             return document.getElementById(`cell-${x}-${y}`);
         }
 
-        async function rotateLoop(loopColor, overrideDir = null, duration = 220, isUndo = false) {
+        async function rotateLoop(loopId, overrideDir = null, duration = 220, isUndo = false) {
             if (isAnimating) return;
             isAnimating = true;
 
-            let path = [];
-            let dir = 1; // Default CCW for Red and Blue
+            const levelConfig = LEVELS[currentLevel];
+            const loopObj = levelConfig.loops.find(l => l.id === loopId);
 
-            if (loopColor === 'RED') { path = RED_PATH; dir = 1; }
-            else if (loopColor === 'BLUE') { path = BLUE_PATH; dir = 1; }
-            else if (loopColor === 'YELLOW') { path = YELLOW_PATH; dir = 1; } // CW for Yellow
-
-            if (overrideDir !== null) dir = overrideDir;
-            if (path.length === 0) {
+            if (!loopObj) {
                 isAnimating = false;
-                updateUndoButtonState();
                 return;
             }
 
+            let path = loopObj.path;
+            let dir = loopObj.dir;
+
+            if (overrideDir !== null) dir = overrideDir;
             const n = path.length;
 
-            // Prepare transition displacements for piece elements
             const movePairs = [];
             for (let i = 0; i < n; i++) {
                 const [srcX, srcY] = path[i];
@@ -423,17 +574,14 @@
                 }
             }
 
-            // Apply transition animation
             movePairs.forEach(({ pieceEl, deltaX, deltaY }) => {
                 pieceEl.style.transition = `transform ${duration}ms cubic-bezier(0.25, 1, 0.5, 1)`;
                 pieceEl.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
                 pieceEl.style.zIndex = '30';
             });
 
-            // Wait for animation to finish
             await new Promise(resolve => setTimeout(resolve, duration));
 
-            // Re-parent pieces smoothly without tearing or rebuilding DOM
             movePairs.forEach(({ pieceEl, tgtCell }) => {
                 pieceEl.style.transition = 'none';
                 pieceEl.style.transform = 'none';
@@ -441,7 +589,6 @@
                 tgtCell.appendChild(pieceEl);
             });
 
-            // Shift internal board array state
             const currentPieces = path.map(([x, y]) => boardState[y][x]);
             const shiftedPieces = new Array(n);
 
@@ -456,13 +603,12 @@
             });
 
             if (!isScrambling && !isUndo) {
-                historyStack.push({ loopColor, dir });
+                historyStack.push({ loopId, dir });
                 moveCount++;
             } else if (isUndo) {
                 moveCount = Math.max(0, moveCount - 1);
             }
 
-            // Mark animation finished
             isAnimating = false;
 
             updateMoveCounter();
@@ -470,7 +616,6 @@
             checkWinState();
         }
 
-        // Animated Fast Scramble sequence
         async function scrambleBoardAnimated() {
             if (isAnimating || isScrambling) return;
             isScrambling = true;
@@ -479,12 +624,15 @@
             initBoard();
             await new Promise(r => setTimeout(r, 150));
 
-            const loops = ['RED', 'BLUE', 'YELLOW'];
-            const totalScrambleMoves = 24;
+            const levelConfig = LEVELS[currentLevel];
+            const loops = levelConfig.loops.map(l => l.id);
+            // Increased scramble iterations for thorough mixing across all 5 loops
+            const totalScrambleMoves = currentLevel === 1 ? 30 : 65;
 
             for (let i = 0; i < totalScrambleMoves; i++) {
                 const randLoop = loops[Math.floor(Math.random() * loops.length)];
-                await rotateLoop(randLoop, null, 60); // Fast 60ms step animation
+                const randDir = Math.random() < 0.5 ? 1 : -1;
+                await rotateLoop(randLoop, randDir, 35);
             }
 
             moveCount = 0;
@@ -500,7 +648,7 @@
             if (isAnimating || isScrambling || historyStack.length === 0) return;
             const lastMove = historyStack.pop();
             const reverseDir = -lastMove.dir;
-            await rotateLoop(lastMove.loopColor, reverseDir, 200, true);
+            await rotateLoop(lastMove.loopId, reverseDir, 200, true);
         }
 
         function updateUndoButtonState() {
@@ -517,23 +665,23 @@
         function checkWinState() {
             if (isScrambling) return;
 
+            const levelConfig = LEVELS[currentLevel];
             let isWin = true;
 
-            for (let r = 0; r < ROWS; r++) {
-                for (let c = 0; c < COLS; c++) {
-                    const cellType = CELL_TYPES[r][c];
+            for (let r = 0; r < levelConfig.rows; r++) {
+                for (let c = 0; c < levelConfig.cols; c++) {
+                    const cellType = levelConfig.cellTypes[r][c].toLowerCase();
                     const piece = boardState[r][c];
 
                     if (!piece) continue;
 
-                    if (piece.color === 'Red') {
-                        if (cellType !== 'R' && cellType !== 'rb') isWin = false;
-                    } else if (piece.color === 'Yellow') {
-                        if (cellType !== 'Y' && cellType !== 'yb') isWin = false;
-                    } else if (piece.color === 'Blue') {
-                        if (cellType !== 'B' && cellType !== 'rb' && cellType !== 'yb') isWin = false;
+                    const colorInitial = piece.color.charAt(0).toLowerCase(); // 'r', 'y', 'b', 'g', 'p'
+                    if (!cellType.includes(colorInitial)) {
+                        isWin = false;
+                        break;
                     }
                 }
+                if (!isWin) break;
             }
 
             if (isWin && moveCount > 0 && historyStack.length > 0) {
@@ -543,15 +691,19 @@
 
         window.addEventListener('keydown', (e) => {
             if (e.key === 'r' || e.key === 'R' || e.key === '1') rotateLoop('RED');
-            if (e.key === 'b' || e.key === 'B' || e.key === '2') rotateLoop('BLUE');
-            if (e.key === 'y' || e.key === 'Y' || e.key === '3') rotateLoop('YELLOW');
+            if (e.key === 'y' || e.key === 'Y' || e.key === '2') rotateLoop('YELLOW');
+            if (e.key === 'b' || e.key === 'B' || e.key === '3') rotateLoop('BLUE');
+            if (currentLevel === 2) {
+                if (e.key === 'g' || e.key === 'G' || e.key === '4') rotateLoop('GREEN');
+                if (e.key === 'p' || e.key === 'P' || e.key === '5') rotateLoop('PURPLE');
+            }
             if ((e.key === 'z' || e.key === 'Z') && (e.ctrlKey || e.metaKey)) undoMove();
             if (e.key === 'u' || e.key === 'U') undoMove();
         });
 
-        // Initialize on load and start scramble animation
         window.onload = function() {
-            initBoard();
+            createControlsDOM();
+            createGridDOM();
             setTimeout(() => {
                 scrambleBoardAnimated();
             }, 500);
