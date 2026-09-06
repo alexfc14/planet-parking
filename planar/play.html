@@ -427,8 +427,8 @@
   <!-- LEVEL COMPLETE MODAL -->
   <div class="modal-backdrop" id="modal-victory">
     <div class="modal-dialog">
-      <h2 class="modal-title">Graph Untangled! 🎉</h2>
-      <p class="modal-subtitle">Perfect planar layout achieved without crossings</p>
+      <h2 class="modal-title" id="vic-title">Graph Untangled! 🎉</h2>
+      <p class="modal-subtitle" id="vic-sub">Perfect planar layout achieved without crossings</p>
       
       <div class="stats-grid">
         <div class="stat-box">
@@ -741,7 +741,11 @@
     const sound = new SoundEngine();
 
     /* ==========================================================================
-       LEVEL DEFINITIONS (Guaranteed planar graphs with intentional initial scramble)
+       EXPANDED LEVEL DEFINITIONS (Challenging Planar Graph Families)
+       - Maximal Planar Graphs (Triangulated nested structures)
+       - Cubic 3-Connected Planar Bipartite Graphs
+       - Series-Parallel Diamond Ladders
+       - Apex-Tree Structures
        ========================================================================== */
     const LEVELS = [
       {
@@ -820,10 +824,132 @@
           { id: 'n7', x: -2.5, y: -2.5 }
         ],
         edges: [
-          ['n0', 'n1'], ['n2', 'n3'], // intentionally crossed main spokes
+          ['n0', 'n1'], ['n2', 'n3'],
           ['n0', 'n4'], ['n4', 'n2'], ['n2', 'n5'], ['n5', 'n1'],
           ['n1', 'n6'], ['n6', 'n3'], ['n3', 'n7'], ['n7', 'n0'],
           ['n4', 'n5'], ['n5', 'n6'], ['n6', 'n7'], ['n7', 'n4']
+        ]
+      },
+      {
+        id: 6,
+        title: "Level 6: Cubic Bipartite Q3",
+        // The 3-dimensional cube graph Q3: 3-regular, 3-connected, bipartite and planar
+        nodes: [
+          { id: 'a0', x: -4.5, y: -2.5 },
+          { id: 'a1', x: 4.5, y: 2.5 },
+          { id: 'a2', x: -2.0, y: 4.0 },
+          { id: 'a3', x: 2.0, y: -4.0 },
+          { id: 'b0', x: 4.5, y: -2.5 },
+          { id: 'b1', x: -4.5, y: 2.5 },
+          { id: 'b2', x: 2.0, y: 4.0 },
+          { id: 'b3', x: -2.0, y: -4.0 }
+        ],
+        edges: [
+          ['a0', 'b0'], ['a0', 'b1'], ['a0', 'b3'],
+          ['a1', 'b0'], ['a1', 'b1'], ['a1', 'b2'],
+          ['a2', 'b1'], ['a2', 'b2'], ['a2', 'b3'],
+          ['a3', 'b0'], ['a3', 'b2'], ['a3', 'b3']
+        ]
+      },
+      {
+        id: 7,
+        title: "Level 7: Series-Parallel Diamond Chain",
+        // Subcubic series-parallel graph constructed via recursive diamond subdivisions
+        nodes: [
+          { id: 's', x: -6.5, y: 0.0 },
+          { id: 't', x: 6.5, y: 0.0 },
+          { id: 'd1_t', x: -3.5, y: -3.5 },
+          { id: 'd1_b', x: -3.5, y: 3.5 },
+          { id: 'm', x: 0.0, y: -1.0 },
+          { id: 'd2_t', x: 3.5, y: -3.5 },
+          { id: 'd2_b', x: 3.5, y: 3.5 },
+          { id: 'p_mid', x: 0.0, y: 4.0 }
+        ],
+        edges: [
+          ['s', 'd1_t'], ['s', 'd1_b'], ['d1_t', 'm'], ['d1_b', 'm'],
+          ['m', 'd2_t'], ['m', 'd2_b'], ['d2_t', 't'], ['d2_b', 't'],
+          ['d1_t', 'p_mid'], ['p_mid', 'd2_b'], ['s', 't']
+        ]
+      },
+      {
+        id: 8,
+        title: "Level 8: Maximal Apollonian Triangulation",
+        // Fully triangulated maximal planar graph where every face is a triangle
+        nodes: [
+          { id: 'v0', x: 0.0, y: 5.5 },
+          { id: 'v1', x: -5.5, y: -4.5 },
+          { id: 'v2', x: 5.5, y: -4.5 },
+          { id: 'c0', x: 0.0, y: 1.0 },
+          { id: 't1', x: -2.5, y: 2.0 },
+          { id: 't2', x: 2.5, y: 2.0 },
+          { id: 't3', x: 0.0, y: -2.5 },
+          { id: 'core', x: 0.0, y: -0.2 }
+        ],
+        edges: [
+          // Outer triangle
+          ['v0', 'v1'], ['v1', 'v2'], ['v2', 'v0'],
+          // Central split
+          ['v0', 'c0'], ['v1', 'c0'], ['v2', 'c0'],
+          // Recursive facial subdivisions
+          ['v0', 't1'], ['v1', 't1'], ['c0', 't1'],
+          ['v0', 't2'], ['v2', 't2'], ['c0', 't2'],
+          ['v1', 't3'], ['v2', 't3'], ['c0', 't3'],
+          ['c0', 'core'], ['t1', 'core'], ['t2', 'core'], ['t3', 'core']
+        ]
+      },
+      {
+        id: 9,
+        title: "Level 9: Apex-Tree Sanctuary",
+        // Tree graph with one universal apex vertex connected to all branch endpoints
+        nodes: [
+          { id: 'apex', x: 0.0, y: 0.0 }, // The apex vertex placed centrally
+          { id: 'root', x: -5.0, y: 4.0 },
+          { id: 'b1', x: -2.0, y: 4.5 },
+          { id: 'b2', x: -5.0, y: 1.0 },
+          { id: 'l1', x: 4.0, y: 4.0 },
+          { id: 'l2', x: 5.5, y: 1.5 },
+          { id: 'l3', x: -3.0, y: -3.5 },
+          { id: 'l4', x: 3.5, y: -4.0 },
+          { id: 'leaf_deep', x: 0.0, y: -5.0 }
+        ],
+        edges: [
+          // Underlying Tree Structure
+          ['root', 'b1'], ['root', 'b2'],
+          ['b1', 'l1'], ['b1', 'l2'],
+          ['b2', 'l3'], ['b2', 'l4'],
+          ['l3', 'leaf_deep'],
+          // Apex connections to peripheral boundary components
+          ['apex', 'root'],
+          ['apex', 'l1'],
+          ['apex', 'l2'],
+          ['apex', 'l4'],
+          ['apex', 'leaf_deep']
+        ]
+      },
+      {
+        id: 10,
+        title: "Level 10: Grand Prismatoid",
+        // Challenging Cubic 3-connected Planar Bipartite network (Hexagonal Prism + Antiparallel Core)
+        nodes: [
+          { id: 'p0', x: -5.0, y: 3.0 },
+          { id: 'p1', x: 0.0, y: 5.5 },
+          { id: 'p2', x: 5.0, y: 3.0 },
+          { id: 'p3', x: 5.0, y: -3.0 },
+          { id: 'p4', x: 0.0, y: -5.5 },
+          { id: 'p5', x: -5.0, y: -3.0 },
+          { id: 'q0', x: 3.0, y: -1.5 },
+          { id: 'q1', x: -3.0, y: 1.5 },
+          { id: 'q2', x: 1.5, y: 3.0 },
+          { id: 'q3', x: -1.5, y: -3.0 }
+        ],
+        edges: [
+          // Perimeter cycle
+          ['p0', 'p1'], ['p1', 'p2'], ['p2', 'p3'], ['p3', 'p4'], ['p4', 'p5'], ['p5', 'p0'],
+          // Interior bipartite lattice
+          ['q0', 'p2'], ['q0', 'p3'], ['q0', 'q2'],
+          ['q1', 'p0'], ['q1', 'p5'], ['q1', 'q3'],
+          ['q2', 'p1'], ['q2', 'q1'],
+          ['q3', 'p4'], ['q3', 'q0']
         ]
       }
     ];
@@ -846,7 +972,7 @@
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     container.appendChild(renderer.domElement);
 
-    // Background textured plane with subtle frosted clay appearance
+    // Background textured plane
     const backdropGeo = new THREE.PlaneGeometry(80, 80);
     const backdropMat = new THREE.MeshStandardMaterial({
       color: 0x141a27,
@@ -955,9 +1081,10 @@
     const planeIntersection = new THREE.Vector3();
 
     let selectedNode = null;
+    let isDraggingNode = false; // Flag to prevent win trigger while actively holding
     let dragStartPos = { x: 0, y: 0 };
     let pointerDownPos = { x: 0, y: 0 };
-    let isDragging = false;
+    let isPointerMoved = false;
     let jointIdCounter = 1;
 
     /* ==========================================================================
@@ -968,18 +1095,16 @@
         return (C.y - A.y) * (B.x - A.x) > (B.y - A.y) * (C.x - A.x);
       }
 
-      // Check if endpoints are shared
       const eps = 0.0001;
       const samePt = (a, b) => Math.hypot(a.x - b.x, a.y - b.y) < eps;
       if (samePt(p1, p3) || samePt(p1, p4) || samePt(p2, p3) || samePt(p2, p4)) {
-        return null; // Shared vertex is not a crossing in planar graph embeddings
+        return null;
       }
 
       const straddle1 = ccw(p1, p3, p4) !== ccw(p2, p3, p4);
       const straddle2 = ccw(p1, p2, p3) !== ccw(p1, p2, p4);
 
       if (straddle1 && straddle2) {
-        // Calculate intersection point (ix, iy)
         const a1 = p2.y - p1.y;
         const b1 = p1.x - p2.x;
         const c1 = a1 * p1.x + b1 * p1.y;
@@ -1023,6 +1148,8 @@
       moveCount = 0;
       jointIdCounter = 1;
       isLevelCompleted = false;
+      selectedNode = null;
+      isDraggingNode = false;
 
       // Spawn Nodes
       levelData.nodes.forEach(nd => {
@@ -1052,8 +1179,8 @@
         });
       });
 
-      // Update UI
-      document.getElementById('level-display').innerText = levelData.title.split(':')[0];
+      // Update UI Header
+      document.getElementById('level-display').innerText = `Level ${currentLevelIndex + 1}/${LEVELS.length}`;
       closeAllModals();
       resetTimer();
       startTimer();
@@ -1175,7 +1302,8 @@
 
       if (crossingsFound === 0) {
         badge.className = "stat-badge badge-crossings-good";
-        if (crossingsCount > 0 && !isLevelCompleted && !isReplaying) {
+        // ONLY trigger victory if not currently dragging a node/joint
+        if (crossingsCount > 0 && !isDraggingNode && !isLevelCompleted && !isReplaying) {
           sound.playUntangleStep();
           triggerVictory();
         }
@@ -1214,7 +1342,7 @@
       // Insert joint inside edge ordered sequence
       edge.joints.splice(segIndex, 0, jointId);
 
-      // Record move
+      // Record action
       recordAction({
         type: 'add_joint',
         edgeId: edgeId,
@@ -1228,6 +1356,11 @@
       moveCount++;
       sound.playJointCreated();
       updateEdgesAndCrossings();
+
+      // Check win after creating a joint
+      if (crossingsCount === 0 && !isDraggingNode && !isLevelCompleted && !isReplaying) {
+        triggerVictory();
+      }
     }
 
     /* ==========================================================================
@@ -1238,7 +1371,7 @@
     }
 
     function undoLastAction() {
-      if (moveHistory.length === 0 || isReplaying || isLevelCompleted) return;
+      if (moveHistory.length === 0 || isReplaying || isLevelCompleted || isDraggingNode) return;
       const last = moveHistory.pop();
 
       if (last.type === 'move') {
@@ -1249,7 +1382,6 @@
           node.mesh.position.set(node.x, node.y, 0);
         }
       } else if (last.type === 'add_joint') {
-        // Remove joint node & clean edge
         const edge = edges.find(e => e.id === last.edgeId);
         if (edge) {
           const idx = edge.joints.indexOf(last.jointId);
@@ -1271,6 +1403,7 @@
        LEVEL COMPLETION & PASS TO A FRIEND
        ========================================================================== */
     function triggerVictory() {
+      if (isLevelCompleted) return;
       isLevelCompleted = true;
       stopTimer();
       sound.playVictory();
@@ -1279,19 +1412,33 @@
       const timeStr = formatTimer(elapsedSec);
 
       if (passFriendMode && p1Stats) {
-        // Friend finished!
         p2Stats = { time: elapsedSec, timeStr: timeStr, moves: moveCount };
         showFriendScoreboard();
         return;
       }
 
-      // Normal single player finish
+      // Check if this was the last level
+      const isFinalLevel = (currentLevelIndex === LEVELS.length - 1);
+      const nextBtn = document.getElementById('btn-vic-next');
+      const vicTitle = document.getElementById('vic-title');
+      const vicSub = document.getElementById('vic-sub');
+
+      if (isFinalLevel) {
+        vicTitle.innerText = "Master of Planarity! 🏆";
+        vicSub.innerText = "You untangled all 10 complex planar topologies!";
+        nextBtn.innerText = "Play Again from Start";
+      } else {
+        vicTitle.innerText = "Graph Untangled! 🎉";
+        vicSub.innerText = `Solves ${LEVELS[currentLevelIndex].title}`;
+        nextBtn.innerText = `Next: Level ${currentLevelIndex + 2}`;
+      }
+
       document.getElementById('vic-time').innerText = timeStr;
       document.getElementById('vic-moves').innerText = moveCount;
 
       setTimeout(() => {
         document.getElementById('modal-victory').classList.add('active');
-      }, 500);
+      }, 400);
     }
 
     function showFriendScoreboard() {
@@ -1335,7 +1482,6 @@
       isReplaying = true;
       document.getElementById('recap-banner').style.display = 'block';
 
-      // Start MediaRecorder if supported
       recordedChunks = [];
       try {
         const stream = renderer.domElement.captureStream(30);
@@ -1351,13 +1497,11 @@
         mediaRecorder = null;
       }
 
-      // Clone actions and reset level to initial without clearing moveHistory
       const replayQueue = [...moveHistory];
       loadLevel(currentLevelIndex, true);
       isReplaying = true;
       stopTimer();
 
-      // Fast pace: 320ms per move
       let stepIdx = 0;
       const recapInterval = setInterval(() => {
         if (stepIdx >= replayQueue.length) {
@@ -1395,7 +1539,7 @@
         updateEdgesAndCrossings();
         sound.playDrop();
         stepIdx++;
-      }, 340);
+      }, 320);
     }
 
     function finishSpeedRecap() {
@@ -1426,15 +1570,15 @@
 
     function onPointerDown(e) {
       if (isPaused || isReplaying || isLevelCompleted) return;
-      sound.init(); // Initialize audio context on first user action
+      sound.init();
 
       const { clientX, clientY } = getPointerPos(e);
       pointerDownPos = { x: clientX, y: clientY };
-      isDragging = false;
+      isPointerMoved = false;
 
       updateRaycaster(clientX, clientY);
 
-      // Check node picking
+      // Check node & joint picking
       const nodeMeshes = nodes.map(n => n.mesh);
       const nodeHits = raycaster.intersectObjects(nodeMeshes, false);
 
@@ -1442,9 +1586,9 @@
         const hitMesh = nodeHits[0].object;
         selectedNode = nodes.find(n => n.mesh === hitMesh);
         if (selectedNode) {
+          isDraggingNode = true;
           dragStartPos = { x: selectedNode.x, y: selectedNode.y };
           sound.playGrab();
-          // Scale pop feedback
           selectedNode.mesh.scale.set(1.25, 1.25, 1.25);
         }
       }
@@ -1455,13 +1599,12 @@
       const { clientX, clientY } = getPointerPos(e);
 
       if (Math.hypot(clientX - pointerDownPos.x, clientY - pointerDownPos.y) > 6) {
-        isDragging = true;
+        isPointerMoved = true;
       }
 
-      if (selectedNode) {
+      if (selectedNode && isDraggingNode) {
         updateRaycaster(clientX, clientY);
         if (raycaster.ray.intersectPlane(planeZ, planeIntersection)) {
-          // Constrain coordinates within camera bounds
           const boundX = 9.5;
           const boundY = 7.0;
           selectedNode.x = Math.max(-boundX, Math.min(boundX, planeIntersection.x));
@@ -1477,7 +1620,6 @@
       if (selectedNode) {
         selectedNode.mesh.scale.set(1, 1, 1);
 
-        // If moved, save into undo history
         const distMoved = Math.hypot(selectedNode.x - dragStartPos.x, selectedNode.y - dragStartPos.y);
         if (distMoved > 0.15) {
           recordAction({
@@ -1492,13 +1634,23 @@
           moveCount++;
           sound.playDrop();
         }
+
+        // Release node
         selectedNode = null;
+        isDraggingNode = false;
+
+        // Re-evaluate graph crossings on drop:
         updateEdgesAndCrossings();
+
+        // Check victory now that node is dropped
+        if (crossingsCount === 0 && !isLevelCompleted && !isReplaying) {
+          triggerVictory();
+        }
         return;
       }
 
-      // Check click on edge cylinder to insert a bend joint
-      if (!isDragging) {
+      // Check click on edge cylinder to insert a bend joint (if wasn't dragging)
+      if (!isPointerMoved) {
         const { clientX, clientY } = pointerDownPos;
         updateRaycaster(clientX, clientY);
 
@@ -1598,8 +1750,13 @@
     document.getElementById('set-highlights').addEventListener('change', () => updateEdgesAndCrossings());
 
     // Victory Modal Handlers
-    document.getElementById('btn-vic-next').addEventListener('click', () => loadLevel(currentLevelIndex + 1));
-    document.getElementById('btn-vic-retry').addEventListener('click', () => loadLevel(currentLevelIndex));
+    document.getElementById('btn-vic-next').addEventListener('click', () => {
+      loadLevel(currentLevelIndex + 1);
+    });
+
+    document.getElementById('btn-vic-retry').addEventListener('click', () => {
+      loadLevel(currentLevelIndex);
+    });
 
     document.getElementById('btn-vic-friend').addEventListener('click', () => {
       p1Stats = {
