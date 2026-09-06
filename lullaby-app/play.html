@@ -1,0 +1,1624 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Lullaby Dreams: Baby Sleep Sanctuary</title>
+  <!-- Three.js Library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <style>
+    :root {
+      --bg-dark: #070611;
+      --accent: #ffd480;
+      --accent-glow: rgba(255, 212, 128, 0.45);
+      --glass-bg: rgba(22, 18, 42, 0.75);
+      --glass-border: rgba(255, 255, 255, 0.12);
+      --text-main: #f5f2ff;
+      --text-muted: #aca5cf;
+      --btn-active: rgba(255, 212, 128, 0.22);
+      --btn-active-border: #ffd480;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: var(--bg-dark);
+      color: var(--text-main);
+      touch-action: manipulation;
+    }
+
+    #canvas-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+    }
+
+    /* Top Sleep Bar */
+    .top-bar {
+      position: absolute;
+      top: 18px;
+      left: 0;
+      right: 0;
+      padding: 0 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 10;
+      pointer-events: none;
+      transition: opacity 0.4s ease;
+    }
+
+    .app-title-chip {
+      pointer-events: auto;
+      background: var(--glass-bg);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid var(--glass-border);
+      border-radius: 999px;
+      padding: 8px 18px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    }
+
+    .app-title {
+      font-weight: 700;
+      font-size: 15px;
+      letter-spacing: 0.5px;
+      color: var(--accent);
+      text-shadow: 0 0 10px var(--accent-glow);
+    }
+
+    .timer-badge {
+      font-size: 12px;
+      color: var(--text-muted);
+      border-left: 1px solid rgba(255, 255, 255, 0.15);
+      padding-left: 10px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .top-actions {
+      display: flex;
+      gap: 10px;
+      pointer-events: auto;
+    }
+
+    .icon-btn {
+      background: var(--glass-bg);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid var(--glass-border);
+      color: var(--text-main);
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+      box-shadow: 0 6px 18px rgba(0,0,0,0.35);
+    }
+
+    .icon-btn:hover {
+      background: rgba(255, 255, 255, 0.18);
+      transform: scale(1.05);
+    }
+
+    .icon-btn:active {
+      transform: scale(0.95);
+    }
+
+    .icon-btn.active {
+      background: var(--btn-active);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .icon-btn svg {
+      width: 20px;
+      height: 20px;
+      fill: currentColor;
+    }
+
+    /* Floating Bottom Sleep Sound Board */
+    .sound-dock-container {
+      position: absolute;
+      bottom: 24px;
+      left: 0;
+      right: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      z-index: 10;
+      pointer-events: none;
+      transition: opacity 0.4s ease, transform 0.4s ease;
+    }
+
+    .sound-dock {
+      pointer-events: auto;
+      background: var(--glass-bg);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--glass-border);
+      border-radius: 999px;
+      padding: 8px 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 14px 34px rgba(0, 0, 0, 0.5);
+      max-width: 96vw;
+      overflow-x: auto;
+    }
+
+    /* Sound Pill Buttons */
+    .sound-chip {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: var(--text-main);
+      font-size: 13px;
+      font-weight: 600;
+      border-radius: 999px;
+      padding: 8px 16px;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      white-space: nowrap;
+    }
+
+    .sound-chip:hover {
+      background: rgba(255, 255, 255, 0.16);
+    }
+
+    .sound-chip.active {
+      background: var(--btn-active);
+      border-color: var(--btn-active-border);
+      color: var(--accent);
+      box-shadow: 0 0 14px var(--accent-glow);
+    }
+
+    .song-select-chip {
+      background: rgba(255, 212, 128, 0.12);
+      border: 1px solid rgba(255, 212, 128, 0.35);
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 700;
+      border-radius: 999px;
+      padding: 8px 14px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+      transition: all 0.2s ease;
+    }
+
+    .song-select-chip:hover {
+      background: rgba(255, 212, 128, 0.25);
+    }
+
+    .play-master-btn {
+      background: linear-gradient(135deg, #ffd480 0%, #ffa447 100%);
+      color: #2b1800;
+      font-size: 14px;
+      font-weight: 800;
+      border: none;
+      border-radius: 999px;
+      padding: 9px 20px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 6px 18px rgba(255, 164, 71, 0.45);
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+
+    .play-master-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 24px rgba(255, 164, 71, 0.6);
+    }
+
+    .play-master-btn.paused {
+      background: rgba(255, 255, 255, 0.12);
+      color: #fff;
+      box-shadow: none;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    /* Tap prompt */
+    .sleep-hint {
+      font-size: 12px;
+      color: var(--text-muted);
+      background: rgba(14, 11, 28, 0.7);
+      backdrop-filter: blur(8px);
+      padding: 4px 14px;
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      pointer-events: none;
+    }
+
+    /* Floating Touch Musical Note */
+    .floating-star {
+      position: absolute;
+      pointer-events: none;
+      z-index: 20;
+      color: var(--accent);
+      font-weight: 800;
+      font-size: 20px;
+      text-shadow: 0 0 14px var(--accent-glow);
+      animation: floatUpFade 1.2s forwards cubic-bezier(0.1, 0.8, 0.3, 1);
+    }
+
+    @keyframes floatUpFade {
+      0% { opacity: 0; transform: translate(-50%, 0) scale(0.5); }
+      20% { opacity: 1; transform: translate(-50%, -15px) scale(1.1); }
+      100% { opacity: 0; transform: translate(-50%, -50px) scale(0.9); }
+    }
+
+    /* Modals & Settings Drawer */
+    .modal-backdrop {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(6, 4, 14, 0.78);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+      padding: 18px;
+    }
+
+    .modal-backdrop.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal-card {
+      background: linear-gradient(150deg, rgba(28, 23, 51, 0.95) 0%, rgba(15, 12, 31, 0.98) 100%);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 28px;
+      padding: 28px 24px;
+      max-width: 440px;
+      width: 100%;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+      text-align: center;
+      transform: translateY(20px) scale(0.96);
+      transition: transform 0.3s cubic-bezier(0.2, 0.9, 0.3, 1);
+    }
+
+    .modal-backdrop.open .modal-card {
+      transform: translateY(0) scale(1);
+    }
+
+    .modal-title {
+      font-size: 22px;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 4px;
+    }
+
+    .modal-subtitle {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 18px;
+    }
+
+    .section-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--accent);
+      margin-bottom: 8px;
+      text-align: left;
+    }
+
+    /* Song Selection Pills Grid */
+    .song-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 18px;
+    }
+
+    .song-pill {
+      background: rgba(255, 255, 255, 0.07);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: var(--text-main);
+      font-size: 12px;
+      font-weight: 600;
+      border-radius: 14px;
+      padding: 10px 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-align: center;
+      line-height: 1.3;
+    }
+
+    .song-pill:hover {
+      background: rgba(255, 255, 255, 0.14);
+    }
+
+    .song-pill.active {
+      background: var(--btn-active);
+      border-color: var(--accent);
+      color: var(--accent);
+      box-shadow: 0 0 12px var(--accent-glow);
+    }
+
+    .mixer-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+      font-size: 13.5px;
+    }
+
+    .mixer-row:last-child {
+      border-bottom: none;
+    }
+
+    .mixer-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .slider {
+      -webkit-appearance: none;
+      width: 120px;
+      height: 6px;
+      border-radius: 3px;
+      background: rgba(255, 255, 255, 0.18);
+      outline: none;
+    }
+
+    .slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--accent);
+      cursor: pointer;
+      box-shadow: 0 0 8px var(--accent-glow);
+    }
+
+    .timer-chips-group {
+      display: flex;
+      justify-content: center;
+      gap: 6px;
+      margin-bottom: 16px;
+    }
+
+    .timer-pill {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: var(--text-muted);
+      font-size: 11px;
+      font-weight: 600;
+      border-radius: 999px;
+      padding: 6px 10px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .timer-pill.active {
+      background: var(--btn-active);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .primary-modal-btn {
+      background: linear-gradient(135deg, #ffd480 0%, #ffa447 100%);
+      color: #2b1800;
+      border: none;
+      font-size: 15px;
+      font-weight: 800;
+      border-radius: 999px;
+      padding: 12px 20px;
+      cursor: pointer;
+      width: 100%;
+      margin-top: 14px;
+      box-shadow: 0 6px 18px rgba(255, 164, 71, 0.35);
+    }
+
+    /* Night Light Mode (Dim Nursery Mode) */
+    body.night-light .top-bar,
+    body.night-light .sound-dock-container {
+      opacity: 0.15;
+    }
+
+    body.night-light .top-bar:hover,
+    body.night-light .sound-dock-container:hover {
+      opacity: 1;
+    }
+
+    @media (max-width: 600px) {
+      .sound-dock { padding: 6px 10px; gap: 6px; }
+      .sound-chip { padding: 6px 10px; font-size: 12px; }
+      .play-master-btn { padding: 7px 14px; font-size: 13px; }
+      .song-select-chip { padding: 6px 10px; font-size: 11px; }
+      .song-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 3D Celestial Dream Scene Container -->
+  <div id="canvas-container"></div>
+
+  <!-- Top Bar -->
+  <div class="top-bar">
+    <div class="app-title-chip">
+      <span class="app-title">🌙 Lullaby Dreams</span>
+      <div class="timer-badge" id="timer-badge-text">∞ Continuous</div>
+    </div>
+
+    <div class="top-actions">
+      <!-- Night Light Mode (Dim Screen for dark nursery) -->
+      <button class="icon-btn" id="btn-night-light" title="Nursery Night-Light Mode">
+        <svg viewBox="0 0 24 24"><path d="M12 3c-4.97 0-9 4.03-9 9 0 2.12.74 4.07 1.97 5.61L4.35 19H9v-2H6.08C5.39 15.65 5 13.9 5 12c0-3.87 3.13-7 7-7 1.9 0 3.65.76 4.97 2H19v-1.35C17.46 3.74 14.88 3 12 3zm9 9c0-1.9-.76-3.65-2-4.97V9h-2v2.92C15.65 12.61 13.9 13 12 13c-1.9 0-3.65-.76-4.97-2H5v1.35C6.54 14.26 9.12 15 12 15c4.97 0 9-4.03 9-9z"/></svg>
+      </button>
+
+      <!-- Master Mute / Unmute -->
+      <button class="icon-btn" id="btn-master-mute" title="Mute Audio">
+        <svg id="svg-volume-on" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+        <svg id="svg-volume-off" viewBox="0 0 24 24" style="display:none;"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/></svg>
+      </button>
+
+      <!-- Audio Mixer, Song Selection & Sleep Timer Settings -->
+      <button class="icon-btn" id="btn-open-settings" title="Sound Mixer & Songs">
+        <svg viewBox="0 0 24 24"><path d="M3 17v2h6v-2H3zM3 5v2h10V5H3zm10 16v-2h8v-2h-8v-2h-2v6h2zM7 9v2H3v2h4v2h2V9H7zm14 4v-2H11v2h10zm-6-4h2V7h4V5h-4V3h-2v6z"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Bottom Sound Board -->
+  <div class="sound-dock-container">
+    <div class="sound-dock">
+      <!-- Master Pause/Play Button -->
+      <button class="play-master-btn" id="btn-master-play">
+        <span id="play-master-icon">⏸</span>
+        <span id="play-master-label">Sleep Audio</span>
+      </button>
+
+      <!-- 🎵 Metallic Music Box Song Selector -->
+      <button class="song-select-chip" id="btn-quick-song" title="Change Lullaby Song">
+        <span>🎶</span>
+        <span id="label-current-song">Twinkle Little Star</span>
+        <span>▾</span>
+      </button>
+
+      <!-- Music Box Channel Toggle -->
+      <button class="sound-chip active" id="chip-lullaby">
+        <span>🎵</span>
+        <span>Music Box</span>
+      </button>
+
+      <!-- ❤️ Warm Maternal Womb Pulse -->
+      <button class="sound-chip active" id="chip-womb">
+        <span>❤️</span>
+        <span>Womb Pulse</span>
+      </button>
+
+      <!-- 💨 Soothing Air Breeze -->
+      <button class="sound-chip active" id="chip-air">
+        <span>💨</span>
+        <span>Air Breeze</span>
+      </button>
+
+      <!-- 💧 Natural Water Stream -->
+      <button class="sound-chip active" id="chip-water">
+        <span>💧</span>
+        <span>Water</span>
+      </button>
+    </div>
+    <div class="sleep-hint">✨ Touch the sky to chime metallic music-box notes & stardust</div>
+  </div>
+
+  <!-- Audio Mixer & Song Selection Modal -->
+  <div class="modal-backdrop" id="modal-settings">
+    <div class="modal-card">
+      <h2 class="modal-title">Sanctuary Mixer</h2>
+      <p class="modal-subtitle">Choose lullaby melodies & peaceful ambient balance</p>
+
+      <!-- Song Selection Grid -->
+      <div class="section-label">Lullaby Melody</div>
+      <div class="song-grid" id="modal-song-grid">
+        <button class="song-pill active" data-song="twinkle">
+          ⭐ Twinkle, Twinkle Little Star
+        </button>
+        <button class="song-pill" data-song="frere">
+          🔔 Frère Jacques (Are You Sleeping?)
+        </button>
+        <button class="song-pill" data-song="lamb">
+          🐑 Mary Had a Little Lamb
+        </button>
+        <button class="song-pill" data-song="macdonald">
+          🚜 Old MacDonald Had a Farm
+        </button>
+      </div>
+
+      <!-- Sleep Timer -->
+      <div class="section-label">Sleep Timer</div>
+      <div class="timer-chips-group">
+        <button class="timer-pill active" data-time="0">Continuous</button>
+        <button class="timer-pill" data-time="15">15 min</button>
+        <button class="timer-pill" data-time="30">30 min</button>
+        <button class="timer-pill" data-time="45">45 min</button>
+        <button class="timer-pill" data-time="60">60 min</button>
+      </div>
+
+      <!-- Sound Volumes -->
+      <div class="section-label">Volumes</div>
+      <div style="text-align:left; margin-bottom:8px;">
+        <div class="mixer-row">
+          <span class="mixer-label">🔊 Master Volume</span>
+          <input type="range" class="slider" id="slider-master" min="0" max="100" value="80">
+        </div>
+        <div class="mixer-row">
+          <span class="mixer-label">🎵 Metallic Music Box</span>
+          <input type="range" class="slider" id="slider-lullaby" min="0" max="100" value="70">
+        </div>
+        <div class="mixer-row">
+          <span class="mixer-label">❤️ Womb Heartbeat</span>
+          <input type="range" class="slider" id="slider-womb" min="0" max="100" value="85">
+        </div>
+        <div class="mixer-row">
+          <span class="mixer-label">💨 Air Breeze</span>
+          <input type="range" class="slider" id="slider-air" min="0" max="100" value="40">
+        </div>
+        <div class="mixer-row">
+          <span class="mixer-label">💧 Gentle Water</span>
+          <input type="range" class="slider" id="slider-water" min="0" max="100" value="55">
+        </div>
+      </div>
+
+      <button class="primary-modal-btn" id="btn-close-settings">Rest Peaceful</button>
+    </div>
+  </div>
+
+  <script>
+    /* ==========================================================================
+       TECHNICAL CONFIG & RESILIENT STORAGE
+       ========================================================================== */
+    if (typeof navigator !== 'undefined' && navigator.audioSession) {
+      try {
+        navigator.audioSession.type = 'playback';
+      } catch (e) {}
+    }
+
+    const SafeStorage = {
+      getItem(key, defaultVal = null) {
+        try {
+          const val = localStorage.getItem(key);
+          if (val !== null) return JSON.parse(val);
+        } catch (e) {
+          const match = document.cookie.match(new RegExp('(^| )' + key + '=([^;]+)'));
+          if (match) {
+            try { return JSON.parse(decodeURIComponent(match[2])); } catch (_) {}
+          }
+        }
+        return defaultVal;
+      },
+      setItem(key, value) {
+        const str = JSON.stringify(value);
+        try {
+          localStorage.setItem(key, str);
+        } catch (e) {
+          const d = new Date();
+          d.setTime(d.getTime() + (30 * 24 * 60 * 60 * 1000));
+          document.cookie = `${key}=${encodeURIComponent(str)};expires=${d.toUTCString()};path=/;SameSite=Lax`;
+        }
+      }
+    };
+
+    /* ==========================================================================
+       CLASSICAL LULLABY REPERTOIRE (HIGH-PITCH MUSIC BOX REGISTER)
+       ========================================================================== */
+    const SONG_CATALOG = {
+      twinkle: {
+        id: 'twinkle',
+        title: 'Twinkle Little Star',
+        tempo: 48,
+        notes: [
+          // Twin-kle, twin-kle, lit-tle star, How I won-der what you are!
+          { note: 72, dur: 1 }, { note: 72, dur: 1 }, { note: 79, dur: 1 }, { note: 79, dur: 1 },
+          { note: 81, dur: 1 }, { note: 81, dur: 1 }, { note: 79, dur: 2 },
+          { note: 77, dur: 1 }, { note: 77, dur: 1 }, { note: 76, dur: 1 }, { note: 76, dur: 1 },
+          { note: 74, dur: 1 }, { note: 74, dur: 1 }, { note: 72, dur: 2 },
+
+          // Up a-bove the world so high, Like a dia-mond in the sky.
+          { note: 79, dur: 1 }, { note: 79, dur: 1 }, { note: 77, dur: 1 }, { note: 77, dur: 1 },
+          { note: 76, dur: 1 }, { note: 76, dur: 1 }, { note: 74, dur: 2 },
+          { note: 79, dur: 1 }, { note: 79, dur: 1 }, { note: 77, dur: 1 }, { note: 77, dur: 1 },
+          { note: 76, dur: 1 }, { note: 76, dur: 1 }, { note: 74, dur: 2 },
+
+          // Twin-kle, twin-kle, lit-tle star, How I won-der what you are!
+          { note: 72, dur: 1 }, { note: 72, dur: 1 }, { note: 79, dur: 1 }, { note: 79, dur: 1 },
+          { note: 81, dur: 1 }, { note: 81, dur: 1 }, { note: 79, dur: 2 },
+          { note: 77, dur: 1 }, { note: 77, dur: 1 }, { note: 76, dur: 1 }, { note: 76, dur: 1 },
+          { note: 74, dur: 1 }, { note: 74, dur: 1 }, { note: 72, dur: 3 },
+
+          // Celestial music-box arpeggio bridge
+          { note: 76, dur: 1 }, { note: 79, dur: 1 }, { note: 84, dur: 2 },
+          { note: 81, dur: 1 }, { note: 79, dur: 1 }, { note: 76, dur: 2 },
+          { note: 74, dur: 1 }, { note: 72, dur: 3 }
+        ]
+      },
+
+      frere: {
+        id: 'frere',
+        title: 'Frère Jacques',
+        tempo: 46,
+        notes: [
+          // Frè-re Jac-ques, Frè-re Jac-ques (Are you sleep-ing? Are you sleep-ing?)
+          { note: 77, dur: 1 }, { note: 79, dur: 1 }, { note: 81, dur: 1 }, { note: 77, dur: 1 },
+          { note: 77, dur: 1 }, { note: 79, dur: 1 }, { note: 81, dur: 1 }, { note: 77, dur: 1 },
+
+          // Dor-mez-vous? Dor-mez-vous? (Bro-ther John, Bro-ther John)
+          { note: 81, dur: 1 }, { note: 82, dur: 1 }, { note: 84, dur: 2 },
+          { note: 81, dur: 1 }, { note: 82, dur: 1 }, { note: 84, dur: 2 },
+
+          // Son-nez les ma-ti-nes! Son-nez les ma-ti-nes! (Morn-ing bells are ring-ing!)
+          { note: 84, dur: 0.75 }, { note: 86, dur: 0.25 }, { note: 84, dur: 0.5 }, { note: 82, dur: 0.5 }, { note: 81, dur: 1 }, { note: 77, dur: 1 },
+          { note: 84, dur: 0.75 }, { note: 86, dur: 0.25 }, { note: 84, dur: 0.5 }, { note: 82, dur: 0.5 }, { note: 81, dur: 1 }, { note: 77, dur: 1 },
+
+          // Din, dan, don. Din, dan, don. (Ding, dong, ding. Ding, dong, ding.)
+          { note: 77, dur: 1 }, { note: 72, dur: 1 }, { note: 77, dur: 2 },
+          { note: 77, dur: 1 }, { note: 72, dur: 1 }, { note: 77, dur: 3 },
+
+          // Music box transition chime
+          { note: 81, dur: 1 }, { note: 84, dur: 1 }, { note: 89, dur: 3 }
+        ]
+      },
+
+      lamb: {
+        id: 'lamb',
+        title: 'Mary Had a Little Lamb',
+        tempo: 48,
+        notes: [
+          // Ma-ry had a lit-tle lamb, lit-tle lamb, lit-tle lamb
+          { note: 76, dur: 1 }, { note: 74, dur: 1 }, { note: 72, dur: 1 }, { note: 74, dur: 1 },
+          { note: 76, dur: 1 }, { note: 76, dur: 1 }, { note: 76, dur: 2 },
+          { note: 74, dur: 1 }, { note: 74, dur: 1 }, { note: 74, dur: 2 },
+          { note: 76, dur: 1 }, { note: 79, dur: 1 }, { note: 79, dur: 2 },
+
+          // Ma-ry had a lit-tle lamb, its fleece was white as snow
+          { note: 76, dur: 1 }, { note: 74, dur: 1 }, { note: 72, dur: 1 }, { note: 74, dur: 1 },
+          { note: 76, dur: 1 }, { note: 76, dur: 1 }, { note: 76, dur: 1 }, { note: 76, dur: 1 },
+          { note: 74, dur: 1 }, { note: 74, dur: 1 }, { note: 76, dur: 1 }, { note: 74, dur: 1 },
+          { note: 72, dur: 3 },
+
+          // Gentle slumbering music box echo
+          { note: 76, dur: 1 }, { note: 79, dur: 1 }, { note: 84, dur: 1 }, { note: 79, dur: 1 }, { note: 72, dur: 3 }
+        ]
+      },
+
+      macdonald: {
+        id: 'macdonald',
+        title: 'Old MacDonald',
+        tempo: 46,
+        notes: [
+          // Old Mac-Don-ald had a farm, E-I-E-I-O!
+          { note: 79, dur: 1 }, { note: 79, dur: 1 }, { note: 79, dur: 1 }, { note: 74, dur: 1 },
+          { note: 76, dur: 1 }, { note: 76, dur: 1 }, { note: 74, dur: 2 },
+          { note: 83, dur: 1 }, { note: 83, dur: 1 }, { note: 81, dur: 1 }, { note: 81, dur: 1 },
+          { note: 79, dur: 3 },
+
+          // And on his farm he had a cow / chick, E-I-E-I-O!
+          { note: 74, dur: 1 },
+          { note: 79, dur: 1 }, { note: 79, dur: 1 }, { note: 79, dur: 1 }, { note: 74, dur: 1 },
+          { note: 76, dur: 1 }, { note: 76, dur: 1 }, { note: 74, dur: 2 },
+          { note: 83, dur: 1 }, { note: 83, dur: 1 }, { note: 81, dur: 1 }, { note: 81, dur: 1 },
+          { note: 79, dur: 3 },
+
+          // With a moo-moo here, and a moo-moo there...
+          { note: 74, dur: 0.5 }, { note: 74, dur: 0.5 },
+          { note: 79, dur: 1 }, { note: 79, dur: 1 }, { note: 79, dur: 1 }, { note: 74, dur: 0.5 }, { note: 74, dur: 0.5 },
+          { note: 79, dur: 1 }, { note: 79, dur: 1 }, { note: 79, dur: 2 },
+
+          // Final E-I-E-I-O!
+          { note: 79, dur: 1 }, { note: 79, dur: 1 }, { note: 79, dur: 1 }, { note: 74, dur: 1 },
+          { note: 76, dur: 1 }, { note: 76, dur: 1 }, { note: 74, dur: 2 },
+          { note: 83, dur: 1 }, { note: 83, dur: 1 }, { note: 81, dur: 1 }, { note: 81, dur: 1 },
+          { note: 79, dur: 4 }
+        ]
+      }
+    };
+
+    /* ==========================================================================
+       AUTHENTIC METALLIC MUSIC BOX & SANCTUARY AUDIO ENGINE
+       ========================================================================== */
+    class SanctuaryAudioEngine {
+      constructor() {
+        this.ctx = null;
+        this.isInitialized = false;
+
+        // Master & Channel Gains
+        this.masterGain = null;
+        this.lullabyGain = null;
+        this.wombGain = null;
+        this.airGain = null;
+        this.waterGain = null;
+        this.chimeGain = null;
+
+        // States
+        this.isPlaying = false;
+        this.isMuted = false;
+
+        this.enableLullaby = SafeStorage.getItem('snd_lullaby', true);
+        this.enableWomb = SafeStorage.getItem('snd_womb', true);
+        this.enableAir = SafeStorage.getItem('snd_air', true);
+        this.enableWater = SafeStorage.getItem('snd_water', true);
+
+        // Volumes
+        this.volMaster = SafeStorage.getItem('vol_master', 0.80);
+        this.volLullaby = SafeStorage.getItem('vol_lullaby', 0.70);
+        this.volWomb = SafeStorage.getItem('vol_womb', 0.85);
+        this.volAir = SafeStorage.getItem('vol_air', 0.40);
+        this.volWater = SafeStorage.getItem('vol_water', 0.55);
+
+        // Active Song Selection
+        this.currentSongId = SafeStorage.getItem('active_song', 'twinkle');
+        if (!SONG_CATALOG[this.currentSongId]) this.currentSongId = 'twinkle';
+
+        this.stepTimer = null;
+        this.stepIndex = 0;
+
+        // Ambient Loops
+        this.wombTimer = null;
+        this.waterDropTimer = null;
+        this.waterSurgeTimer = null;
+        this.waterNoiseSource = null;
+        this.airNoiseSource = null;
+        this.waterBandpass = null;
+        this.waterGainMod = null;
+      }
+
+      init() {
+        if (this.isInitialized) return;
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        this.ctx = new AudioCtx();
+
+        // Master Limiter
+        const limiter = this.ctx.createDynamicsCompressor();
+        limiter.threshold.value = -10;
+        limiter.knee.value = 18;
+        limiter.ratio.value = 6;
+        limiter.attack.value = 0.005;
+        limiter.release.value = 0.25;
+        limiter.connect(this.ctx.destination);
+
+        this.masterGain = this.ctx.createGain();
+        this.masterGain.gain.setValueAtTime(this.volMaster, this.ctx.currentTime);
+        this.masterGain.connect(limiter);
+
+        // Independent Channel Gains
+        this.lullabyGain = this.ctx.createGain();
+        this.lullabyGain.gain.setValueAtTime(this.enableLullaby ? this.volLullaby : 0.0, this.ctx.currentTime);
+        this.lullabyGain.connect(this.masterGain);
+
+        this.wombGain = this.ctx.createGain();
+        this.wombGain.gain.setValueAtTime(this.enableWomb ? this.volWomb : 0.0, this.ctx.currentTime);
+        this.wombGain.connect(this.masterGain);
+
+        this.airGain = this.ctx.createGain();
+        this.airGain.gain.setValueAtTime(this.enableAir ? this.volAir : 0.0, this.ctx.currentTime);
+        this.airGain.connect(this.masterGain);
+
+        this.waterGain = this.ctx.createGain();
+        this.waterGain.gain.setValueAtTime(this.enableWater ? this.volWater : 0.0, this.ctx.currentTime);
+        this.waterGain.connect(this.masterGain);
+
+        this.chimeGain = this.ctx.createGain();
+        this.chimeGain.gain.setValueAtTime(0.75, this.ctx.currentTime);
+        this.chimeGain.connect(this.masterGain);
+
+        // Ambience
+        this.setupAirBreeze();
+        this.setupRichWater();
+
+        this.isInitialized = true;
+      }
+
+      midiToFreq(midi) {
+        return 440 * Math.pow(2, (midi - 69) / 12);
+      }
+
+      /* -------------------------------------------------------------
+         🎵 PHYSICAL STEEL COMB / TINE METALLIC MUSIC BOX SYNTHESIZER
+         Simulates an authentic musical box tine:
+         1. Pure fundamental beam vibration
+         2. Inharmonic high metallic modes (2.756x and 5.404x for clamped steel bars)
+         3. Tiny mechanical plectrum click / strike transient
+         ------------------------------------------------------------- */
+      playMetallicMusicBoxNote(midi, velocity = 0.65, isInteractiveChime = false) {
+        if (!this.ctx) return;
+        const targetBus = isInteractiveChime ? this.chimeGain : this.lullabyGain;
+        if (!isInteractiveChime && (!this.isPlaying || !this.enableLullaby)) return;
+
+        const now = this.ctx.currentTime;
+        const f0 = this.midiToFreq(midi);
+
+        // 1. Fundamental Tine Resonance (Clean Steel Tone)
+        const oscFundamental = this.ctx.createOscillator();
+        oscFundamental.type = 'sine';
+        oscFundamental.frequency.setValueAtTime(f0, now);
+
+        const envFundamental = this.ctx.createGain();
+        envFundamental.gain.setValueAtTime(0, now);
+        // Extremely crisp mechanical strike
+        envFundamental.gain.linearRampToValueAtTime(velocity * 0.48, now + 0.003);
+        // Natural crystalline ring out
+        envFundamental.gain.exponentialRampToValueAtTime(0.00001, now + 2.8);
+
+        // 2. High Metallic Inharmonic Mode 1 (Clamped bar physics: ~2.756 x f0)
+        const oscMetal1 = this.ctx.createOscillator();
+        oscMetal1.type = 'sine';
+        oscMetal1.frequency.setValueAtTime(f0 * 2.756, now);
+
+        const envMetal1 = this.ctx.createGain();
+        envMetal1.gain.setValueAtTime(0, now);
+        envMetal1.gain.linearRampToValueAtTime(velocity * 0.22, now + 0.002);
+        envMetal1.gain.exponentialRampToValueAtTime(0.00001, now + 0.85);
+
+        // 3. Metallic High Glint Mode 2 (~5.404 x f0)
+        const oscMetal2 = this.ctx.createOscillator();
+        oscMetal2.type = 'sine';
+        oscMetal2.frequency.setValueAtTime(f0 * 5.404, now);
+
+        const envMetal2 = this.ctx.createGain();
+        envMetal2.gain.setValueAtTime(0, now);
+        envMetal2.gain.linearRampToValueAtTime(velocity * 0.12, now + 0.0015);
+        envMetal2.gain.exponentialRampToValueAtTime(0.00001, now + 0.45);
+
+        // 4. Mechanical Comb Plectrum "Click" / Strike Transient
+        const bufferSize = Math.floor(this.ctx.sampleRate * 0.012);
+        const clickBuffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+        const clickData = clickBuffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+          clickData[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize * 0.2));
+        }
+
+        const clickSource = this.ctx.createBufferSource();
+        clickSource.buffer = clickBuffer;
+
+        const clickFilter = this.ctx.createBiquadFilter();
+        clickFilter.type = 'bandpass';
+        clickFilter.frequency.setValueAtTime(Math.min(f0 * 4.2, 12000), now);
+        clickFilter.Q.value = 3.5;
+
+        const clickGain = this.ctx.createGain();
+        clickGain.gain.setValueAtTime(velocity * 0.14, now);
+
+        // Routing
+        oscFundamental.connect(envFundamental);
+        oscMetal1.connect(envMetal1);
+        oscMetal2.connect(envMetal2);
+
+        clickSource.connect(clickFilter);
+        clickFilter.connect(clickGain);
+
+        envFundamental.connect(targetBus);
+        envMetal1.connect(targetBus);
+        envMetal2.connect(targetBus);
+        clickGain.connect(targetBus);
+
+        // Timing
+        oscFundamental.start(now);
+        oscMetal1.start(now);
+        oscMetal2.start(now);
+        clickSource.start(now);
+
+        oscFundamental.stop(now + 2.9);
+        oscMetal1.stop(now + 0.9);
+        oscMetal2.stop(now + 0.5);
+      }
+
+      setSong(songId) {
+        if (!SONG_CATALOG[songId]) return;
+        this.currentSongId = songId;
+        SafeStorage.setItem('active_song', songId);
+        this.stepIndex = 0;
+        if (this.stepTimer) {
+          clearTimeout(this.stepTimer);
+          if (this.isPlaying) {
+            this.scheduleLullabyStep();
+          }
+        }
+      }
+
+      scheduleLullabyStep() {
+        if (!this.isPlaying) return;
+
+        const song = SONG_CATALOG[this.currentSongId];
+        const item = song.notes[this.stepIndex];
+        const beatDuration = (60 / song.tempo) * 1000;
+        const currentDur = item.dur * beatDuration;
+
+        if (item.note) {
+          this.playMetallicMusicBoxNote(item.note, 0.70, false);
+        }
+
+        this.stepIndex = (this.stepIndex + 1) % song.notes.length;
+        this.stepTimer = setTimeout(() => this.scheduleLullabyStep(), currentDur);
+      }
+
+      /* -------------------------------------------------------------
+         ❤️ PHYSIOLOGICAL SYSTOLE & DIASTOLE WOMB HEARTBEAT
+         ------------------------------------------------------------- */
+      startWombLoop() {
+        if (this.wombTimer) clearInterval(this.wombTimer);
+
+        const playSystole = (time) => {
+          if (!this.ctx || !this.isPlaying || !this.enableWomb) return;
+
+          const osc1 = this.ctx.createOscillator();
+          osc1.type = 'sine';
+          osc1.frequency.setValueAtTime(58, time);
+          osc1.frequency.exponentialRampToValueAtTime(32, time + 0.16);
+
+          const gain1 = this.ctx.createGain();
+          gain1.gain.setValueAtTime(0, time);
+          gain1.gain.linearRampToValueAtTime(0.70, time + 0.025);
+          gain1.gain.exponentialRampToValueAtTime(0.0001, time + 0.22);
+
+          const whooshOsc = this.ctx.createOscillator();
+          whooshOsc.type = 'triangle';
+          whooshOsc.frequency.setValueAtTime(65, time);
+          whooshOsc.frequency.exponentialRampToValueAtTime(38, time + 0.28);
+
+          const whooshFilter = this.ctx.createBiquadFilter();
+          whooshFilter.type = 'lowpass';
+          whooshFilter.frequency.setValueAtTime(140, time);
+
+          const whooshGain = this.ctx.createGain();
+          whooshGain.gain.setValueAtTime(0, time);
+          whooshGain.gain.linearRampToValueAtTime(0.35, time + 0.04);
+          whooshGain.gain.exponentialRampToValueAtTime(0.0001, time + 0.32);
+
+          osc1.connect(gain1);
+          gain1.connect(this.wombGain);
+
+          whooshOsc.connect(whooshFilter);
+          whooshFilter.connect(whooshGain);
+          whooshGain.connect(this.wombGain);
+
+          osc1.start(time);
+          osc1.stop(time + 0.25);
+          whooshOsc.start(time);
+          whooshOsc.stop(time + 0.35);
+        };
+
+        const playDiastole = (time) => {
+          if (!this.ctx || !this.isPlaying || !this.enableWomb) return;
+
+          const osc2 = this.ctx.createOscillator();
+          osc2.type = 'sine';
+          osc2.frequency.setValueAtTime(68, time);
+          osc2.frequency.exponentialRampToValueAtTime(36, time + 0.14);
+
+          const gain2 = this.ctx.createGain();
+          gain2.gain.setValueAtTime(0, time);
+          gain2.gain.linearRampToValueAtTime(0.48, time + 0.02);
+          gain2.gain.exponentialRampToValueAtTime(0.0001, time + 0.18);
+
+          osc2.connect(gain2);
+          gain2.connect(this.wombGain);
+
+          osc2.start(time);
+          osc2.stop(time + 0.20);
+        };
+
+        this.wombTimer = setInterval(() => {
+          if (this.isPlaying && this.enableWomb && this.ctx) {
+            const now = this.ctx.currentTime;
+            playSystole(now);
+            playDiastole(now + 0.28);
+          }
+        }, 1000);
+      }
+
+      /* -------------------------------------------------------------
+         💨 AIR BREEZE (CONTINUOUS SMOOTH PINK NOISE, NO PULSE)
+         ------------------------------------------------------------- */
+      setupAirBreeze() {
+        const bufferSize = this.ctx.sampleRate * 3;
+        const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        let b0 = 0, b1 = 0, b2 = 0;
+
+        for (let i = 0; i < bufferSize; i++) {
+          const white = Math.random() * 2 - 1;
+          b0 = 0.99886 * b0 + white * 0.0555179;
+          b1 = 0.99332 * b1 + white * 0.0750759;
+          b2 = 0.96900 * b2 + white * 0.1538520;
+          data[i] = (b0 + b1 + b2) * 0.22;
+        }
+
+        const source = this.ctx.createBufferSource();
+        source.buffer = buffer;
+        source.loop = true;
+
+        const airFilter = this.ctx.createBiquadFilter();
+        airFilter.type = 'lowpass';
+        airFilter.frequency.value = 620;
+
+        source.connect(airFilter);
+        airFilter.connect(this.airGain);
+
+        source.start();
+        this.airNoiseSource = source;
+      }
+
+      /* -------------------------------------------------------------
+         💧 NATURAL WATER STREAM (INFREQUENT, SUBTLE DROPS)
+         ------------------------------------------------------------- */
+      setupRichWater() {
+        const sampleRate = this.ctx.sampleRate;
+        const bufferSize = sampleRate * 3;
+
+        const streamBuffer = this.ctx.createBuffer(2, bufferSize, sampleRate);
+        const leftChannel = streamBuffer.getChannelData(0);
+        const rightChannel = streamBuffer.getChannelData(1);
+
+        let lastL = 0.0, lastR = 0.0;
+        for (let i = 0; i < bufferSize; i++) {
+          const whiteL = Math.random() * 2 - 1;
+          const whiteR = Math.random() * 2 - 1;
+          lastL = (lastL + (0.04 * whiteL)) / 1.04;
+          lastR = (lastR + (0.04 * whiteR)) / 1.04;
+          leftChannel[i] = lastL * 2.8;
+          rightChannel[i] = lastR * 2.8;
+        }
+
+        this.waterNoiseSource = this.ctx.createBufferSource();
+        this.waterNoiseSource.buffer = streamBuffer;
+        this.waterNoiseSource.loop = true;
+
+        const waterLowpass = this.ctx.createBiquadFilter();
+        waterLowpass.type = 'lowpass';
+        waterLowpass.frequency.value = 1100;
+
+        this.waterBandpass = this.ctx.createBiquadFilter();
+        this.waterBandpass.type = 'bandpass';
+        this.waterBandpass.frequency.value = 650;
+        this.waterBandpass.Q.value = 1.3;
+
+        this.waterGainMod = this.ctx.createGain();
+        this.waterGainMod.gain.value = 0.55;
+
+        this.waterNoiseSource.connect(waterLowpass);
+        waterLowpass.connect(this.waterBandpass);
+        this.waterBandpass.connect(this.waterGainMod);
+        this.waterGainMod.connect(this.waterGain);
+
+        this.waterNoiseSource.start();
+
+        this.waterSurgeTimer = setInterval(() => {
+          if (!this.isPlaying || !this.enableWater || !this.ctx) return;
+          const now = this.ctx.currentTime;
+          const nextFreq = 520 + Math.random() * 320;
+          const nextGain = 0.48 + Math.random() * 0.18;
+          this.waterBandpass.frequency.linearRampToValueAtTime(nextFreq, now + 2.0);
+          this.waterGainMod.gain.linearRampToValueAtTime(nextGain, now + 2.0);
+        }, 2200);
+
+        this.waterDropTimer = setInterval(() => {
+          if (!this.isPlaying || !this.enableWater || !this.ctx) return;
+          if (Math.random() < 0.4) {
+            this.playLiquidDrop();
+          }
+        }, 1800);
+      }
+
+      playLiquidDrop() {
+        if (!this.ctx) return;
+        const t = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        osc.type = 'sine';
+
+        const baseFreq = 540 + Math.random() * 260;
+        osc.frequency.setValueAtTime(baseFreq, t);
+        osc.frequency.exponentialRampToValueAtTime(baseFreq * 1.25, t + 0.05);
+
+        const env = this.ctx.createGain();
+        env.gain.setValueAtTime(0, t);
+        const dropVol = 0.035 + Math.random() * 0.03;
+        env.gain.linearRampToValueAtTime(dropVol, t + 0.008);
+        env.gain.exponentialRampToValueAtTime(0.0001, t + 0.07);
+
+        osc.connect(env);
+        env.connect(this.waterGain);
+
+        osc.start(t);
+        osc.stop(t + 0.08);
+      }
+
+      /* -------------------------------------------------------------
+         INTERACTIVE SKY TOUCH METALLIC CHIME
+         ------------------------------------------------------------- */
+      playTouchChime() {
+        if (!this.ctx) return;
+        const scale = [72, 74, 76, 77, 79, 81, 84, 86, 88];
+        const note = scale[Math.floor(Math.random() * scale.length)];
+        this.playMetallicMusicBoxNote(note, 0.75, true);
+      }
+
+      /* -------------------------------------------------------------
+         PLAYBACK & GAIN CONTROLS
+         ------------------------------------------------------------- */
+      start() {
+        this.init();
+        if (this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
+        this.isPlaying = true;
+
+        const t = this.ctx.currentTime;
+        this.masterGain.gain.cancelScheduledValues(t);
+        this.masterGain.gain.setValueAtTime(this.masterGain.gain.value, t);
+        this.masterGain.gain.linearRampToValueAtTime(this.isMuted ? 0 : this.volMaster, t + 0.3);
+
+        this.scheduleLullabyStep();
+        this.startWombLoop();
+      }
+
+      stop() {
+        this.isPlaying = false;
+        if (this.stepTimer) clearTimeout(this.stepTimer);
+        if (this.wombTimer) clearInterval(this.wombTimer);
+
+        if (this.masterGain && this.ctx) {
+          const t = this.ctx.currentTime;
+          this.masterGain.gain.cancelScheduledValues(t);
+          this.masterGain.gain.setValueAtTime(this.masterGain.gain.value, t);
+          this.masterGain.gain.linearRampToValueAtTime(0.0, t + 0.15);
+        }
+      }
+
+      toggleMute() {
+        this.isMuted = !this.isMuted;
+        if (this.masterGain && this.ctx) {
+          const t = this.ctx.currentTime;
+          this.masterGain.gain.cancelScheduledValues(t);
+          this.masterGain.gain.setValueAtTime(this.masterGain.gain.value, t);
+          this.masterGain.gain.linearRampToValueAtTime(this.isMuted || !this.isPlaying ? 0 : this.volMaster, t + 0.15);
+        }
+        return this.isMuted;
+      }
+
+      setMasterVolume(val) {
+        this.volMaster = val;
+        SafeStorage.setItem('vol_master', val);
+        if (this.masterGain && this.isPlaying && !this.isMuted) {
+          this.masterGain.gain.setValueAtTime(val, this.ctx.currentTime);
+        }
+      }
+
+      setChannelVolume(channel, val) {
+        this[`vol${channel}`] = val;
+        SafeStorage.setItem(`vol_${channel.toLowerCase()}`, val);
+        const gainNode = this[`${channel.toLowerCase()}Gain`];
+        const isEnabled = this[`enable${channel}`];
+        if (gainNode && this.ctx) {
+          gainNode.gain.setValueAtTime(isEnabled ? val : 0.0, this.ctx.currentTime);
+        }
+      }
+
+      toggleChannel(channel) {
+        const key = `enable${channel}`;
+        this[key] = !this[key];
+        SafeStorage.setItem(`snd_${channel.toLowerCase()}`, this[key]);
+        const gainNode = this[`${channel.toLowerCase()}Gain`];
+        const targetVol = this[`vol${channel}`];
+        if (gainNode && this.ctx) {
+          const t = this.ctx.currentTime;
+          gainNode.gain.cancelScheduledValues(t);
+          gainNode.gain.setValueAtTime(gainNode.gain.value, t);
+          gainNode.gain.linearRampToValueAtTime(this[key] ? targetVol : 0.0, t + 0.1);
+        }
+        return this[key];
+      }
+    }
+
+    const audio = new SanctuaryAudioEngine();
+
+    /* ==========================================================================
+       THREE.JS HYPNOTIC CELESTIAL DREAMSCAPE
+       ========================================================================== */
+    let scene, camera, renderer;
+    let moonMesh, moonAura, starsParticles, cloudsGroup;
+
+    function initDreamScene() {
+      const container = document.getElementById('canvas-container');
+      const width = container.clientWidth;
+      const height = container.clientHeight;
+
+      scene = new THREE.Scene();
+      scene.fog = new THREE.FogExp2(0x070611, 0.035);
+
+      camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
+      camera.position.set(0, 0, 15);
+
+      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+      renderer.setSize(width, height);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1.2;
+      container.appendChild(renderer.domElement);
+
+      const ambientLight = new THREE.AmbientLight(0xb1a8d9, 0.85);
+      scene.add(ambientLight);
+
+      const moonLight = new THREE.PointLight(0xffe6a3, 1.8, 30);
+      moonLight.position.set(0, 1.5, 4);
+      scene.add(moonLight);
+
+      createHypnoticMoon();
+      createStarfield();
+      createDreamClouds();
+
+      window.addEventListener('resize', () => {
+        const w = container.clientWidth;
+        const h = container.clientHeight;
+        camera.aspect = w / h;
+        camera.updateProjectionMatrix();
+        renderer.setSize(w, h);
+      });
+
+      window.addEventListener('pointerdown', handleScreenTouch);
+      animateDreamScene();
+    }
+
+    function createHypnoticMoon() {
+      const moonGroup = new THREE.Group();
+
+      const moonGeom = new THREE.SphereGeometry(2.4, 32, 32);
+      const moonMat = new THREE.MeshStandardMaterial({
+        color: 0xffe299,
+        emissive: 0x543f0c,
+        roughness: 0.35,
+        metalness: 0.1
+      });
+      moonMesh = new THREE.Mesh(moonGeom, moonMat);
+      moonGroup.add(moonMesh);
+
+      const auraGeom = new THREE.SphereGeometry(2.9, 32, 32);
+      const auraMat = new THREE.MeshBasicMaterial({
+        color: 0xffd480,
+        transparent: true,
+        opacity: 0.22,
+        blending: THREE.AdditiveBlending
+      });
+      moonAura = new THREE.Mesh(auraGeom, auraMat);
+      moonGroup.add(moonAura);
+
+      const eyeGeom = new THREE.TorusGeometry(0.35, 0.04, 12, 24, Math.PI);
+      const eyeMat = new THREE.MeshBasicMaterial({ color: 0x543f0c });
+      const eyeL = new THREE.Mesh(eyeGeom, eyeMat);
+      eyeL.position.set(-0.6, 0.2, 2.3);
+      eyeL.rotation.z = Math.PI;
+      moonGroup.add(eyeL);
+
+      const eyeR = new THREE.Mesh(eyeGeom, eyeMat);
+      eyeR.position.set(0.6, 0.2, 2.3);
+      eyeR.rotation.z = Math.PI;
+      moonGroup.add(eyeR);
+
+      scene.add(moonGroup);
+    }
+
+    function createStarfield() {
+      const starCount = 450;
+      const geom = new THREE.BufferGeometry();
+      const pos = new Float32Array(starCount * 3);
+
+      for (let i = 0; i < starCount; i++) {
+        pos[i * 3] = (Math.random() - 0.5) * 40;
+        pos[i * 3 + 1] = (Math.random() - 0.5) * 30;
+        pos[i * 3 + 2] = (Math.random() - 0.5) * 20 - 5;
+      }
+
+      geom.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+      const mat = new THREE.PointsMaterial({
+        color: 0xfff3cc,
+        size: 0.22,
+        transparent: true,
+        opacity: 0.85,
+        blending: THREE.AdditiveBlending
+      });
+
+      starsParticles = new THREE.Points(geom, mat);
+      scene.add(starsParticles);
+    }
+
+    function createDreamClouds() {
+      cloudsGroup = new THREE.Group();
+      const cloudGeom = new THREE.DodecahedronGeometry(1.6, 1);
+      const cloudMat = new THREE.MeshStandardMaterial({
+        color: 0x221a47,
+        emissive: 0x0c081f,
+        roughness: 0.8,
+        transparent: true,
+        opacity: 0.45
+      });
+
+      for (let i = 0; i < 6; i++) {
+        const cloud = new THREE.Mesh(cloudGeom, cloudMat);
+        cloud.position.set(
+          (Math.random() - 0.5) * 20,
+          (Math.random() - 0.5) * 10 - 2,
+          (Math.random() - 0.5) * 6 - 2
+        );
+        cloud.scale.set(1.8, 0.8, 1.2);
+        cloudsGroup.add(cloud);
+      }
+      scene.add(cloudsGroup);
+    }
+
+    function handleScreenTouch(e) {
+      if (e.target.closest('button, input, .modal-card')) return;
+
+      if (!audio.isPlaying && !audio.isMuted) {
+        audio.start();
+        updatePlayStateUI();
+      }
+
+      audio.playTouchChime();
+
+      const star = document.createElement('div');
+      star.className = 'floating-star';
+      const symbols = ['✦', '✨', '⭐', '🌙', '♪'];
+      star.textContent = symbols[Math.floor(Math.random() * symbols.length)];
+      star.style.left = `${e.clientX}px`;
+      star.style.top = `${e.clientY}px`;
+      document.body.appendChild(star);
+      setTimeout(() => star.remove(), 1200);
+    }
+
+    function animateDreamScene() {
+      requestAnimationFrame(animateDreamScene);
+      const t = performance.now() * 0.001;
+
+      if (moonMesh) {
+        moonMesh.parent.position.y = Math.sin(t * 0.8) * 0.4;
+        moonMesh.parent.rotation.y = Math.sin(t * 0.4) * 0.12;
+        moonMesh.parent.rotation.z = Math.cos(t * 0.3) * 0.04;
+      }
+
+      if (moonAura) {
+        const pulse = 1 + Math.sin(t * 1.5) * 0.05;
+        moonAura.scale.set(pulse, pulse, pulse);
+      }
+
+      if (starsParticles) {
+        starsParticles.rotation.y = t * 0.015;
+      }
+
+      if (cloudsGroup) {
+        cloudsGroup.children.forEach((c, idx) => {
+          c.position.x += 0.003 * (idx % 2 === 0 ? 1 : -1);
+          if (c.position.x > 14) c.position.x = -14;
+          if (c.position.x < -14) c.position.x = 14;
+        });
+      }
+
+      renderer.render(scene, camera);
+    }
+
+    /* ==========================================================================
+       SLEEP TIMER LOGIC
+       ========================================================================== */
+    let sleepTimerTarget = null;
+    let timerCountdownInterval = null;
+
+    function setSleepTimer(minutes) {
+      if (timerCountdownInterval) clearInterval(timerCountdownInterval);
+      const badge = document.getElementById('timer-badge-text');
+
+      if (minutes === 0) {
+        sleepTimerTarget = null;
+        badge.textContent = '∞ Continuous';
+        return;
+      }
+
+      sleepTimerTarget = Date.now() + minutes * 60 * 1000;
+      updateTimerBadge();
+
+      timerCountdownInterval = setInterval(() => {
+        const remaining = Math.max(0, Math.round((sleepTimerTarget - Date.now()) / 1000));
+        if (remaining <= 0) {
+          clearInterval(timerCountdownInterval);
+          badge.textContent = '💤 Asleep';
+          audio.stop();
+          updatePlayStateUI();
+        } else {
+          updateTimerBadge();
+        }
+      }, 1000);
+    }
+
+    function updateTimerBadge() {
+      if (!sleepTimerTarget) return;
+      const remainingSec = Math.max(0, Math.round((sleepTimerTarget - Date.now()) / 1000));
+      const m = Math.floor(remainingSec / 60);
+      const s = remainingSec % 60;
+      document.getElementById('timer-badge-text').textContent = `⏱ ${m}m ${s < 10 ? '0' : ''}${s}s`;
+    }
+
+    /* ==========================================================================
+       UI EVENT WIRING & STATE SYNC
+       ========================================================================== */
+    function updatePlayStateUI() {
+      const btn = document.getElementById('btn-master-play');
+      const icon = document.getElementById('play-master-icon');
+      const label = document.getElementById('play-master-label');
+
+      if (audio.isPlaying && !audio.isMuted) {
+        btn.classList.remove('paused');
+        icon.textContent = '⏸';
+        label.textContent = 'Resting';
+      } else {
+        btn.classList.add('paused');
+        icon.textContent = '▶';
+        label.textContent = 'Play Sounds';
+      }
+    }
+
+    function updateSongDisplayUI() {
+      const song = SONG_CATALOG[audio.currentSongId];
+      if (song) {
+        document.getElementById('label-current-song').textContent = song.title;
+        document.querySelectorAll('.song-pill').forEach(btn => {
+          btn.classList.toggle('active', btn.dataset.song === audio.currentSongId);
+        });
+      }
+    }
+
+    document.getElementById('btn-master-play').addEventListener('click', () => {
+      if (audio.isPlaying) {
+        audio.stop();
+      } else {
+        audio.start();
+      }
+      updatePlayStateUI();
+    });
+
+    document.getElementById('btn-master-mute').addEventListener('click', () => {
+      const isMuted = audio.toggleMute();
+      document.getElementById('svg-volume-on').style.display = isMuted ? 'none' : 'block';
+      document.getElementById('svg-volume-off').style.display = isMuted ? 'block' : 'none';
+      updatePlayStateUI();
+    });
+
+    document.getElementById('btn-night-light').addEventListener('click', (e) => {
+      document.body.classList.toggle('night-light');
+      e.currentTarget.classList.toggle('active', document.body.classList.contains('night-light'));
+    });
+
+    // Quick dock song button opens selection modal
+    document.getElementById('btn-quick-song').addEventListener('click', () => {
+      document.getElementById('modal-settings').classList.add('open');
+    });
+
+    // Song Selection Pills
+    document.querySelectorAll('.song-pill').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const songId = e.currentTarget.dataset.song;
+        audio.setSong(songId);
+        updateSongDisplayUI();
+      });
+    });
+
+    const soundChips = [
+      { id: 'chip-lullaby', channel: 'Lullaby' },
+      { id: 'chip-womb', channel: 'Womb' },
+      { id: 'chip-air', channel: 'Air' },
+      { id: 'chip-water', channel: 'Water' }
+    ];
+
+    soundChips.forEach(({ id, channel }) => {
+      const el = document.getElementById(id);
+      el.classList.toggle('active', audio[`enable${channel}`]);
+      el.addEventListener('click', () => {
+        audio.init();
+        const active = audio.toggleChannel(channel);
+        el.classList.toggle('active', active);
+        if (!audio.isPlaying && active) {
+          audio.start();
+          updatePlayStateUI();
+        }
+      });
+    });
+
+    document.getElementById('btn-open-settings').addEventListener('click', () => {
+      document.getElementById('modal-settings').classList.add('open');
+    });
+
+    document.getElementById('btn-close-settings').addEventListener('click', () => {
+      document.getElementById('modal-settings').classList.remove('open');
+    });
+
+    document.getElementById('slider-master').addEventListener('input', (e) => {
+      audio.setMasterVolume(parseFloat(e.target.value) / 100);
+    });
+    document.getElementById('slider-lullaby').addEventListener('input', (e) => {
+      audio.setChannelVolume('Lullaby', parseFloat(e.target.value) / 100);
+    });
+    document.getElementById('slider-womb').addEventListener('input', (e) => {
+      audio.setChannelVolume('Womb', parseFloat(e.target.value) / 100);
+    });
+    document.getElementById('slider-air').addEventListener('input', (e) => {
+      audio.setChannelVolume('Air', parseFloat(e.target.value) / 100);
+    });
+    document.getElementById('slider-water').addEventListener('input', (e) => {
+      audio.setChannelVolume('Water', parseFloat(e.target.value) / 100);
+    });
+
+    document.querySelectorAll('.timer-pill').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        document.querySelectorAll('.timer-pill').forEach(b => b.classList.remove('active'));
+        e.target.classList.add('active');
+        const mins = parseInt(e.target.dataset.time, 10);
+        setSleepTimer(mins);
+      });
+    });
+
+    /* ==========================================================================
+       STARTUP SEQUENCE
+       ========================================================================== */
+    window.addEventListener('load', () => {
+      initDreamScene();
+
+      // UI updates from persistent values
+      updateSongDisplayUI();
+      document.getElementById('slider-master').value = Math.round(audio.volMaster * 100);
+      document.getElementById('slider-lullaby').value = Math.round(audio.volLullaby * 100);
+      document.getElementById('slider-womb').value = Math.round(audio.volWomb * 100);
+      document.getElementById('slider-air').value = Math.round(audio.volAir * 100);
+      document.getElementById('slider-water').value = Math.round(audio.volWater * 100);
+
+      const autoStart = () => {
+        if (!audio.isPlaying && !audio.isMuted) {
+          audio.start();
+          updatePlayStateUI();
+        }
+        window.removeEventListener('pointerdown', autoStart);
+      };
+      window.addEventListener('pointerdown', autoStart);
+    });
+  </script>
+</body>
+</html>
