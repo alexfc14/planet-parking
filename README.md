@@ -14,7 +14,7 @@ Live links to play:
 * [Ring Sudoku 💍](https://alexfc14.github.io/vibe-games/rings/play.html) | [Flowers 🌸](https://alexfc14.github.io/vibe-games/rings/petals.html)
 * [Blocks 🟥](https://alexfc14.github.io/vibe-games/blocks/play.html)
 * [Lawn mower 🚜](https://alexfc14.github.io/vibe-games/lawn-mower/play.html)
-* [Brown Noise 💤🔊](https://alexfc14.github.io/vibe-games/brown-noise/play.html)
+* [Brown Noise 💤🔊](https://alexfc14.github.io/vibe-games/brown-noise/play.html) | [Lullaby App 💤🎶](https://alexfc14.github.io/vibe-games/lullaby-app/play.html)
 * [Manhattan - Route Planner 🏗️🚲](https://alexfc14.github.io/vibe-games/manhattan/play.html)
 * [Home Duo 🔵⭕](https://alexfc14.github.io/vibe-games/home-duo/play.html)
 * [Congas 🚆](https://alexfc14.github.io/vibe-games/congas/play.html)
