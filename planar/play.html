@@ -475,7 +475,7 @@
   <div id="hud">
     <div class="hud-group">
       <div class="glass-card stat-pill interactive-pill" id="btn-level-select" title="Choose Level">
-        <span id="level-display">Level 1/14</span>
+        <span id="level-display">Level 1/20</span>
         <svg style="width: 14px; height: 14px; margin-left: 2px; fill: currentColor; opacity: 0.7;" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
       </div>
       <div class="glass-card stat-pill">
@@ -1180,6 +1180,193 @@
     ];
 
     /* ==========================================================================
+       PROCEDURAL PLANAR GRAPH GENERATOR (Levels 15 to 20)
+       Iteratively places random nodes and connects all non-crossing straight lines,
+       then thoroughly scrambles coordinates to ensure challenging puzzles.
+       ========================================================================== */
+    function distSqToSegment(p, v, w) {
+      const l2 = (v.x - w.x) ** 2 + (v.y - w.y) ** 2;
+      if (l2 === 0) return (p.x - v.x) ** 2 + (p.y - v.y) ** 2;
+      let t = ((p.x - v.x) * (w.x - v.x) + (p.y - v.y) * (w.y - v.y)) / l2;
+      t = Math.max(0, Math.min(1, t));
+      return (p.x - (v.x + t * (w.x - v.x))) ** 2 + (p.y - (v.y + t * (w.y - v.y))) ** 2;
+    }
+
+    function createRandomPlanarLevel(levelId, numNodes, seed) {
+      // Seeded Linear Congruential Generator for reproducible and persistent graphs
+      let currentSeed = seed;
+      function rand() {
+        currentSeed = (currentSeed * 1664525 + 1013904223) % 4294967296;
+        return currentSeed / 4294967296;
+      }
+      function randRange(min, max) {
+        return min + rand() * (max - min);
+      }
+
+      const planarNodes = [];
+      const planarSegments = [];
+      const edgeSet = new Set();
+
+      function edgeKey(u, v) {
+        return u < v ? `${u}_${v}` : `${v}_${u}`;
+      }
+
+      function canDrawEdge(pA, pB) {
+        if (edgeSet.has(edgeKey(pA.id, pB.id))) return false;
+        // Avoid passing too close to another vertex
+        for (let nd of planarNodes) {
+          if (nd.id === pA.id || nd.id === pB.id) continue;
+          if (distSqToSegment(nd, pA, pB) < 0.35) return false;
+        }
+        // Avoid intersecting any existing planar segment
+        for (let seg of planarSegments) {
+          if (seg.u === pA.id || seg.u === pB.id || seg.v === pA.id || seg.v === pB.id) {
+            continue;
+          }
+          if (checkSegmentsIntersection(pA, pB, seg.p1, seg.p2)) {
+            return false;
+          }
+        }
+        return true;
+      }
+
+      function tryAddEdge(pA, pB) {
+        if (canDrawEdge(pA, pB)) {
+          planarSegments.push({ u: pA.id, v: pB.id, p1: pA, p2: pB });
+          edgeSet.add(edgeKey(pA.id, pB.id));
+          return true;
+        }
+        return false;
+      }
+
+      // 1. Start with 2 base nodes connected by an edge
+      const p0 = { id: 'r0', x: -2.8, y: -0.5 };
+      const p1 = { id: 'r1', x: 2.8, y: 0.5 };
+      planarNodes.push(p0, p1);
+      tryAddEdge(p0, p1);
+
+      // 2. Iteratively place random nodes and connect with all possible non-crossing edges
+      for (let i = 2; i < numNodes; i++) {
+        let placed = false;
+        let attempts = 0;
+        let candidate = null;
+
+        while (!placed && attempts < 250) {
+          attempts++;
+          const candX = Math.round(randRange(-5.2, 5.2) * 10) / 10;
+          const candY = Math.round(randRange(-4.2, 4.2) * 10) / 10;
+          candidate = { id: 'r' + i, x: candX, y: candY };
+
+          // Keep minimum distance from existing nodes and segments
+          let tooClose = false;
+          for (let nd of planarNodes) {
+            if (Math.hypot(nd.x - candidate.x, nd.y - candidate.y) < 1.35) {
+              tooClose = true;
+              break;
+            }
+          }
+          if (tooClose) continue;
+
+          for (let seg of planarSegments) {
+            if (distSqToSegment(candidate, seg.p1, seg.p2) < 0.45) {
+              tooClose = true;
+              break;
+            }
+          }
+          if (tooClose) continue;
+
+          // Check if candidate can connect to at least 2 existing nodes
+          let connectable = 0;
+          for (let nd of planarNodes) {
+            if (canDrawEdge(candidate, nd)) connectable++;
+          }
+
+          if (connectable >= (planarNodes.length <= 3 ? 1 : 2)) {
+            placed = true;
+          }
+        }
+
+        if (!placed) {
+          // Fallback placement along perimeter
+          const angle = (i / numNodes) * Math.PI * 2;
+          candidate = {
+            id: 'r' + i,
+            x: Math.round(Math.cos(angle) * 4.6 * 10) / 10,
+            y: Math.round(Math.sin(angle) * 3.6 * 10) / 10
+          };
+        }
+
+        planarNodes.push(candidate);
+
+        // Sort potential edges by shortest distance to favor tight planar triangles
+        const potentialEdges = [];
+        for (let j = 0; j < planarNodes.length - 1; j++) {
+          const other = planarNodes[j];
+          potentialEdges.push({
+            other,
+            dist: Math.hypot(candidate.x - other.x, candidate.y - other.y)
+          });
+        }
+        potentialEdges.sort((a, b) => a.dist - b.dist);
+
+        potentialEdges.forEach(item => {
+          tryAddEdge(candidate, item.other);
+        });
+
+        // Opportunistically add edges between existing nodes that now can be linked
+        for (let a = 0; a < planarNodes.length; a++) {
+          for (let b = a + 1; b < planarNodes.length; b++) {
+            tryAddEdge(planarNodes[a], planarNodes[b]);
+          }
+        }
+      }
+
+      // 3. Scramble node positions for the puzzle challenge
+      const scrambledNodes = [];
+      for (let i = 0; i < numNodes; i++) {
+        let sx, sy, ok = false;
+        let sAttempts = 0;
+        while (!ok && sAttempts < 100) {
+          sAttempts++;
+          sx = Math.round(randRange(-5.2, 5.2) * 10) / 10;
+          sy = Math.round(randRange(-4.2, 4.2) * 10) / 10;
+          ok = true;
+          for (let sc of scrambledNodes) {
+            if (Math.hypot(sc.x - sx, sc.y - sy) < 1.35) {
+              ok = false;
+              break;
+            }
+          }
+        }
+        if (!ok) {
+          const ang = (i / numNodes) * Math.PI * 2 + 0.4;
+          sx = Math.round(Math.cos(ang) * 4.4 * 10) / 10;
+          sy = Math.round(Math.sin(ang) * 3.4 * 10) / 10;
+        }
+        scrambledNodes.push({ id: 'r' + i, x: sx, y: sy });
+      }
+
+      const finalEdges = [];
+      edgeSet.forEach(k => {
+        const [u, v] = k.split('_');
+        finalEdges.push([u, v]);
+      });
+
+      return {
+        id: levelId,
+        title: `Level ${levelId}: Random: ${numNodes} points`,
+        nodes: scrambledNodes,
+        edges: finalEdges
+      };
+    }
+
+    // Generate Levels 15 through 20 (incrementing from 12 to 17 nodes)
+    for (let lvl = 15; lvl <= 20; lvl++) {
+      const nodeCount = 12 + (lvl - 15);
+      LEVELS.push(createRandomPlanarLevel(lvl, nodeCount, 77700 + lvl * 1337));
+    }
+
+    /* ==========================================================================
        THREE.JS SCENE SETUP & GEOMETRIES
        ========================================================================== */
     const container = document.getElementById('canvas-container');
@@ -1666,7 +1853,7 @@
 
       if (isFinalLevel) {
         vicTitle.innerText = "Grandmaster of Planarity! 🏆";
-        vicSub.innerText = "You solved all 14 topological planar puzzles!";
+        vicSub.innerText = "You solved all 20 topological planar puzzles!";
         nextBtn.innerText = "Play Again from Start";
       } else {
         vicTitle.innerText = "Graph Untangled! 🎉";
