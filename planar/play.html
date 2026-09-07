@@ -2,13 +2,13 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <title>Planar - Untangle the Graph</title>
   <style>
     :root {
       --bg-gradient: radial-gradient(circle at 50% 40%, #1e2638 0%, #0d111a 100%);
-      --panel-bg: rgba(22, 29, 44, 0.78);
-      --panel-border: rgba(255, 255, 255, 0.12);
+      --panel-bg: rgba(22, 29, 44, 0.85);
+      --panel-border: rgba(255, 255, 255, 0.14);
       --accent-cyan: #38ef7d;
       --accent-blue: #11998e;
       --warning-red: #ff4757;
@@ -21,29 +21,29 @@
       box-sizing: border-box;
       user-select: none;
       -webkit-user-select: none;
+      -webkit-touch-callout: none;
       margin: 0;
       padding: 0;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     }
 
-    body, html {
+    body, html, #canvas-container, canvas {
       width: 100%;
       height: 100%;
       overflow: hidden;
       background: #0d111a;
       color: var(--text-main);
+      touch-action: none !important;
+      overscroll-behavior: none !important;
     }
 
     #canvas-container {
-      width: 100%;
-      height: 100%;
       position: absolute;
       top: 0;
       left: 0;
       z-index: 1;
     }
 
-    /* HUD overlay */
     #hud {
       position: absolute;
       top: 0;
@@ -81,6 +81,41 @@
       display: flex;
       align-items: center;
       gap: 8px;
+    }
+
+    .level-info-col {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 6px;
+    }
+
+    .level-name-badge {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      letter-spacing: 0.4px;
+      padding: 4px 12px;
+      background: var(--panel-bg);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid var(--panel-border);
+      border-radius: 10px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+      max-width: 220px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      cursor: pointer;
+      pointer-events: auto;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .level-name-badge:hover {
+      color: var(--text-main);
+      background: rgba(255, 255, 255, 0.12);
+      border-color: rgba(255, 255, 255, 0.25);
+      transform: translateY(-1px);
     }
 
     .interactive-pill {
@@ -154,7 +189,6 @@
       fill: currentColor;
     }
 
-    /* Modals */
     .modal-backdrop {
       position: absolute;
       top: 0;
@@ -182,7 +216,7 @@
       background: var(--panel-bg);
       border: 1px solid var(--panel-border);
       border-radius: 20px;
-      padding: 32px;
+      padding: 28px;
       max-width: 460px;
       width: 100%;
       text-align: center;
@@ -241,6 +275,20 @@
       gap: 10px;
     }
 
+    .btn-row {
+      display: flex;
+      gap: 10px;
+      width: 100%;
+    }
+
+    .btn-row .btn {
+      flex: 1;
+      min-width: 0;
+      padding: 12px 10px;
+      font-size: 14px;
+      white-space: nowrap;
+    }
+
     .btn {
       padding: 13px 20px;
       border-radius: 12px;
@@ -285,15 +333,15 @@
       color: var(--text-main);
     }
 
-    /* Level Selector Grid */
     .level-select-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 10px;
-      max-height: 52vh;
+      max-height: 50vh;
       overflow-y: auto;
       padding: 4px;
       margin-bottom: 20px;
+      -webkit-overflow-scrolling: touch;
     }
 
     @media (max-width: 460px) {
@@ -319,7 +367,6 @@
     .level-select-item:hover {
       background: rgba(255, 255, 255, 0.12);
       border-color: rgba(255, 255, 255, 0.25);
-      transform: translateY(-2px);
     }
 
     .level-select-item.current-level {
@@ -359,7 +406,6 @@
       margin-top: 2px;
     }
 
-    /* Instructions & toast */
     #hint-pill {
       position: absolute;
       bottom: 24px;
@@ -372,9 +418,9 @@
       pointer-events: none;
       text-align: center;
       transition: opacity 0.5s ease;
+      max-width: 90%;
     }
 
-    /* Scoreboard Comparison Table */
     .scoreboard-table {
       width: 100%;
       margin: 16px 0;
@@ -398,7 +444,6 @@
       font-weight: 700;
     }
 
-    /* Range sliders in settings */
     .setting-row {
       display: flex;
       justify-content: space-between;
@@ -448,7 +493,6 @@
       transform: translateX(20px);
     }
 
-    /* Replay status badge */
     #recap-banner {
       position: absolute;
       top: 80px;
@@ -465,18 +509,32 @@
       letter-spacing: 0.5px;
       display: none;
     }
+
+    #inspect-solved-banner {
+      position: absolute;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 60;
+      display: none;
+      align-items: center;
+      gap: 14px;
+      padding: 10px 18px;
+    }
   </style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
 <body>
   <div id="canvas-container"></div>
 
-  <!-- HUD overlay -->
   <div id="hud">
-    <div class="hud-group">
-      <div class="glass-card stat-pill interactive-pill" id="btn-level-select" title="Choose Level">
-        <span id="level-display">Level 1/20</span>
-        <svg style="width: 14px; height: 14px; margin-left: 2px; fill: currentColor; opacity: 0.7;" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+    <div class="hud-group" style="align-items: flex-start;">
+      <div class="level-info-col">
+        <div class="glass-card stat-pill interactive-pill" id="btn-level-select" title="Choose Level">
+          <span id="level-display">Level 1/23</span>
+          <svg style="width: 14px; height: 14px; margin-left: 2px; fill: currentColor; opacity: 0.7;" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+        </div>
+        <div class="level-name-badge" id="level-name-display" title="Choose Level">Diamond Quadrant</div>
       </div>
       <div class="glass-card stat-pill">
         <span>Crossings:</span>
@@ -488,6 +546,9 @@
       <div class="glass-card stat-pill">
         <span id="time-display">00:00</span>
       </div>
+      <button class="icon-btn" id="btn-custom-dice" title="Configure Random Graph" style="display: none; font-size: 18px;">
+        🎲
+      </button>
       <button class="icon-btn" id="btn-undo" title="Undo Move">
         <svg viewBox="0 0 24 24"><path d="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z"/></svg>
       </button>
@@ -514,18 +575,47 @@
     ● SPEED RECAP PLAYBACK
   </div>
 
+  <div id="inspect-solved-banner" class="glass-card">
+    <span style="font-weight: 600; font-size: 14px; color: var(--accent-cyan);">✨ Arranging Solved Layout</span>
+    <button class="btn btn-primary" id="btn-return-results" style="padding: 6px 14px; font-size: 13px;">View Results 🏆</button>
+  </div>
+
   <!-- LEVEL SELECT MODAL -->
   <div class="modal-backdrop" id="modal-level-select">
     <div class="modal-dialog">
       <h2 class="modal-title">Select Level</h2>
       <p class="modal-subtitle">Explore and solve any planar topology</p>
       
-      <div class="level-select-grid" id="level-grid-container">
-        <!-- Rendered dynamically -->
-      </div>
+      <div class="level-select-grid" id="level-grid-container"></div>
 
       <div class="btn-stack">
         <button class="btn btn-secondary" id="btn-close-levels">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- RANDOM GRAPH CONFIG MODAL -->
+  <div class="modal-backdrop" id="modal-random-config">
+    <div class="modal-dialog">
+      <h2 class="modal-title">Random Graph 🎲</h2>
+      <p class="modal-subtitle">Generate a custom planar puzzle with chosen seed</p>
+      
+      <div class="setting-row" style="margin-bottom: 20px;">
+        <span>Nodes: <strong id="val-nodes-count" style="color: var(--accent-cyan); font-size: 16px;">14</strong></span>
+        <input type="range" id="input-nodes-count" min="6" max="25" value="14" style="width: 140px; accent-color: var(--accent-cyan); cursor: pointer;" />
+      </div>
+
+      <div class="setting-row" style="margin-bottom: 24px;">
+        <span>Seed:</span>
+        <div style="display: flex; gap: 8px; align-items: center;">
+          <input type="number" id="input-seed" value="7" style="width: 110px; padding: 8px 10px; background: rgba(255,255,255,0.08); border: 1px solid var(--panel-border); border-radius: 8px; color: var(--text-main); font-weight: 600; text-align: center;" />
+          <button class="icon-btn" id="btn-random-seed" title="Roll Random Seed" style="width: 38px; height: 38px; font-size: 16px;">🎲</button>
+        </div>
+      </div>
+
+      <div class="btn-stack">
+        <button class="btn btn-primary" id="btn-apply-random">Generate & Play</button>
+        <button class="btn btn-secondary" id="btn-close-random">Cancel</button>
       </div>
     </div>
   </div>
@@ -549,10 +639,15 @@
 
       <div class="btn-stack">
         <button class="btn btn-primary" id="btn-vic-next">Next Level</button>
-        <button class="btn btn-secondary" id="btn-vic-replay-run">Speed Recap & WebM</button>
-        <button class="btn btn-secondary" id="btn-vic-friend">Pass to a Friend</button>
-        <button class="btn btn-secondary" id="btn-vic-levels">Select Level</button>
-        <button class="btn btn-tertiary" id="btn-vic-retry">Play Again</button>
+        <div class="btn-row">
+          <button class="btn btn-secondary" id="btn-vic-replay-run">Speed Recap</button>
+          <button class="btn btn-secondary" id="btn-vic-friend">Pass to a Friend</button>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-secondary" id="btn-vic-levels">Select Level</button>
+          <button class="btn btn-secondary" id="btn-vic-retry">Play Again</button>
+        </div>
+        <button class="btn btn-tertiary" id="btn-vic-see-solved">See Solved</button>
       </div>
     </div>
   </div>
@@ -572,9 +667,7 @@
             <th>Result</th>
           </tr>
         </thead>
-        <tbody id="scoreboard-body">
-          <!-- Filled dynamically -->
-        </tbody>
+        <tbody id="scoreboard-body"></tbody>
       </table>
 
       <div class="btn-stack">
@@ -592,7 +685,6 @@
       
       <div class="btn-stack">
         <button class="btn btn-primary" id="btn-download-webm">Download Recap (.webm)</button>
-        <button class="btn btn-recap-done" id="btn-recap-done" style="display:none;"></button>
         <button class="btn btn-secondary" id="btn-recap-back">Back to Level Complete</button>
       </div>
     </div>
@@ -648,9 +740,22 @@
   </div>
 
   <script>
-    /* ==========================================================================
-       STORAGE UTILITIES (localStorage with cookie fallback for sandbox)
-       ========================================================================== */
+    // Prevent iOS Safari pinch, double-tap zoom, and gesture crashes
+    document.addEventListener('gesturestart', (e) => e.preventDefault(), { passive: false });
+    document.addEventListener('gesturechange', (e) => e.preventDefault(), { passive: false });
+    document.addEventListener('gestureend', (e) => e.preventDefault(), { passive: false });
+
+    let lastTouchEnd = 0;
+    document.addEventListener('touchend', (e) => {
+      const now = Date.now();
+      if (now - lastTouchEnd <= 300) {
+        if (!e.target.closest('input')) {
+          e.preventDefault();
+        }
+      }
+      lastTouchEnd = now;
+    }, { passive: false });
+
     const Storage = {
       set(key, val) {
         try {
@@ -677,9 +782,6 @@
       }
     };
 
-    /* ==========================================================================
-       SYNTHESIZER & AUDIO SYSTEM (Web Audio API)
-       ========================================================================== */
     if (navigator.audioSession) {
       navigator.audioSession.type = "playback";
     }
@@ -849,10 +951,6 @@
 
     const sound = new SoundEngine();
 
-    /* ==========================================================================
-       LEVEL DEFINITIONS (100% Planar, Mathematically Verified)
-       14 Progressive Topologies with Strict Euler Planarity
-       ========================================================================== */
     const LEVELS = [
       {
         id: 1,
@@ -1115,7 +1213,6 @@
       {
         id: 13,
         title: "Level 13: Crown Bipartite Mesh",
-        // Guaranteed Planar Bipartite Quadrangulation: V = 14, E = 24, F = 12 (E = 2V - 4)
         nodes: [
           { id: 'c0', x: -4.5, y: -3.5 },
           { id: 'd0', x: 4.5, y: 3.5 },
@@ -1133,24 +1230,18 @@
           { id: 'd6', x: 0.0, y: 5.0 }
         ],
         edges: [
-          // Outer 6-cycle (alternating C-D)
           ['c0', 'd0'], ['d0', 'c1'], ['c1', 'd1'], ['d1', 'c2'], ['c2', 'd2'], ['d2', 'c0'],
-          // Inner 6-cycle (alternating D-C)
           ['d3', 'c3'], ['c3', 'd4'], ['d4', 'c4'], ['c4', 'd5'], ['d5', 'c5'], ['c5', 'd3'],
-          // Transversal prism rungs
           ['c0', 'd3'], ['d0', 'c3'],
           ['c1', 'd4'], ['d1', 'c4'],
           ['c2', 'd5'], ['d2', 'c5'],
-          // Cap c6 connecting to outer d-vertices
           ['c6', 'd0'], ['c6', 'd1'], ['c6', 'd2'],
-          // Cap d6 connecting to inner c-vertices
           ['d6', 'c3'], ['d6', 'c4'], ['d6', 'c5']
         ]
       },
       {
         id: 14,
         title: "Level 14: Grand Icosahedral Geodesic",
-        // The regular icosahedron graph: Maximal planar, 5-regular: V = 12, E = 3V - 6 = 30 edges
         nodes: [
           { id: 'top_apex', x: 0.0, y: 5.2 },
           { id: 'bot_apex', x: 0.0, y: -5.2 },
@@ -1176,14 +1267,83 @@
           ['q0', 'q4'], ['q4', 'q2'], ['q2', 'q1'], ['q1', 'q3'], ['q3', 'q0'],
           ['bot_apex', 'q0'], ['bot_apex', 'q1'], ['bot_apex', 'q2'], ['bot_apex', 'q3'], ['bot_apex', 'q4']
         ]
+      },
+      {
+        id: 15,
+        title: "Level 15: Goldner-Harary",
+        // The Goldner-Harary graph: 11 vertices, 27 edges (Maximal Planar, non-Hamiltonian)
+        nodes: [
+          { id: 'top', x: -1.8, y: -4.6 },
+          { id: 'bot', x: 2.2, y: 4.6 },
+          { id: 'c', x: -4.6, y: 2.2 },
+          { id: 'w', x: 4.8, y: -2.0 },
+          { id: 'e', x: -3.8, y: -2.4 },
+          { id: 'ul', x: 3.6, y: 2.2 },
+          { id: 'ur', x: -1.2, y: 4.4 },
+          { id: 'll', x: 1.4, y: -4.2 },
+          { id: 'lr', x: 0.2, y: 0.4 },
+          { id: 'l_out', x: 5.2, y: 0.2 },
+          { id: 'r_out', x: -5.2, y: -0.2 }
+        ],
+        edges: [
+          ['top', 'bot'],
+          ['top', 'c'], ['bot', 'c'],
+          ['w', 'c'], ['c', 'e'],
+          ['top', 'w'], ['bot', 'w'],
+          ['top', 'e'], ['bot', 'e'],
+          ['ul', 'top'], ['ul', 'w'], ['ul', 'c'],
+          ['ur', 'top'], ['ur', 'c'], ['ur', 'e'],
+          ['ll', 'bot'], ['ll', 'w'], ['ll', 'c'],
+          ['lr', 'bot'], ['lr', 'c'], ['lr', 'e'],
+          ['l_out', 'top'], ['l_out', 'bot'], ['l_out', 'w'],
+          ['r_out', 'top'], ['r_out', 'bot'], ['r_out', 'e']
+        ]
+      },
+      {
+        id: 16,
+        title: "Level 16: Dodecahedron",
+        // Schlegel diagram of regular dodecahedron: 20 vertices, 30 edges, 12 pentagonal faces
+        nodes: [
+          { id: 'a0', x: -1.5, y: -4.2 },
+          { id: 'a1', x: -4.8, y: 1.8 },
+          { id: 'a2', x: 2.2, y: 4.5 },
+          { id: 'a3', x: 5.2, y: -2.0 },
+          { id: 'a4', x: 0.0, y: 2.5 },
+          { id: 'b0', x: 4.2, y: 3.5 },
+          { id: 'b1', x: 1.8, y: -3.8 },
+          { id: 'b2', x: -5.0, y: -2.2 },
+          { id: 'b3', x: -2.5, y: 4.0 },
+          { id: 'b4', x: 5.0, y: 0.5 },
+          { id: 'c0', x: -3.5, y: -0.5 },
+          { id: 'c1', x: 3.5, y: -4.0 },
+          { id: 'c2', x: 0.0, y: -1.5 },
+          { id: 'c3', x: -3.8, y: 2.5 },
+          { id: 'c4', x: 2.8, y: 1.5 },
+          { id: 'd0', x: -1.8, y: 0.8 },
+          { id: 'd1', x: 1.5, y: -1.0 },
+          { id: 'd2', x: -0.5, y: 4.8 },
+          { id: 'd3', x: 3.8, y: -1.8 },
+          { id: 'd4', x: -4.5, y: -4.0 }
+        ],
+        edges: [
+          // Outer pentagon cycle A
+          ['a0', 'a1'], ['a1', 'a2'], ['a2', 'a3'], ['a3', 'a4'], ['a4', 'a0'],
+          // Radial connectors A -> B
+          ['a0', 'b0'], ['a1', 'b1'], ['a2', 'b2'], ['a3', 'b3'], ['a4', 'b4'],
+          // Alternating 10-cycle between B and C
+          ['b0', 'c0'], ['b0', 'c1'],
+          ['b1', 'c1'], ['b1', 'c2'],
+          ['b2', 'c2'], ['b2', 'c3'],
+          ['b3', 'c3'], ['b3', 'c4'],
+          ['b4', 'c4'], ['b4', 'c0'],
+          // Radial connectors C -> D
+          ['c0', 'd0'], ['c1', 'd1'], ['c2', 'd2'], ['c3', 'd3'], ['c4', 'd4'],
+          // Inner pentagon cycle D
+          ['d0', 'd1'], ['d1', 'd2'], ['d2', 'd3'], ['d3', 'd4'], ['d4', 'd0']
+        ]
       }
     ];
 
-    /* ==========================================================================
-       PROCEDURAL PLANAR GRAPH GENERATOR (Levels 15 to 20)
-       Iteratively places random nodes and connects all non-crossing straight lines,
-       then thoroughly scrambles coordinates to ensure challenging puzzles.
-       ========================================================================== */
     function distSqToSegment(p, v, w) {
       const l2 = (v.x - w.x) ** 2 + (v.y - w.y) ** 2;
       if (l2 === 0) return (p.x - v.x) ** 2 + (p.y - v.y) ** 2;
@@ -1193,7 +1353,6 @@
     }
 
     function createRandomPlanarLevel(levelId, numNodes, seed) {
-      // Seeded Linear Congruential Generator for reproducible and persistent graphs
       let currentSeed = seed;
       function rand() {
         currentSeed = (currentSeed * 1664525 + 1013904223) % 4294967296;
@@ -1213,12 +1372,10 @@
 
       function canDrawEdge(pA, pB) {
         if (edgeSet.has(edgeKey(pA.id, pB.id))) return false;
-        // Avoid passing too close to another vertex
         for (let nd of planarNodes) {
           if (nd.id === pA.id || nd.id === pB.id) continue;
           if (distSqToSegment(nd, pA, pB) < 0.35) return false;
         }
-        // Avoid intersecting any existing planar segment
         for (let seg of planarSegments) {
           if (seg.u === pA.id || seg.u === pB.id || seg.v === pA.id || seg.v === pB.id) {
             continue;
@@ -1239,13 +1396,11 @@
         return false;
       }
 
-      // 1. Start with 2 base nodes connected by an edge
       const p0 = { id: 'r0', x: -2.8, y: -0.5 };
       const p1 = { id: 'r1', x: 2.8, y: 0.5 };
       planarNodes.push(p0, p1);
       tryAddEdge(p0, p1);
 
-      // 2. Iteratively place random nodes and connect with all possible non-crossing edges
       for (let i = 2; i < numNodes; i++) {
         let placed = false;
         let attempts = 0;
@@ -1257,7 +1412,6 @@
           const candY = Math.round(randRange(-4.2, 4.2) * 10) / 10;
           candidate = { id: 'r' + i, x: candX, y: candY };
 
-          // Keep minimum distance from existing nodes and segments
           let tooClose = false;
           for (let nd of planarNodes) {
             if (Math.hypot(nd.x - candidate.x, nd.y - candidate.y) < 1.35) {
@@ -1275,7 +1429,6 @@
           }
           if (tooClose) continue;
 
-          // Check if candidate can connect to at least 2 existing nodes
           let connectable = 0;
           for (let nd of planarNodes) {
             if (canDrawEdge(candidate, nd)) connectable++;
@@ -1287,7 +1440,6 @@
         }
 
         if (!placed) {
-          // Fallback placement along perimeter
           const angle = (i / numNodes) * Math.PI * 2;
           candidate = {
             id: 'r' + i,
@@ -1298,7 +1450,6 @@
 
         planarNodes.push(candidate);
 
-        // Sort potential edges by shortest distance to favor tight planar triangles
         const potentialEdges = [];
         for (let j = 0; j < planarNodes.length - 1; j++) {
           const other = planarNodes[j];
@@ -1313,7 +1464,6 @@
           tryAddEdge(candidate, item.other);
         });
 
-        // Opportunistically add edges between existing nodes that now can be linked
         for (let a = 0; a < planarNodes.length; a++) {
           for (let b = a + 1; b < planarNodes.length; b++) {
             tryAddEdge(planarNodes[a], planarNodes[b]);
@@ -1321,7 +1471,6 @@
         }
       }
 
-      // 3. Scramble node positions for the puzzle challenge
       const scrambledNodes = [];
       for (let i = 0; i < numNodes; i++) {
         let sx, sy, ok = false;
@@ -1354,21 +1503,50 @@
 
       return {
         id: levelId,
-        title: `Level ${levelId}: Random: ${numNodes} points`,
+        title: `Level ${levelId}: Gen${numNodes}`,
         nodes: scrambledNodes,
         edges: finalEdges
       };
     }
 
-    // Generate Levels 15 through 20 (incrementing from 12 to 17 nodes)
-    for (let lvl = 15; lvl <= 20; lvl++) {
-      const nodeCount = 12 + (lvl - 15);
+    // Build Levels 17 through 22 (Gen12 to Gen17)
+    for (let lvl = 17; lvl <= 22; lvl++) {
+      const nodeCount = 12 + (lvl - 17);
       LEVELS.push(createRandomPlanarLevel(lvl, nodeCount, 77700 + lvl * 1337));
     }
 
-    /* ==========================================================================
-       THREE.JS SCENE SETUP & GEOMETRIES
-       ========================================================================== */
+    // Level 23: Customizable Random Planar Graph
+    const customRandomState = {
+      nodesCount: Storage.get('planar_custom_nodes', 14),
+      seed: Storage.get('planar_custom_seed', 7)
+    };
+
+    const customLevelObj = createRandomPlanarLevel(23, customRandomState.nodesCount, customRandomState.seed);
+    customLevelObj.isCustomRandom = true;
+    customLevelObj.title = "Level 23: Random 🎲";
+    customLevelObj.nodesCount = customRandomState.nodesCount;
+    customLevelObj.currentSeed = customRandomState.seed;
+    customLevelObj.customTitle = `Random ${customRandomState.nodesCount}N - Seed ${customRandomState.seed}`;
+    LEVELS.push(customLevelObj);
+
+    function regenerateCustomLevel(numNodes, seed) {
+      customRandomState.nodesCount = numNodes;
+      customRandomState.seed = seed;
+      Storage.set('planar_custom_nodes', numNodes);
+      Storage.set('planar_custom_seed', seed);
+
+      const regenerated = createRandomPlanarLevel(23, numNodes, seed);
+      const lvlCustom = LEVELS.find(l => l.isCustomRandom);
+      if (lvlCustom) {
+        lvlCustom.nodes = regenerated.nodes;
+        lvlCustom.edges = regenerated.edges;
+        lvlCustom.nodesCount = numNodes;
+        lvlCustom.currentSeed = seed;
+        lvlCustom.customTitle = `Random ${numNodes}N - Seed ${seed}`;
+        lvlCustom.title = "Level 23: Random 🎲";
+      }
+    }
+
     const container = document.getElementById('canvas-container');
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x0e131d);
@@ -1377,14 +1555,13 @@
     camera.position.set(0, 0, 26);
     camera.lookAt(0, 0, 0);
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, preserveDrawingBuffer: true });
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, preserveDrawingBuffer: true, powerPreference: "high-performance" });
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     container.appendChild(renderer.domElement);
 
-    // Background textured plane
     const backdropGeo = new THREE.PlaneGeometry(80, 80);
     const backdropMat = new THREE.MeshStandardMaterial({
       color: 0x141a27,
@@ -1396,15 +1573,14 @@
     backdrop.receiveShadow = true;
     scene.add(backdrop);
 
-    // Lighting
-    const ambLight = new THREE.AmbientLight(0xffffff, 0.6);
+    const ambLight = new THREE.AmbientLight(0xffffff, 0.65);
     scene.add(ambLight);
 
     const dirLight = new THREE.DirectionalLight(0xffffff, 0.9);
     dirLight.position.set(10, 15, 20);
     dirLight.castShadow = true;
-    dirLight.shadow.mapSize.width = 2048;
-    dirLight.shadow.mapSize.height = 2048;
+    dirLight.shadow.mapSize.width = 1024;
+    dirLight.shadow.mapSize.height = 1024;
     dirLight.shadow.camera.near = 0.5;
     dirLight.shadow.camera.far = 60;
     dirLight.shadow.camera.left = -15;
@@ -1418,10 +1594,15 @@
     pointLight.position.set(0, 0, 8);
     scene.add(pointLight);
 
-    // Reusable Materials & Geometries
-    const nodeGeo = new THREE.SphereGeometry(0.7, 32, 32);
-    const jointGeo = new THREE.SphereGeometry(0.42, 24, 24);
-    const markerGeo = new THREE.RingGeometry(0.2, 0.45, 24);
+    // Reusable Materials & Shared Geometries (ZERO allocations during game drag)
+    const nodeGeo = new THREE.SphereGeometry(0.7, 24, 24);
+    const jointGeo = new THREE.SphereGeometry(0.42, 18, 18);
+    const markerGeo = new THREE.RingGeometry(0.2, 0.45, 20);
+
+    // Shared unit cylinder centered at p1 extending along +Z
+    const sharedCylinderGeo = new THREE.CylinderGeometry(0.16, 0.16, 1, 12);
+    sharedCylinderGeo.translate(0, 0.5, 0);
+    sharedCylinderGeo.rotateX(Math.PI / 2);
 
     const nodeMat = new THREE.MeshStandardMaterial({
       color: 0x38ef7d,
@@ -1458,14 +1639,13 @@
       side: THREE.DoubleSide
     });
 
-    /* ==========================================================================
-       GAME STATE & LOGIC
-       ========================================================================== */
     let currentLevelIndex = 0;
     let nodes = [];
     let edges = [];
-    let edgeMeshes = [];
-    let crossingMarkers = [];
+
+    // Memory-safe pools (prevents WebKit GPU buffer exhaustion crash on iPad)
+    const edgeMeshPool = [];
+    const markerMeshPool = [];
 
     let moveHistory = [];
     let moveCount = 0;
@@ -1474,23 +1654,23 @@
     let timerInterval = null;
     let isPaused = false;
     let isLevelCompleted = false;
+    let isInspectingSolved = false;
 
-    // Pass-to-friend data
     let passFriendMode = false;
     let p1Stats = null;
     let p2Stats = null;
 
-    // Speed Recap & Recording
     let isReplaying = false;
     let recordedChunks = [];
     let mediaRecorder = null;
     let webmBlobUrl = null;
 
-    // Raycasting & Interaction
     const raycaster = new THREE.Raycaster();
     const mouse = new THREE.Vector2();
     const planeZ = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
     const planeIntersection = new THREE.Vector3();
+    const _v1 = new THREE.Vector3();
+    const _v2 = new THREE.Vector3();
 
     let selectedNode = null;
     let isDraggingNode = false;
@@ -1499,9 +1679,6 @@
     let isPointerMoved = false;
     let jointIdCounter = 1;
 
-    /* ==========================================================================
-       GEOMETRY HELPERS: Line Intersection
-       ========================================================================== */
     function checkSegmentsIntersection(p1, p2, p3, p4) {
       function ccw(A, B, C) {
         return (C.y - A.y) * (B.x - A.x) > (B.y - A.y) * (C.x - A.x);
@@ -1536,12 +1713,10 @@
       return null;
     }
 
-    /* ==========================================================================
-       BUILD & UPDATE GRAPH SCENE
-       ========================================================================== */
     function loadLevel(levelIdx, preservePassFriend = false) {
       currentLevelIndex = levelIdx % LEVELS.length;
       const levelData = LEVELS[currentLevelIndex];
+      Storage.set('planar_current_level', currentLevelIndex);
 
       if (!preservePassFriend) {
         passFriendMode = false;
@@ -1549,9 +1724,12 @@
         p2Stats = null;
       }
 
+      // Hide all pooled edge meshes & markers
+      edgeMeshPool.forEach(m => { m.visible = false; });
+      markerMeshPool.forEach(m => { m.visible = false; });
+
+      // Remove current nodes from scene
       nodes.forEach(n => scene.remove(n.mesh));
-      clearEdgeMeshes();
-      clearCrossingMarkers();
 
       nodes = [];
       edges = [];
@@ -1559,6 +1737,7 @@
       moveCount = 0;
       jointIdCounter = 1;
       isLevelCompleted = false;
+      isInspectingSolved = false;
       selectedNode = null;
       isDraggingNode = false;
 
@@ -1590,51 +1769,36 @@
         });
       });
 
-      // Update UI Header
-      document.getElementById('level-display').innerText = `Level ${currentLevelIndex + 1}/${LEVELS.length}`;
+      const diceBtn = document.getElementById('btn-custom-dice');
+      const levelNameEl = document.getElementById('level-name-display');
+      if (levelData.isCustomRandom) {
+        document.getElementById('level-display').innerText = `Level ${currentLevelIndex + 1}/${LEVELS.length} 🎲`;
+        if (levelNameEl) {
+          levelNameEl.innerText = levelData.customTitle || `Random ${levelData.nodesCount}N - Seed ${levelData.currentSeed}`;
+          levelNameEl.title = levelNameEl.innerText;
+        }
+        if (diceBtn) diceBtn.style.display = 'flex';
+      } else {
+        document.getElementById('level-display').innerText = `Level ${currentLevelIndex + 1}/${LEVELS.length}`;
+        if (levelNameEl) {
+          const rawName = levelData.title.replace(/^Level \d+:\s*/, '');
+          levelNameEl.innerText = rawName;
+          levelNameEl.title = rawName;
+        }
+        if (diceBtn) diceBtn.style.display = 'none';
+      }
+
       closeAllModals();
       resetTimer();
       startTimer();
       updateEdgesAndCrossings();
     }
 
-    function clearEdgeMeshes() {
-      edgeMeshes.forEach(em => scene.remove(em.mesh));
-      edgeMeshes = [];
-    }
-
-    function clearCrossingMarkers() {
-      crossingMarkers.forEach(m => scene.remove(m));
-      crossingMarkers = [];
-    }
-
     function getNode(id) {
       return nodes.find(n => n.id === id);
     }
 
-    function createCylinderConnector(p1, p2, isCrossing) {
-      const v1 = new THREE.Vector3(p1.x, p1.y, 0);
-      const v2 = new THREE.Vector3(p2.x, p2.y, 0);
-      const dist = v1.distanceTo(v2);
-      const radius = 0.16;
-
-      const geom = new THREE.CylinderGeometry(radius, radius, Math.max(dist, 0.001), 16);
-      geom.translate(0, dist / 2, 0);
-      geom.rotateX(Math.PI / 2);
-
-      const mat = isCrossing ? edgeCrossMat : edgeNormalMat;
-      const mesh = new THREE.Mesh(geom, mat);
-      mesh.position.copy(v1);
-      mesh.lookAt(v2);
-      mesh.castShadow = true;
-      mesh.receiveShadow = true;
-      return mesh;
-    }
-
     function updateEdgesAndCrossings() {
-      clearEdgeMeshes();
-      clearCrossingMarkers();
-
       const activeSegments = [];
 
       edges.forEach(edge => {
@@ -1674,34 +1838,63 @@
         }
       }
 
-      activeSegments.forEach(seg => {
-        const mesh = createCylinderConnector(seg.p1, seg.p2, seg.isCrossing);
-        mesh.userData = {
-          edgeId: seg.edgeId,
-          segIndex: seg.segIndex,
-          startNodeId: seg.startNodeId,
-          endNodeId: seg.endNodeId
-        };
-        scene.add(mesh);
-        edgeMeshes.push({
-          edgeId: seg.edgeId,
-          segIndex: seg.segIndex,
-          mesh: mesh,
-          startNodeId: seg.startNodeId,
-          endNodeId: seg.endNodeId
-        });
-      });
+      // Memory-safe Edge Mesh Pool reuse
+      for (let i = 0; i < activeSegments.length; i++) {
+        const seg = activeSegments[i];
+        let mesh = edgeMeshPool[i];
 
-      const showHighlights = document.getElementById('set-highlights').checked;
-      if (showHighlights) {
-        crossingPoints.forEach(pt => {
-          const marker = new THREE.Mesh(markerGeo, markerMat);
-          marker.position.set(pt.x, pt.y, 0.05);
-          scene.add(marker);
-          crossingMarkers.push(marker);
-        });
+        if (!mesh) {
+          mesh = new THREE.Mesh(sharedCylinderGeo, seg.isCrossing ? edgeCrossMat : edgeNormalMat);
+          mesh.castShadow = true;
+          mesh.receiveShadow = true;
+          scene.add(mesh);
+          edgeMeshPool.push(mesh);
+        } else {
+          mesh.visible = true;
+          mesh.material = seg.isCrossing ? edgeCrossMat : edgeNormalMat;
+        }
+
+        _v1.set(seg.p1.x, seg.p1.y, 0);
+        _v2.set(seg.p2.x, seg.p2.y, 0);
+        const dist = _v1.distanceTo(_v2);
+
+        mesh.position.copy(_v1);
+        mesh.lookAt(_v2);
+        mesh.scale.set(1, 1, Math.max(dist, 0.001));
+
+        mesh.userData.edgeId = seg.edgeId;
+        mesh.userData.segIndex = seg.segIndex;
+        mesh.userData.startNodeId = seg.startNodeId;
+        mesh.userData.endNodeId = seg.endNodeId;
       }
 
+      // Hide unused pooled edge meshes
+      for (let i = activeSegments.length; i < edgeMeshPool.length; i++) {
+        edgeMeshPool[i].visible = false;
+      }
+
+      // Memory-safe Crossing Marker Pool reuse
+      const showHighlights = document.getElementById('set-highlights').checked;
+      const numMarkers = showHighlights ? crossingPoints.length : 0;
+
+      for (let i = 0; i < numMarkers; i++) {
+        const pt = crossingPoints[i];
+        let marker = markerMeshPool[i];
+        if (!marker) {
+          marker = new THREE.Mesh(markerGeo, markerMat);
+          scene.add(marker);
+          markerMeshPool.push(marker);
+        } else {
+          marker.visible = true;
+        }
+        marker.position.set(pt.x, pt.y, 0.05);
+      }
+
+      for (let i = numMarkers; i < markerMeshPool.length; i++) {
+        markerMeshPool[i].visible = false;
+      }
+
+      // Update Crossing Badge
       const badge = document.getElementById('crossings-badge');
       badge.innerText = crossingsFound;
 
@@ -1721,9 +1914,6 @@
       crossingsCount = crossingsFound;
     }
 
-    /* ==========================================================================
-       JOINTS & BENDS SUBDIVISION
-       ========================================================================== */
     function addJointToSegment(edgeId, segIndex, worldPos) {
       const edge = edges.find(e => e.id === edgeId);
       if (!edge) return;
@@ -1764,15 +1954,12 @@
       }
     }
 
-    /* ==========================================================================
-       ACTION RECORDER & UNDO SYSTEM
-       ========================================================================== */
     function recordAction(action) {
       moveHistory.push(action);
     }
 
     function undoLastAction() {
-      if (moveHistory.length === 0 || isReplaying || isLevelCompleted || isDraggingNode) return;
+      if (moveHistory.length === 0 || isReplaying || (isLevelCompleted && !isInspectingSolved) || isDraggingNode) return;
       const last = moveHistory.pop();
 
       if (last.type === 'move') {
@@ -1800,9 +1987,6 @@
       updateEdgesAndCrossings();
     }
 
-    /* ==========================================================================
-       LEVEL SELECTOR MODAL GENERATOR
-       ========================================================================== */
     function openLevelSelect() {
       const grid = document.getElementById('level-grid-container');
       grid.innerHTML = '';
@@ -1810,11 +1994,12 @@
       LEVELS.forEach((lvl, idx) => {
         const item = document.createElement('div');
         item.className = 'level-select-item' + (idx === currentLevelIndex ? ' current-level' : '');
+        const isDiceLevel = !!lvl.isCustomRandom;
         item.innerHTML = `
-          <div class="level-num-badge">${(idx + 1).toString().padStart(2, '0')}</div>
+          <div class="level-num-badge">${isDiceLevel ? '🎲' : (idx + 1).toString().padStart(2, '0')}</div>
           <div class="level-item-info">
-            <span class="level-item-title">${lvl.title.replace(/^Level \d+:\s*/, '')}</span>
-            <span class="level-item-meta">${lvl.nodes.length} nodes · ${lvl.edges.length} edges</span>
+            <span class="level-item-title">${isDiceLevel ? 'Random 🎲' : lvl.title.replace(/^Level \d+:\s*/, '')}</span>
+            <span class="level-item-meta">${isDiceLevel ? `${lvl.nodesCount}N · Seed ${lvl.currentSeed}` : `${lvl.nodes.length} nodes · ${lvl.edges.length} edges`}</span>
           </div>
         `;
         item.addEventListener('click', () => {
@@ -1828,9 +2013,6 @@
       document.getElementById('modal-level-select').classList.add('active');
     }
 
-    /* ==========================================================================
-       LEVEL COMPLETION & PASS TO A FRIEND
-       ========================================================================== */
     function triggerVictory() {
       if (isLevelCompleted) return;
       isLevelCompleted = true;
@@ -1846,18 +2028,23 @@
         return;
       }
 
+      const currentLevelData = LEVELS[currentLevelIndex];
       const isFinalLevel = (currentLevelIndex === LEVELS.length - 1);
       const nextBtn = document.getElementById('btn-vic-next');
       const vicTitle = document.getElementById('vic-title');
       const vicSub = document.getElementById('vic-sub');
 
-      if (isFinalLevel) {
+      if (currentLevelData.isCustomRandom) {
+        vicTitle.innerText = "Graph Untangled! 🎉";
+        vicSub.innerText = currentLevelData.customTitle;
+        nextBtn.innerText = "Roll New Seed 🎲";
+      } else if (isFinalLevel) {
         vicTitle.innerText = "Grandmaster of Planarity! 🏆";
-        vicSub.innerText = "You solved all 20 topological planar puzzles!";
+        vicSub.innerText = "You solved all topological planar puzzles!";
         nextBtn.innerText = "Play Again from Start";
       } else {
         vicTitle.innerText = "Graph Untangled! 🎉";
-        vicSub.innerText = `Solves ${LEVELS[currentLevelIndex].title}`;
+        vicSub.innerText = `Solves ${currentLevelData.title}`;
         nextBtn.innerText = `Next: Level ${currentLevelIndex + 2}`;
       }
 
@@ -1897,9 +2084,6 @@
       document.getElementById('modal-scoreboard').classList.add('active');
     }
 
-    /* ==========================================================================
-       SPEED RECAP (Paced Replay + MediaRecorder WebM Download)
-       ========================================================================== */
     async function startSpeedRecap() {
       if (moveHistory.length === 0) return;
       closeAllModals();
@@ -1978,13 +2162,11 @@
       }, 600);
     }
 
-    /* ==========================================================================
-       MOUSE & TOUCH INTERACTION PIPELINE
-       ========================================================================== */
     function getPointerPos(e) {
-      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-      return { clientX, clientY };
+      if (e.touches && e.touches.length > 0) {
+        return { clientX: e.touches[0].clientX, clientY: e.touches[0].clientY };
+      }
+      return { clientX: e.clientX, clientY: e.clientY };
     }
 
     function updateRaycaster(clientX, clientY) {
@@ -1994,7 +2176,7 @@
     }
 
     function onPointerDown(e) {
-      if (isPaused || isReplaying || isLevelCompleted) return;
+      if (isPaused || isReplaying || (isLevelCompleted && !isInspectingSolved)) return;
       sound.init();
 
       const { clientX, clientY } = getPointerPos(e);
@@ -2020,6 +2202,7 @@
 
     function onPointerMove(e) {
       if (isPaused || isReplaying) return;
+      if (e.touches && e.touches.length > 1) return; // Ignore multitouch gestures
       const { clientX, clientY } = getPointerPos(e);
 
       if (Math.hypot(clientX - pointerDownPos.x, clientY - pointerDownPos.y) > 6) {
@@ -2064,7 +2247,7 @@
 
         updateEdgesAndCrossings();
 
-        if (crossingsCount === 0 && !isLevelCompleted && !isReplaying) {
+        if (crossingsCount === 0 && !isLevelCompleted && !isReplaying && !isInspectingSolved) {
           triggerVictory();
         }
         return;
@@ -2074,7 +2257,8 @@
         const { clientX, clientY } = pointerDownPos;
         updateRaycaster(clientX, clientY);
 
-        const edgeHits = raycaster.intersectObjects(edgeMeshes.map(em => em.mesh), false);
+        const visibleEdgeMeshes = edgeMeshPool.filter(m => m.visible);
+        const edgeHits = raycaster.intersectObjects(visibleEdgeMeshes, false);
         if (edgeHits.length > 0) {
           const hitObj = edgeHits[0].object;
           const hitData = hitObj.userData;
@@ -2091,11 +2275,8 @@
 
     window.addEventListener('touchstart', onPointerDown, { passive: false });
     window.addEventListener('touchmove', onPointerMove, { passive: false });
-    window.addEventListener('touchend', onPointerUp);
+    window.addEventListener('touchend', onPointerUp, { passive: false });
 
-    /* ==========================================================================
-       TIMER & UI FORMATTING
-       ========================================================================== */
     function formatTimer(sec) {
       const m = Math.floor(sec / 60).toString().padStart(2, '0');
       const s = (sec % 60).toString().padStart(2, '0');
@@ -2124,14 +2305,16 @@
 
     function closeAllModals() {
       document.querySelectorAll('.modal-backdrop').forEach(m => m.classList.remove('active'));
+      const inspectBanner = document.getElementById('inspect-solved-banner');
+      if (inspectBanner) inspectBanner.style.display = 'none';
+      isInspectingSolved = false;
     }
 
-    /* ==========================================================================
-       EVENT LISTENERS (HUD & Modals)
-       ========================================================================== */
     document.getElementById('btn-undo').addEventListener('click', () => undoLastAction());
     document.getElementById('btn-restart').addEventListener('click', () => loadLevel(currentLevelIndex, passFriendMode));
     document.getElementById('btn-level-select').addEventListener('click', () => openLevelSelect());
+    const levelNameBtn = document.getElementById('level-name-display');
+    if (levelNameBtn) levelNameBtn.addEventListener('click', () => openLevelSelect());
     document.getElementById('btn-close-levels').addEventListener('click', () => closeAllModals());
 
     document.getElementById('btn-audio').addEventListener('click', () => {
@@ -2176,9 +2359,42 @@
     document.getElementById('set-sfx').addEventListener('change', (e) => sound.setSfx(e.target.checked));
     document.getElementById('set-highlights').addEventListener('change', () => updateEdgesAndCrossings());
 
-    // Victory Modal Handlers
+    function openRandomConfigModal() {
+      document.getElementById('input-nodes-count').value = customRandomState.nodesCount;
+      document.getElementById('val-nodes-count').innerText = customRandomState.nodesCount;
+      document.getElementById('input-seed').value = customRandomState.seed;
+      document.getElementById('modal-random-config').classList.add('active');
+    }
+
+    document.getElementById('btn-custom-dice').addEventListener('click', openRandomConfigModal);
+    document.getElementById('btn-close-random').addEventListener('click', closeAllModals);
+
+    document.getElementById('input-nodes-count').addEventListener('input', (e) => {
+      document.getElementById('val-nodes-count').innerText = e.target.value;
+    });
+
+    document.getElementById('btn-random-seed').addEventListener('click', () => {
+      document.getElementById('input-seed').value = Math.floor(Math.random() * 99999) + 1;
+    });
+
+    document.getElementById('btn-apply-random').addEventListener('click', () => {
+      const nodesCount = Math.max(6, Math.min(25, parseInt(document.getElementById('input-nodes-count').value, 10) || 14));
+      const seed = parseInt(document.getElementById('input-seed').value, 10) || 1;
+      regenerateCustomLevel(nodesCount, seed);
+      closeAllModals();
+      const customIdx = LEVELS.findIndex(l => l.isCustomRandom);
+      loadLevel(customIdx !== -1 ? customIdx : LEVELS.length - 1);
+    });
+
+    // Victory Handlers
     document.getElementById('btn-vic-next').addEventListener('click', () => {
-      loadLevel(currentLevelIndex + 1);
+      if (LEVELS[currentLevelIndex].isCustomRandom) {
+        const nextSeed = Math.floor(Math.random() * 99999) + 1;
+        regenerateCustomLevel(customRandomState.nodesCount, nextSeed);
+        loadLevel(currentLevelIndex);
+      } else {
+        loadLevel(currentLevelIndex + 1);
+      }
     });
 
     document.getElementById('btn-vic-retry').addEventListener('click', () => {
@@ -2202,7 +2418,18 @@
 
     document.getElementById('btn-vic-replay-run').addEventListener('click', () => startSpeedRecap());
 
-    // Replay Modal Handlers
+    document.getElementById('btn-vic-see-solved').addEventListener('click', () => {
+      closeAllModals();
+      isInspectingSolved = true;
+      document.getElementById('inspect-solved-banner').style.display = 'flex';
+    });
+
+    document.getElementById('btn-return-results').addEventListener('click', () => {
+      isInspectingSolved = false;
+      document.getElementById('inspect-solved-banner').style.display = 'none';
+      document.getElementById('modal-victory').classList.add('active');
+    });
+
     document.getElementById('btn-recap-back').addEventListener('click', () => {
       closeAllModals();
       document.getElementById('modal-victory').classList.add('active');
@@ -2213,14 +2440,20 @@
         const a = document.createElement('a');
         a.style.display = 'none';
         a.href = webmBlobUrl;
-        a.download = `Planar_Level_${currentLevelIndex + 1}_Recap.webm`;
+        const currentLvl = LEVELS[currentLevelIndex];
+        if (currentLvl && currentLvl.isCustomRandom) {
+          const safeSeedName = (currentLvl.customTitle || `Random_${currentLvl.nodesCount}N_Seed_${currentLvl.currentSeed}`)
+            .replace(/[^a-zA-Z0-9_-]/g, '_');
+          a.download = `Planar_${safeSeedName}_Recap.webm`;
+        } else {
+          a.download = `Planar_Level_${currentLevelIndex + 1}_Recap.webm`;
+        }
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
       }
     });
 
-    // Scoreboard Modal Handlers
     document.getElementById('btn-score-next').addEventListener('click', () => {
       passFriendMode = false;
       loadLevel(currentLevelIndex + 1);
@@ -2231,30 +2464,30 @@
       loadLevel(currentLevelIndex);
     });
 
-    // Responsive Canvas Resize
     window.addEventListener('resize', () => {
       camera.aspect = window.innerWidth / window.innerHeight;
       camera.updateProjectionMatrix();
       renderer.setSize(window.innerWidth, window.innerHeight);
     });
 
-    /* ==========================================================================
-       RENDER LOOP
-       ========================================================================== */
     function animate() {
       requestAnimationFrame(animate);
 
       const time = Date.now() * 0.005;
-      crossingMarkers.forEach((m, idx) => {
-        const s = 1 + 0.15 * Math.sin(time + idx);
-        m.scale.set(s, s, 1);
-      });
+      for (let i = 0; i < markerMeshPool.length; i++) {
+        const m = markerMeshPool[i];
+        if (m.visible) {
+          const s = 1 + 0.15 * Math.sin(time + i);
+          m.scale.set(s, s, 1);
+        }
+      }
 
       renderer.render(scene, camera);
     }
 
     window.onload = function() {
-      loadLevel(0);
+      const savedLevel = Storage.get('planar_current_level', 0);
+      loadLevel(savedLevel);
       animate();
 
       setTimeout(() => {
