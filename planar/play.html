@@ -475,7 +475,7 @@
   <div id="hud">
     <div class="hud-group">
       <div class="glass-card stat-pill interactive-pill" id="btn-level-select" title="Choose Level">
-        <span id="level-display">Level 1/10</span>
+        <span id="level-display">Level 1/14</span>
         <svg style="width: 14px; height: 14px; margin-left: 2px; fill: currentColor; opacity: 0.7;" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
       </div>
       <div class="glass-card stat-pill">
@@ -592,7 +592,8 @@
       
       <div class="btn-stack">
         <button class="btn btn-primary" id="btn-download-webm">Download Recap (.webm)</button>
-        <button class="btn btn-secondary" id="btn-recap-done">Back to Level Complete</button>
+        <button class="btn btn-recap-done" id="btn-recap-done" style="display:none;"></button>
+        <button class="btn btn-secondary" id="btn-recap-back">Back to Level Complete</button>
       </div>
     </div>
   </div>
@@ -850,6 +851,7 @@
 
     /* ==========================================================================
        LEVEL DEFINITIONS (100% Planar, Mathematically Verified)
+       14 Progressive Topologies with Strict Euler Planarity
        ========================================================================== */
     const LEVELS = [
       {
@@ -937,7 +939,6 @@
       {
         id: 6,
         title: "Level 6: Cubic Bipartite Q3",
-        // The 3D cube graph Q3: 3-regular, 3-connected, bipartite and planar
         nodes: [
           { id: 'a0', x: -4.5, y: -2.5 },
           { id: 'a1', x: 4.5, y: 2.5 },
@@ -958,7 +959,6 @@
       {
         id: 7,
         title: "Level 7: Series-Parallel Diamond Chain",
-        // Subcubic series-parallel graph with recursive diamond subdivisions
         nodes: [
           { id: 's', x: -6.5, y: 0.0 },
           { id: 't', x: 6.5, y: 0.0 },
@@ -978,7 +978,6 @@
       {
         id: 8,
         title: "Level 8: Maximal Octahedral Triangulation",
-        // Fully triangulated maximal planar graph: V = 8, E = 3V - 6 = 18 edges
         nodes: [
           { id: 'top', x: 0.0, y: 4.5 },
           { id: 'bot', x: 0.0, y: -4.5 },
@@ -990,11 +989,9 @@
           { id: 'p2', x: 1.5, y: -0.5 }
         ],
         edges: [
-          // Octahedral 12-edge core
           ['s0', 's1'], ['s1', 's2'], ['s2', 's3'], ['s3', 's0'],
           ['top', 's0'], ['top', 's1'], ['top', 's2'], ['top', 's3'],
           ['bot', 's0'], ['bot', 's1'], ['bot', 's2'], ['bot', 's3'],
-          // Face triangulation subdivisions (3 edges each = 6 edges; total 18)
           ['p1', 'top'], ['p1', 's0'], ['p1', 's1'],
           ['p2', 'top'], ['p2', 's2'], ['p2', 's3']
         ]
@@ -1002,33 +999,25 @@
       {
         id: 9,
         title: "Level 9: Apex-Tree Sanctuary",
-        // Substantial 16-node, 24-edge Apex-Tree deeply tangled across hemispheres
         nodes: [
-          // Apex vertex trapped centrally in the tangle
           { id: 'apex', x: 0.0, y: 0.2 },
-          // Root of the tree flipped to the bottom
           { id: 'root', x: 0.0, y: -5.4 },
-          // Primary trunk splits (swapped to opposite sides)
           { id: 'bL', x: 4.8, y: -3.2 },
           { id: 'bR', x: -4.8, y: -3.2 },
-          // Secondary branches (inverted across Y axis)
           { id: 'bL1', x: -3.6, y: 3.5 },
           { id: 'bL2', x: 5.8, y: 1.2 },
           { id: 'bR1', x: 3.6, y: 3.5 },
           { id: 'bR2', x: -5.8, y: 1.2 },
-          // Foliage sub-nodes (deeply interleaved)
           { id: 'f1', x: 2.2, y: -1.8 },
           { id: 'f2', x: -2.2, y: -1.8 },
           { id: 'f3', x: -5.0, y: -0.8 },
           { id: 'f4', x: 5.0, y: -0.8 },
-          // Outer leaves (crisscrossing across top and perimeter)
           { id: 'leaf_a', x: -1.4, y: 5.2 },
           { id: 'leaf_b', x: 1.4, y: 5.2 },
           { id: 'leaf_c', x: 5.6, y: 4.2 },
           { id: 'leaf_d', x: -5.6, y: 4.2 }
         ],
         edges: [
-          // Tree Hierarchy (15 edges connecting 15 tree vertices)
           ['root', 'bL'], ['root', 'bR'],
           ['bL', 'bL1'], ['bL', 'bL2'],
           ['bR', 'bR1'], ['bR', 'bR2'],
@@ -1037,7 +1026,6 @@
           ['bR1', 'f2'], ['bR1', 'leaf_b'],
           ['bR2', 'f4'], ['bR2', 'leaf_d'],
           ['f1', 'f3'],
-          // Apex Connections to Boundary Enclosures (9 edges)
           ['apex', 'root'],
           ['apex', 'bL'], ['apex', 'bR'],
           ['apex', 'leaf_a'], ['apex', 'leaf_b'],
@@ -1048,7 +1036,6 @@
       {
         id: 10,
         title: "Level 10: Grand Prismatoid",
-        // Cubic 3-connected Planar Bipartite network (Hexagonal Prism Q6) with dense star scramble
         nodes: [
           { id: 'u0', x: -4.8, y: 3.2 },
           { id: 'u1', x: 4.8, y: -3.2 },
@@ -1064,12 +1051,130 @@
           { id: 'v5', x: -5.2, y: 1.8 }
         ],
         edges: [
-          // Cycle 1 (Outer Hexagon)
           ['u0', 'u1'], ['u1', 'u2'], ['u2', 'u3'], ['u3', 'u4'], ['u4', 'u5'], ['u5', 'u0'],
-          // Cycle 2 (Inner Hexagon)
           ['v0', 'v1'], ['v1', 'v2'], ['v2', 'v3'], ['v3', 'v4'], ['v4', 'v5'], ['v5', 'v0'],
-          // Transversal connecting rungs
           ['u0', 'v0'], ['u1', 'v1'], ['u2', 'v2'], ['u3', 'v3'], ['u4', 'v4'], ['u5', 'v5']
+        ]
+      },
+      {
+        id: 11,
+        title: "Level 11: Nested Apollonian Net",
+        nodes: [
+          { id: 'c0', x: 0.0, y: -0.2 },
+          { id: 'w0', x: 4.8, y: 3.2 },
+          { id: 'w1', x: -4.8, y: 3.2 },
+          { id: 'w2', x: 0.0, y: -5.2 },
+          { id: 'm0', x: -3.5, y: -2.0 },
+          { id: 'm1', x: 3.5, y: -2.0 },
+          { id: 'm2', x: 0.0, y: 4.5 },
+          { id: 'i0', x: 2.2, y: 1.2 },
+          { id: 'i1', x: -2.2, y: 1.2 },
+          { id: 'i2', x: 0.0, y: -2.5 },
+          { id: 'apex_sub', x: -1.2, y: -4.2 }
+        ],
+        edges: [
+          ['w0', 'w1'], ['w1', 'w2'], ['w2', 'w0'],
+          ['m0', 'm1'], ['m1', 'm2'], ['m2', 'm0'],
+          ['w0', 'm1'], ['w0', 'm2'],
+          ['w1', 'm0'], ['w1', 'm2'],
+          ['w2', 'm0'], ['w2', 'm1'],
+          ['i0', 'i1'], ['i1', 'i2'], ['i2', 'i0'],
+          ['m2', 'i0'], ['m2', 'i1'],
+          ['m0', 'i1'], ['m0', 'i2'],
+          ['m1', 'i0'], ['m1', 'i2'],
+          ['c0', 'i0'], ['c0', 'i1'], ['c0', 'i2'],
+          ['apex_sub', 'w2'], ['apex_sub', 'm0'], ['apex_sub', 'm1']
+        ]
+      },
+      {
+        id: 12,
+        title: "Level 12: Desarguesian 3-Prism Dual",
+        nodes: [
+          { id: 'h0', x: -5.0, y: -3.5 },
+          { id: 'h1', x: 5.0, y: 3.5 },
+          { id: 'h2', x: 4.0, y: -4.0 },
+          { id: 'h3', x: -4.0, y: 4.0 },
+          { id: 'h4', x: 0.0, y: 4.8 },
+          { id: 'h5', x: 0.0, y: -4.8 },
+          { id: 'k0', x: -2.5, y: 2.5 },
+          { id: 'k1', x: 2.5, y: -2.5 },
+          { id: 'k2', x: 3.5, y: 1.0 },
+          { id: 'k3', x: -3.5, y: -1.0 },
+          { id: 'core_a', x: 1.0, y: 3.2 },
+          { id: 'core_b', x: -1.0, y: -3.2 }
+        ],
+        edges: [
+          ['h0', 'h2'], ['h2', 'h5'], ['h5', 'h1'], ['h1', 'h3'], ['h3', 'h4'], ['h4', 'h0'],
+          ['k0', 'k2'], ['k2', 'k1'], ['k1', 'k3'], ['k3', 'k0'],
+          ['h0', 'k2'], ['h2', 'k0'], ['h5', 'k0'],
+          ['h1', 'k3'], ['h3', 'k1'], ['h4', 'k1'],
+          ['core_a', 'h0'], ['core_a', 'h2'], ['core_a', 'k0'], ['core_a', 'k2'],
+          ['core_b', 'h1'], ['core_b', 'h3'], ['core_b', 'k1'], ['core_b', 'k3']
+        ]
+      },
+      {
+        id: 13,
+        title: "Level 13: Crown Bipartite Mesh",
+        // Guaranteed Planar Bipartite Quadrangulation: V = 14, E = 24, F = 12 (E = 2V - 4)
+        nodes: [
+          { id: 'c0', x: -4.5, y: -3.5 },
+          { id: 'd0', x: 4.5, y: 3.5 },
+          { id: 'c1', x: -2.0, y: 4.8 },
+          { id: 'd1', x: 2.0, y: -4.8 },
+          { id: 'c2', x: 5.2, y: -1.5 },
+          { id: 'd2', x: -5.2, y: 1.5 },
+          { id: 'c3', x: 2.5, y: 3.0 },
+          { id: 'd3', x: -2.5, y: -3.0 },
+          { id: 'c4', x: -4.0, y: 1.0 },
+          { id: 'd4', x: 4.0, y: -1.0 },
+          { id: 'c5', x: 1.0, y: -2.5 },
+          { id: 'd5', x: -1.0, y: 2.5 },
+          { id: 'c6', x: 0.0, y: -5.0 },
+          { id: 'd6', x: 0.0, y: 5.0 }
+        ],
+        edges: [
+          // Outer 6-cycle (alternating C-D)
+          ['c0', 'd0'], ['d0', 'c1'], ['c1', 'd1'], ['d1', 'c2'], ['c2', 'd2'], ['d2', 'c0'],
+          // Inner 6-cycle (alternating D-C)
+          ['d3', 'c3'], ['c3', 'd4'], ['d4', 'c4'], ['c4', 'd5'], ['d5', 'c5'], ['c5', 'd3'],
+          // Transversal prism rungs
+          ['c0', 'd3'], ['d0', 'c3'],
+          ['c1', 'd4'], ['d1', 'c4'],
+          ['c2', 'd5'], ['d2', 'c5'],
+          // Cap c6 connecting to outer d-vertices
+          ['c6', 'd0'], ['c6', 'd1'], ['c6', 'd2'],
+          // Cap d6 connecting to inner c-vertices
+          ['d6', 'c3'], ['d6', 'c4'], ['d6', 'c5']
+        ]
+      },
+      {
+        id: 14,
+        title: "Level 14: Grand Icosahedral Geodesic",
+        // The regular icosahedron graph: Maximal planar, 5-regular: V = 12, E = 3V - 6 = 30 edges
+        nodes: [
+          { id: 'top_apex', x: 0.0, y: 5.2 },
+          { id: 'bot_apex', x: 0.0, y: -5.2 },
+          { id: 'p0', x: -4.8, y: 2.5 },
+          { id: 'p1', x: 4.8, y: -2.5 },
+          { id: 'p2', x: -1.8, y: -3.8 },
+          { id: 'p3', x: 1.8, y: 3.8 },
+          { id: 'p4', x: 4.8, y: 1.5 },
+          { id: 'q0', x: -4.8, y: -1.5 },
+          { id: 'q1', x: 2.2, y: -2.8 },
+          { id: 'q2', x: -2.2, y: 2.8 },
+          { id: 'q3', x: 3.5, y: -4.2 },
+          { id: 'q4', x: -3.5, y: 4.2 }
+        ],
+        edges: [
+          ['top_apex', 'p0'], ['top_apex', 'p1'], ['top_apex', 'p2'], ['top_apex', 'p3'], ['top_apex', 'p4'],
+          ['p0', 'p3'], ['p3', 'p4'], ['p4', 'p1'], ['p1', 'p2'], ['p2', 'p0'],
+          ['p0', 'q0'], ['p0', 'q4'],
+          ['p3', 'q4'], ['p3', 'q2'],
+          ['p4', 'q2'], ['p4', 'q1'],
+          ['p1', 'q1'], ['p1', 'q3'],
+          ['p2', 'q3'], ['p2', 'q0'],
+          ['q0', 'q4'], ['q4', 'q2'], ['q2', 'q1'], ['q1', 'q3'], ['q3', 'q0'],
+          ['bot_apex', 'q0'], ['bot_apex', 'q1'], ['bot_apex', 'q2'], ['bot_apex', 'q3'], ['bot_apex', 'q4']
         ]
       }
     ];
@@ -1170,12 +1275,12 @@
        GAME STATE & LOGIC
        ========================================================================== */
     let currentLevelIndex = 0;
-    let nodes = [];       // { id, x, y, isJoint, mesh }
-    let edges = [];       // { id, u: nodeId, v: nodeId, joints: [nodeIds] }
-    let edgeMeshes = [];  // { edgeId, segmentIndex, mesh, startNodeId, endNodeId }
+    let nodes = [];
+    let edges = [];
+    let edgeMeshes = [];
     let crossingMarkers = [];
 
-    let moveHistory = []; // { type: 'move'|'add_joint', ... }
+    let moveHistory = [];
     let moveCount = 0;
     let crossingsCount = 0;
     let levelStartTime = 0;
@@ -1257,7 +1362,6 @@
         p2Stats = null;
       }
 
-      // Clear existing 3D objects
       nodes.forEach(n => scene.remove(n.mesh));
       clearEdgeMeshes();
       clearCrossingMarkers();
@@ -1422,7 +1526,7 @@
         }
       } else {
         badge.className = "stat-badge badge-crossings-bad";
-        if (crossingsFound < crossingsCount && !isReplaying) {
+        if (crossingsCount > 0 && crossingsFound < crossingsCount && !isReplaying) {
           sound.playUntangleStep();
         }
       }
@@ -1432,7 +1536,7 @@
 
     /* ==========================================================================
        JOINTS & BENDS SUBDIVISION
-       ========================================================================= */
+       ========================================================================== */
     function addJointToSegment(edgeId, segIndex, worldPos) {
       const edge = edges.find(e => e.id === edgeId);
       if (!edge) return;
@@ -1513,8 +1617,8 @@
        LEVEL SELECTOR MODAL GENERATOR
        ========================================================================== */
     function openLevelSelect() {
-      const container = document.getElementById('level-grid-container');
-      container.innerHTML = '';
+      const grid = document.getElementById('level-grid-container');
+      grid.innerHTML = '';
 
       LEVELS.forEach((lvl, idx) => {
         const item = document.createElement('div');
@@ -1530,7 +1634,7 @@
           closeAllModals();
           loadLevel(idx);
         });
-        container.appendChild(item);
+        grid.appendChild(item);
       });
 
       closeAllModals();
@@ -1561,8 +1665,8 @@
       const vicSub = document.getElementById('vic-sub');
 
       if (isFinalLevel) {
-        vicTitle.innerText = "Master of Planarity! 🏆";
-        vicSub.innerText = "You untangled all 10 complex planar topologies!";
+        vicTitle.innerText = "Grandmaster of Planarity! 🏆";
+        vicSub.innerText = "You solved all 14 topological planar puzzles!";
         nextBtn.innerText = "Play Again from Start";
       } else {
         vicTitle.innerText = "Graph Untangled! 🎉";
@@ -1583,12 +1687,9 @@
       tbody.innerHTML = '';
 
       let p1Wins = false;
-      let p2Wins = false;
 
       if (p1Stats.moves < p2Stats.moves || (p1Stats.moves === p2Stats.moves && p1Stats.time <= p2Stats.time)) {
         p1Wins = true;
-      } else {
-        p2Wins = true;
       }
 
       tbody.innerHTML = `
@@ -1602,7 +1703,7 @@
           <td><strong>Player 2</strong></td>
           <td>${p2Stats.timeStr}</td>
           <td>${p2Stats.moves}</td>
-          <td class="${p2Wins ? 'scoreboard-winner' : ''}">${p2Wins ? 'Winner 👑' : 'Challenger'}</td>
+          <td class="${!p1Wins ? 'scoreboard-winner' : ''}">${!p1Wins ? 'Winner 👑' : 'Challenger'}</td>
         </tr>
       `;
 
@@ -1915,7 +2016,7 @@
     document.getElementById('btn-vic-replay-run').addEventListener('click', () => startSpeedRecap());
 
     // Replay Modal Handlers
-    document.getElementById('btn-recap-done').addEventListener('click', () => {
+    document.getElementById('btn-recap-back').addEventListener('click', () => {
       closeAllModals();
       document.getElementById('modal-victory').classList.add('active');
     });
