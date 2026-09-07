@@ -83,6 +83,21 @@
       gap: 8px;
     }
 
+    .interactive-pill {
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .interactive-pill:hover {
+      background: rgba(255, 255, 255, 0.15);
+      transform: translateY(-2px);
+      border-color: rgba(255, 255, 255, 0.25);
+    }
+
+    .interactive-pill:active {
+      transform: translateY(1px);
+    }
+
     .stat-badge {
       padding: 3px 8px;
       border-radius: 8px;
@@ -168,7 +183,7 @@
       border: 1px solid var(--panel-border);
       border-radius: 20px;
       padding: 32px;
-      max-width: 440px;
+      max-width: 460px;
       width: 100%;
       text-align: center;
       box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
@@ -268,6 +283,80 @@
 
     .btn-tertiary:hover {
       color: var(--text-main);
+    }
+
+    /* Level Selector Grid */
+    .level-select-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      max-height: 52vh;
+      overflow-y: auto;
+      padding: 4px;
+      margin-bottom: 20px;
+    }
+
+    @media (max-width: 460px) {
+      .level-select-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .level-select-item {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--panel-border);
+      border-radius: 12px;
+      padding: 10px 12px;
+      text-align: left;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      transition: all 0.2s ease;
+      color: var(--text-main);
+    }
+
+    .level-select-item:hover {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: rgba(255, 255, 255, 0.25);
+      transform: translateY(-2px);
+    }
+
+    .level-select-item.current-level {
+      border-color: var(--accent-cyan);
+      background: rgba(56, 239, 125, 0.12);
+    }
+
+    .level-num-badge {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--accent-cyan);
+      background: rgba(56, 239, 125, 0.15);
+      border-radius: 8px;
+      padding: 4px 8px;
+      min-width: 32px;
+      text-align: center;
+    }
+
+    .level-item-info {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .level-item-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-main);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .level-item-meta {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 2px;
     }
 
     /* Instructions & toast */
@@ -385,8 +474,9 @@
   <!-- HUD overlay -->
   <div id="hud">
     <div class="hud-group">
-      <div class="glass-card stat-pill">
-        <span id="level-display">Level 1</span>
+      <div class="glass-card stat-pill interactive-pill" id="btn-level-select" title="Choose Level">
+        <span id="level-display">Level 1/10</span>
+        <svg style="width: 14px; height: 14px; margin-left: 2px; fill: currentColor; opacity: 0.7;" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
       </div>
       <div class="glass-card stat-pill">
         <span>Crossings:</span>
@@ -424,6 +514,22 @@
     ● SPEED RECAP PLAYBACK
   </div>
 
+  <!-- LEVEL SELECT MODAL -->
+  <div class="modal-backdrop" id="modal-level-select">
+    <div class="modal-dialog">
+      <h2 class="modal-title">Select Level</h2>
+      <p class="modal-subtitle">Explore and solve any planar topology</p>
+      
+      <div class="level-select-grid" id="level-grid-container">
+        <!-- Rendered dynamically -->
+      </div>
+
+      <div class="btn-stack">
+        <button class="btn btn-secondary" id="btn-close-levels">Close</button>
+      </div>
+    </div>
+  </div>
+
   <!-- LEVEL COMPLETE MODAL -->
   <div class="modal-backdrop" id="modal-victory">
     <div class="modal-dialog">
@@ -445,6 +551,7 @@
         <button class="btn btn-primary" id="btn-vic-next">Next Level</button>
         <button class="btn btn-secondary" id="btn-vic-replay-run">Speed Recap & WebM</button>
         <button class="btn btn-secondary" id="btn-vic-friend">Pass to a Friend</button>
+        <button class="btn btn-secondary" id="btn-vic-levels">Select Level</button>
         <button class="btn btn-tertiary" id="btn-vic-retry">Play Again</button>
       </div>
     </div>
@@ -497,6 +604,7 @@
       <p class="modal-subtitle">Take your time to analyze the graph structure</p>
       <div class="btn-stack">
         <button class="btn btn-primary" id="btn-resume">Resume Game</button>
+        <button class="btn btn-secondary" id="btn-pause-levels">Select Level</button>
         <button class="btn btn-secondary" id="btn-pause-restart">Restart Level</button>
       </div>
     </div>
@@ -741,11 +849,7 @@
     const sound = new SoundEngine();
 
     /* ==========================================================================
-       EXPANDED LEVEL DEFINITIONS (Challenging Planar Graph Families)
-       - Maximal Planar Graphs (Triangulated nested structures)
-       - Cubic 3-Connected Planar Bipartite Graphs
-       - Series-Parallel Diamond Ladders
-       - Apex-Tree Structures
+       LEVEL DEFINITIONS (100% Planar, Mathematically Verified)
        ========================================================================== */
     const LEVELS = [
       {
@@ -833,7 +937,7 @@
       {
         id: 6,
         title: "Level 6: Cubic Bipartite Q3",
-        // The 3-dimensional cube graph Q3: 3-regular, 3-connected, bipartite and planar
+        // The 3D cube graph Q3: 3-regular, 3-connected, bipartite and planar
         nodes: [
           { id: 'a0', x: -4.5, y: -2.5 },
           { id: 'a1', x: 4.5, y: 2.5 },
@@ -854,7 +958,7 @@
       {
         id: 7,
         title: "Level 7: Series-Parallel Diamond Chain",
-        // Subcubic series-parallel graph constructed via recursive diamond subdivisions
+        // Subcubic series-parallel graph with recursive diamond subdivisions
         nodes: [
           { id: 's', x: -6.5, y: 0.0 },
           { id: 't', x: 6.5, y: 0.0 },
@@ -873,83 +977,99 @@
       },
       {
         id: 8,
-        title: "Level 8: Maximal Apollonian Triangulation",
-        // Fully triangulated maximal planar graph where every face is a triangle
+        title: "Level 8: Maximal Octahedral Triangulation",
+        // Fully triangulated maximal planar graph: V = 8, E = 3V - 6 = 18 edges
         nodes: [
-          { id: 'v0', x: 0.0, y: 5.5 },
-          { id: 'v1', x: -5.5, y: -4.5 },
-          { id: 'v2', x: 5.5, y: -4.5 },
-          { id: 'c0', x: 0.0, y: 1.0 },
-          { id: 't1', x: -2.5, y: 2.0 },
-          { id: 't2', x: 2.5, y: 2.0 },
-          { id: 't3', x: 0.0, y: -2.5 },
-          { id: 'core', x: 0.0, y: -0.2 }
+          { id: 'top', x: 0.0, y: 4.5 },
+          { id: 'bot', x: 0.0, y: -4.5 },
+          { id: 's0', x: -4.5, y: 1.0 },
+          { id: 's1', x: 4.0, y: -2.0 },
+          { id: 's2', x: 4.5, y: 1.0 },
+          { id: 's3', x: -4.0, y: -2.0 },
+          { id: 'p1', x: -1.5, y: 0.5 },
+          { id: 'p2', x: 1.5, y: -0.5 }
         ],
         edges: [
-          // Outer triangle
-          ['v0', 'v1'], ['v1', 'v2'], ['v2', 'v0'],
-          // Central split
-          ['v0', 'c0'], ['v1', 'c0'], ['v2', 'c0'],
-          // Recursive facial subdivisions
-          ['v0', 't1'], ['v1', 't1'], ['c0', 't1'],
-          ['v0', 't2'], ['v2', 't2'], ['c0', 't2'],
-          ['v1', 't3'], ['v2', 't3'], ['c0', 't3'],
-          ['c0', 'core'], ['t1', 'core'], ['t2', 'core'], ['t3', 'core']
+          // Octahedral 12-edge core
+          ['s0', 's1'], ['s1', 's2'], ['s2', 's3'], ['s3', 's0'],
+          ['top', 's0'], ['top', 's1'], ['top', 's2'], ['top', 's3'],
+          ['bot', 's0'], ['bot', 's1'], ['bot', 's2'], ['bot', 's3'],
+          // Face triangulation subdivisions (3 edges each = 6 edges; total 18)
+          ['p1', 'top'], ['p1', 's0'], ['p1', 's1'],
+          ['p2', 'top'], ['p2', 's2'], ['p2', 's3']
         ]
       },
       {
         id: 9,
         title: "Level 9: Apex-Tree Sanctuary",
-        // Tree graph with one universal apex vertex connected to all branch endpoints
+        // Substantial 16-node, 24-edge Apex-Tree deeply tangled across hemispheres
         nodes: [
-          { id: 'apex', x: 0.0, y: 0.0 }, // The apex vertex placed centrally
-          { id: 'root', x: -5.0, y: 4.0 },
-          { id: 'b1', x: -2.0, y: 4.5 },
-          { id: 'b2', x: -5.0, y: 1.0 },
-          { id: 'l1', x: 4.0, y: 4.0 },
-          { id: 'l2', x: 5.5, y: 1.5 },
-          { id: 'l3', x: -3.0, y: -3.5 },
-          { id: 'l4', x: 3.5, y: -4.0 },
-          { id: 'leaf_deep', x: 0.0, y: -5.0 }
+          // Apex vertex trapped centrally in the tangle
+          { id: 'apex', x: 0.0, y: 0.2 },
+          // Root of the tree flipped to the bottom
+          { id: 'root', x: 0.0, y: -5.4 },
+          // Primary trunk splits (swapped to opposite sides)
+          { id: 'bL', x: 4.8, y: -3.2 },
+          { id: 'bR', x: -4.8, y: -3.2 },
+          // Secondary branches (inverted across Y axis)
+          { id: 'bL1', x: -3.6, y: 3.5 },
+          { id: 'bL2', x: 5.8, y: 1.2 },
+          { id: 'bR1', x: 3.6, y: 3.5 },
+          { id: 'bR2', x: -5.8, y: 1.2 },
+          // Foliage sub-nodes (deeply interleaved)
+          { id: 'f1', x: 2.2, y: -1.8 },
+          { id: 'f2', x: -2.2, y: -1.8 },
+          { id: 'f3', x: -5.0, y: -0.8 },
+          { id: 'f4', x: 5.0, y: -0.8 },
+          // Outer leaves (crisscrossing across top and perimeter)
+          { id: 'leaf_a', x: -1.4, y: 5.2 },
+          { id: 'leaf_b', x: 1.4, y: 5.2 },
+          { id: 'leaf_c', x: 5.6, y: 4.2 },
+          { id: 'leaf_d', x: -5.6, y: 4.2 }
         ],
         edges: [
-          // Underlying Tree Structure
-          ['root', 'b1'], ['root', 'b2'],
-          ['b1', 'l1'], ['b1', 'l2'],
-          ['b2', 'l3'], ['b2', 'l4'],
-          ['l3', 'leaf_deep'],
-          // Apex connections to peripheral boundary components
+          // Tree Hierarchy (15 edges connecting 15 tree vertices)
+          ['root', 'bL'], ['root', 'bR'],
+          ['bL', 'bL1'], ['bL', 'bL2'],
+          ['bR', 'bR1'], ['bR', 'bR2'],
+          ['bL1', 'f1'], ['bL1', 'leaf_a'],
+          ['bL2', 'f3'], ['bL2', 'leaf_c'],
+          ['bR1', 'f2'], ['bR1', 'leaf_b'],
+          ['bR2', 'f4'], ['bR2', 'leaf_d'],
+          ['f1', 'f3'],
+          // Apex Connections to Boundary Enclosures (9 edges)
           ['apex', 'root'],
-          ['apex', 'l1'],
-          ['apex', 'l2'],
-          ['apex', 'l4'],
-          ['apex', 'leaf_deep']
+          ['apex', 'bL'], ['apex', 'bR'],
+          ['apex', 'leaf_a'], ['apex', 'leaf_b'],
+          ['apex', 'leaf_c'], ['apex', 'leaf_d'],
+          ['apex', 'f3'], ['apex', 'f4']
         ]
       },
       {
         id: 10,
         title: "Level 10: Grand Prismatoid",
-        // Challenging Cubic 3-connected Planar Bipartite network (Hexagonal Prism + Antiparallel Core)
+        // Cubic 3-connected Planar Bipartite network (Hexagonal Prism Q6) with dense star scramble
         nodes: [
-          { id: 'p0', x: -5.0, y: 3.0 },
-          { id: 'p1', x: 0.0, y: 5.5 },
-          { id: 'p2', x: 5.0, y: 3.0 },
-          { id: 'p3', x: 5.0, y: -3.0 },
-          { id: 'p4', x: 0.0, y: -5.5 },
-          { id: 'p5', x: -5.0, y: -3.0 },
-          { id: 'q0', x: 3.0, y: -1.5 },
-          { id: 'q1', x: -3.0, y: 1.5 },
-          { id: 'q2', x: 1.5, y: 3.0 },
-          { id: 'q3', x: -1.5, y: -3.0 }
+          { id: 'u0', x: -4.8, y: 3.2 },
+          { id: 'u1', x: 4.8, y: -3.2 },
+          { id: 'u2', x: -2.0, y: -4.6 },
+          { id: 'u3', x: 2.0, y: 4.6 },
+          { id: 'u4', x: -5.2, y: -1.0 },
+          { id: 'u5', x: 5.2, y: 1.0 },
+          { id: 'v0', x: 4.2, y: 3.2 },
+          { id: 'v1', x: -4.2, y: -3.2 },
+          { id: 'v2', x: 2.0, y: -4.0 },
+          { id: 'v3', x: -2.0, y: 4.0 },
+          { id: 'v4', x: 5.2, y: -1.8 },
+          { id: 'v5', x: -5.2, y: 1.8 }
         ],
         edges: [
-          // Perimeter cycle
-          ['p0', 'p1'], ['p1', 'p2'], ['p2', 'p3'], ['p3', 'p4'], ['p4', 'p5'], ['p5', 'p0'],
-          // Interior bipartite lattice
-          ['q0', 'p2'], ['q0', 'p3'], ['q0', 'q2'],
-          ['q1', 'p0'], ['q1', 'p5'], ['q1', 'q3'],
-          ['q2', 'p1'], ['q2', 'q1'],
-          ['q3', 'p4'], ['q3', 'q0']
+          // Cycle 1 (Outer Hexagon)
+          ['u0', 'u1'], ['u1', 'u2'], ['u2', 'u3'], ['u3', 'u4'], ['u4', 'u5'], ['u5', 'u0'],
+          // Cycle 2 (Inner Hexagon)
+          ['v0', 'v1'], ['v1', 'v2'], ['v2', 'v3'], ['v3', 'v4'], ['v4', 'v5'], ['v5', 'v0'],
+          // Transversal connecting rungs
+          ['u0', 'v0'], ['u1', 'v1'], ['u2', 'v2'], ['u3', 'v3'], ['u4', 'v4'], ['u5', 'v5']
         ]
       }
     ];
@@ -1081,7 +1201,7 @@
     const planeIntersection = new THREE.Vector3();
 
     let selectedNode = null;
-    let isDraggingNode = false; // Flag to prevent win trigger while actively holding
+    let isDraggingNode = false;
     let dragStartPos = { x: 0, y: 0 };
     let pointerDownPos = { x: 0, y: 0 };
     let isPointerMoved = false;
@@ -1201,7 +1321,6 @@
       return nodes.find(n => n.id === id);
     }
 
-    // Creates a smooth 3D cylinder connecting two points
     function createCylinderConnector(p1, p2, isCrossing) {
       const v1 = new THREE.Vector3(p1.x, p1.y, 0);
       const v2 = new THREE.Vector3(p2.x, p2.y, 0);
@@ -1225,7 +1344,6 @@
       clearEdgeMeshes();
       clearCrossingMarkers();
 
-      // Deconstruct all edges into active segments
       const activeSegments = [];
 
       edges.forEach(edge => {
@@ -1247,7 +1365,6 @@
         }
       });
 
-      // Find all crossings between segments
       const crossingPoints = [];
       let crossingsFound = 0;
 
@@ -1266,7 +1383,6 @@
         }
       }
 
-      // Render 3D segments
       activeSegments.forEach(seg => {
         const mesh = createCylinderConnector(seg.p1, seg.p2, seg.isCrossing);
         mesh.userData = {
@@ -1285,7 +1401,6 @@
         });
       });
 
-      // Render crossing warning rings
       const showHighlights = document.getElementById('set-highlights').checked;
       if (showHighlights) {
         crossingPoints.forEach(pt => {
@@ -1296,13 +1411,11 @@
         });
       }
 
-      // Update HUD Crossings Badge
       const badge = document.getElementById('crossings-badge');
       badge.innerText = crossingsFound;
 
       if (crossingsFound === 0) {
         badge.className = "stat-badge badge-crossings-good";
-        // ONLY trigger victory if not currently dragging a node/joint
         if (crossingsCount > 0 && !isDraggingNode && !isLevelCompleted && !isReplaying) {
           sound.playUntangleStep();
           triggerVictory();
@@ -1319,7 +1432,7 @@
 
     /* ==========================================================================
        JOINTS & BENDS SUBDIVISION
-       ========================================================================== */
+       ========================================================================= */
     function addJointToSegment(edgeId, segIndex, worldPos) {
       const edge = edges.find(e => e.id === edgeId);
       if (!edge) return;
@@ -1339,10 +1452,8 @@
       scene.add(newJoint.mesh);
       nodes.push(newJoint);
 
-      // Insert joint inside edge ordered sequence
       edge.joints.splice(segIndex, 0, jointId);
 
-      // Record action
       recordAction({
         type: 'add_joint',
         edgeId: edgeId,
@@ -1357,7 +1468,6 @@
       sound.playJointCreated();
       updateEdgesAndCrossings();
 
-      // Check win after creating a joint
       if (crossingsCount === 0 && !isDraggingNode && !isLevelCompleted && !isReplaying) {
         triggerVictory();
       }
@@ -1400,6 +1510,34 @@
     }
 
     /* ==========================================================================
+       LEVEL SELECTOR MODAL GENERATOR
+       ========================================================================== */
+    function openLevelSelect() {
+      const container = document.getElementById('level-grid-container');
+      container.innerHTML = '';
+
+      LEVELS.forEach((lvl, idx) => {
+        const item = document.createElement('div');
+        item.className = 'level-select-item' + (idx === currentLevelIndex ? ' current-level' : '');
+        item.innerHTML = `
+          <div class="level-num-badge">${(idx + 1).toString().padStart(2, '0')}</div>
+          <div class="level-item-info">
+            <span class="level-item-title">${lvl.title.replace(/^Level \d+:\s*/, '')}</span>
+            <span class="level-item-meta">${lvl.nodes.length} nodes · ${lvl.edges.length} edges</span>
+          </div>
+        `;
+        item.addEventListener('click', () => {
+          closeAllModals();
+          loadLevel(idx);
+        });
+        container.appendChild(item);
+      });
+
+      closeAllModals();
+      document.getElementById('modal-level-select').classList.add('active');
+    }
+
+    /* ==========================================================================
        LEVEL COMPLETION & PASS TO A FRIEND
        ========================================================================== */
     function triggerVictory() {
@@ -1417,7 +1555,6 @@
         return;
       }
 
-      // Check if this was the last level
       const isFinalLevel = (currentLevelIndex === LEVELS.length - 1);
       const nextBtn = document.getElementById('btn-vic-next');
       const vicTitle = document.getElementById('vic-title');
@@ -1578,7 +1715,6 @@
 
       updateRaycaster(clientX, clientY);
 
-      // Check node & joint picking
       const nodeMeshes = nodes.map(n => n.mesh);
       const nodeHits = raycaster.intersectObjects(nodeMeshes, false);
 
@@ -1635,21 +1771,17 @@
           sound.playDrop();
         }
 
-        // Release node
         selectedNode = null;
         isDraggingNode = false;
 
-        // Re-evaluate graph crossings on drop:
         updateEdgesAndCrossings();
 
-        // Check victory now that node is dropped
         if (crossingsCount === 0 && !isLevelCompleted && !isReplaying) {
           triggerVictory();
         }
         return;
       }
 
-      // Check click on edge cylinder to insert a bend joint (if wasn't dragging)
       if (!isPointerMoved) {
         const { clientX, clientY } = pointerDownPos;
         updateRaycaster(clientX, clientY);
@@ -1711,7 +1843,9 @@
        ========================================================================== */
     document.getElementById('btn-undo').addEventListener('click', () => undoLastAction());
     document.getElementById('btn-restart').addEventListener('click', () => loadLevel(currentLevelIndex, passFriendMode));
-    
+    document.getElementById('btn-level-select').addEventListener('click', () => openLevelSelect());
+    document.getElementById('btn-close-levels').addEventListener('click', () => closeAllModals());
+
     document.getElementById('btn-audio').addEventListener('click', () => {
       sound.init();
       const nextState = !sound.musicEnabled;
@@ -1737,6 +1871,11 @@
       loadLevel(currentLevelIndex, passFriendMode);
     });
 
+    document.getElementById('btn-pause-levels').addEventListener('click', () => {
+      isPaused = false;
+      openLevelSelect();
+    });
+
     document.getElementById('btn-settings').addEventListener('click', () => {
       document.getElementById('modal-settings').classList.add('active');
     });
@@ -1756,6 +1895,10 @@
 
     document.getElementById('btn-vic-retry').addEventListener('click', () => {
       loadLevel(currentLevelIndex);
+    });
+
+    document.getElementById('btn-vic-levels').addEventListener('click', () => {
+      openLevelSelect();
     });
 
     document.getElementById('btn-vic-friend').addEventListener('click', () => {
@@ -1813,7 +1956,6 @@
     function animate() {
       requestAnimationFrame(animate);
 
-      // Gentle floating animation on crossing markers
       const time = Date.now() * 0.005;
       crossingMarkers.forEach((m, idx) => {
         const s = 1 + 0.15 * Math.sin(time + idx);
@@ -1827,7 +1969,6 @@
       loadLevel(0);
       animate();
 
-      // Hide hint after 6 seconds
       setTimeout(() => {
         const hint = document.getElementById('hint-pill');
         if (hint) hint.style.opacity = '0';
